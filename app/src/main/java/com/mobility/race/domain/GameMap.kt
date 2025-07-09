@@ -1,62 +1,67 @@
 package com.mobility.race.domain
 
-class GameMap(private val mapData: Array<IntArray>) {
+import kotlin.math.abs
+import kotlin.math.max
+
+class GameMap private constructor(
+    private val _terrainGrid: Array<Array<TerrainType>>
+) {
     enum class TerrainType(val speedModifier: Float) {
-        ABYSS(0.0f),    // Пропасть/водоем
-        GRASS(0.4f),     // Трава
-        ROAD(1.0f)       // Дорога (асфальт)
+        ABYSS(0.0f),
+        GRASS(0.2f),
+        ROAD(1.0f)
     }
 
-    private val terrainGrid: Array<Array<TerrainType>> = Array(10) { Array(10) { TerrainType.GRASS } }
-
-    init {
-        validateMapData()
-        initializeTerrain()
-    }
-
-    private fun validateMapData() {
-        require(mapData.size == 10 && mapData.all { it.size == 10 }) {
-            "Map data must be a 10x10 grid"
-        }
-    }
-
-    private fun initializeTerrain() {
-        for (i in 0 until 10) {
-            for (j in 0 until 10) {
-                terrainGrid[i][j] = when (mapData[i][j]) {
-                    0 -> TerrainType.ABYSS
-                    1 -> TerrainType.GRASS
-                    2 -> TerrainType.ROAD
-                    else -> throw IllegalArgumentException("Invalid terrain type at ($i, $j)")
-                }
-            }
-        }
-    }
-    //позже заменить отрисовку на генерацию
     companion object {
+        private const val MAP_SIZE = 10
+        private const val CENTER_POSITION = 4.5
+        private const val INNER_TRACK = 1.5
+        private const val MIDDLE_ZONE = 3.0
+        private const val OUTER_TRACK = 4.5
+
         fun createRaceTrackMap(): GameMap {
-            val mapData = Array(10) { IntArray(10) { 1 } } // По умолчанию трава
+            val mapData = Array(MAP_SIZE) { IntArray(MAP_SIZE) { 1 } }
 
-            for (i in 0 until 10) {
-                for (j in 0 until 10) {
-                    val distanceToCenter = maxOf(kotlin.math.abs(i - 4.5), kotlin.math.abs(j - 4.5))
-
-                    when {
-                        distanceToCenter < 1.5 -> mapData[i][j] = 2  // дорога
-                        distanceToCenter < 3.0 -> mapData[i][j] = 1  // трава
-                        distanceToCenter < 4.5 -> mapData[i][j] = 2  // дорога
-                        else -> mapData[i][j] = 1                   // трава
+            for (i in 0 until MAP_SIZE) {
+                for (j in 0 until MAP_SIZE) {
+                    val distance = max(abs(i - CENTER_POSITION), abs(j - CENTER_POSITION))
+                    mapData[i][j] = when {
+                        distance < INNER_TRACK -> 2
+                        distance < MIDDLE_ZONE -> 1
+                        distance < OUTER_TRACK -> 2
+                        else -> 1
                     }
                 }
             }
 
-            return GameMap(mapData)
+            return GameMap(validateAndConvert(mapData))
+        }
+
+        private fun validateAndConvert(mapData: Array<IntArray>): Array<Array<TerrainType>> {
+            require(mapData.size == MAP_SIZE && mapData.all { it.size == MAP_SIZE }) {
+                "Map data must be a ${MAP_SIZE}x$MAP_SIZE grid"
+            }
+
+            return Array(MAP_SIZE) { i ->
+                Array(MAP_SIZE) { j ->
+                    when (mapData[i][j]) {
+                        0 -> TerrainType.ABYSS
+                        1 -> TerrainType.GRASS
+                        2 -> TerrainType.ROAD
+                        else -> throw IllegalArgumentException("Invalid terrain type at ($i, $j)")
+                    }
+                }
+            }
         }
     }
 
+    val size: Int get() = _terrainGrid.size
+
     fun getTerrainAt(x: Int, y: Int): TerrainType {
-        require(x in 0..9 && y in 0..9) { "Coordinates must be between 0 and 9" }
-        return terrainGrid[x][y]
+        require(x in _terrainGrid.indices && y in _terrainGrid[0].indices) {
+            "Coordinates ($x, $y) out of bounds"
+        }
+        return _terrainGrid[x][y]
     }
 
     fun isMovable(x: Int, y: Int): Boolean {
