@@ -27,6 +27,8 @@ import kotlin.math.PI
 import kotlin.math.atan2
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.layout.onSizeChanged
+import kotlinx.coroutines.delay
+import kotlin.math.abs
 import kotlin.math.min
 
 class MainActivity : ComponentActivity() {
@@ -61,24 +63,40 @@ fun CarGameScreen() {
         )
     }
 
+    // В классе MainActivity измените игровой цикл:
+
     LaunchedEffect(Unit) {
+        val targetFps = 60
+        val frameTime = 1000L / targetFps
+        var lastTime = System.currentTimeMillis()
+
         while (true) {
             withFrameMillis { time ->
-                val deltaTime = (time - gameTime).coerceAtMost(50) / 1000f
-                gameTime = time
+                val currentTime = System.currentTimeMillis()
+                val deltaTime = (currentTime - lastTime).coerceAtMost(50) / 1000f
+                lastTime = currentTime
 
-                val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
-                val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
-                car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
+                // Ограничиваем частоту обновления физики
+                if (deltaTime > 0) {
+                    val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
+                    val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
+                    car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
 
-                if (touchPosition != null) {
-                    car.accelerate(deltaTime)
-                } else {
-                    car.decelerate(deltaTime)
+                    if (touchPosition != null) {
+                        car.accelerate(deltaTime)
+                    } else {
+                        car.decelerate(deltaTime)
+                    }
+
+                    car.update(deltaTime)
+                    camera.update(deltaTime)
                 }
+            }
 
-                car.update(deltaTime)
-                camera.update(deltaTime)
+            // Переносим задержку за пределы withFrameMillis
+            val sleepTime = frameTime - (System.currentTimeMillis() - lastTime)
+            if (sleepTime > 0) {
+                delay(sleepTime) // Теперь это допустимо, так как мы внутри корутины
             }
         }
     }
@@ -157,10 +175,16 @@ fun CarGameScreen() {
                 )
                 var diff = angle - car.direction
 
+                // Нормализуем угол
                 while (diff > PI) diff -= 2 * PI.toFloat()
                 while (diff < -PI) diff += 2 * PI.toFloat()
 
-                car.startTurn(if (diff > 0) 1f else -1f)
+                // Если касание сзади (угол > 90 градусов), игнорируем
+                if (abs(diff) < PI.toFloat() / 2) {
+                    car.startTurn(if (diff > 0) 1f else -1f)
+                } else {
+                    car.stopTurn()
+                }
 
                 drawCircle(
                     Color.Blue.copy(alpha = 0.5f),

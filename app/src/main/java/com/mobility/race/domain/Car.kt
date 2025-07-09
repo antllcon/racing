@@ -1,11 +1,8 @@
 package com.mobility.race.domain
 
 import androidx.compose.ui.geometry.Offset
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.*
+import kotlin.math.PI
 
 class Car(
     val playerName: String = "Player",
@@ -24,6 +21,7 @@ class Car(
         const val DRIFT_TURN_RATE = 2.5f
         const val DRIFT_SPEED_THRESHOLD = 1.8f
         const val SIZE = 0.2f
+        const val MAP_SIZE = 10f // Размер карты из GameMap
 
         // Анимация
         const val VISUAL_LAG_SPEED = 0.05f
@@ -73,9 +71,15 @@ class Car(
         if (_speed == 0f) return
 
         val moveDistance = _speed * deltaTime
-        position = Offset(
+        val newPosition = Offset(
             x = position.x + moveDistance * cos(_direction),
             y = position.y + moveDistance * sin(_direction)
+        )
+
+        // Ограничиваем позицию в пределах карты с учетом размера машины
+        position = Offset(
+            x = newPosition.x.coerceIn(0f, MAP_SIZE - SIZE),
+            y = newPosition.y.coerceIn(0f, MAP_SIZE - SIZE)
         )
     }
 
@@ -100,10 +104,21 @@ class Car(
     }
 
     fun startTurn(direction: Float) {
+        // Если касание сзади (определяется в обработчике касаний), поворот не происходит
         _turnInput = direction.coerceIn(-1f, 1f)
     }
 
     fun stopTurn() {
         _turnInput = 0f
+    }
+
+    fun reset(position: Offset = Offset(5f, 5f)) {
+        this.position = position
+        _speed = 0f
+        _direction = 0f
+        _visualDirection = 0f
+        _turnInput = 0f
+        _isDrifting = false
+        _speedModifier = 1f
     }
 }
