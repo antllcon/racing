@@ -13,16 +13,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.GameMap
 import kotlin.math.PI
 import kotlin.math.atan2
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.withFrameMillis
+import kotlin.math.abs
 
+fun Offset.getDistance(): Float {
+    return kotlin.math.sqrt(x * x + y * y)
+}
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,21 +37,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-//check car class
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CarGameScreen() {
-    val screenWidth = with(LocalDensity.current) { 1000.dp.toPx() }
-    val screenHeight = with(LocalDensity.current) { 1000.dp.toPx() }
-
     val car = remember {
         Car("Player").apply {
-            position = Offset(screenWidth/2, screenHeight/2)
+            position = Offset(5f, 5f)
         }
     }
 
-    var gameTime by remember { mutableStateOf(0L) }
-    var touchPosition by remember { mutableStateOf(Offset.Zero) }
+    val gameMap = remember { GameMap.createRaceTrackMap() }
+    var gameTime by remember { mutableLongStateOf(0L) }
+    var touchPosition by remember { mutableStateOf<Offset?>(null) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -54,22 +57,14 @@ fun CarGameScreen() {
                 val deltaTime = (time - gameTime).coerceAtMost(50) / 1000f
                 gameTime = time
 
-                car.accelerate(deltaTime)
+                val cellX = car.position.x.toInt().coerceIn(0, 9)
+                val cellY = car.position.y.toInt().coerceIn(0, 9)
 
-                if (touchPosition != Offset.Zero) {
-                    val angle = atan2(
-                        touchPosition.y - car.position.y,
-                        touchPosition.x - car.position.x
-                    )
-                    val currentAngle = car.getDirection()
-                    var diff = angle - currentAngle
+                car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
 
-                    while (diff > PI) diff -= 2 * PI.toFloat()
-                    while (diff < -PI) diff += 2 * PI.toFloat()
-
-                    car.startTurn(if (diff > 0) 1f else -1f)
-                } else {
-                    car.stopTurn()
+                // Управление из примера
+                if (touchPosition != null) {
+                    car.accelerate(deltaTime)
                 }
 
                 car.update(deltaTime)
@@ -88,7 +83,8 @@ fun CarGameScreen() {
                         true
                     }
                     MotionEvent.ACTION_UP -> {
-                        touchPosition = Offset.Zero
+                        touchPosition = null
+                        car.stopTurn()
                         true
                     }
                     else -> false
@@ -96,33 +92,75 @@ fun CarGameScreen() {
             }
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            val cellSize = size.minDimension / 10f
+            val offsetX = (size.width - 10 * cellSize) / 2
+            val offsetY = (size.height - 10 * cellSize) / 2
+
+            // Обработка касания как в примере
+            touchPosition?.let { touchPos ->
+                val gameX = (touchPos.x - offsetX) / cellSize
+                val gameY = (touchPos.y - offsetY) / cellSize
+                val targetPos = Offset(gameX, gameY)
+
+                val angle = atan2(
+                    targetPos.y - car.position.y,
+                    targetPos.x - car.position.x
+                )
+                val currentAngle = car.getDirection()
+                var diff = angle - currentAngle
+
+                // Нормализация угла
+                while (diff > PI) diff -= 2 * PI.toFloat()
+                while (diff < -PI) diff += 2 * PI.toFloat()
+
+                car.startTurn(if (diff > 0) 1f else -1f)
+            }
+
+            // Draw map (осталось как у вас)
+            for (i in 0 until 10) {
+                for (j in 0 until 10) {
+                    val cellPos = Offset(offsetX + j * cellSize, offsetY + i * cellSize)
+                    val color = when (gameMap.getTerrainAt(i, j)) {
+                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
+                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
+                        GameMap.TerrainType.ROAD -> Color(0xFF616161)
+                    }
+
+                    drawRect(color, cellPos, Size(cellSize, cellSize))
+                    drawRect(
+                        Color.Black.copy(alpha = 0.3f),
+                        cellPos,
+                        Size(cellSize, cellSize),
+                        style = Stroke(1f)
+                    )
+                }
+            }
+
+            // Draw car (осталось как у вас)
+            val carScreenPos = Offset(
+                offsetX + car.position.x * cellSize,
+                offsetY + car.position.y * cellSize
+            )
+
             rotate(
                 degrees = car.getVisualDirection() * (180f / PI.toFloat()),
-                pivot = car.position
+                pivot = carScreenPos
             ) {
                 drawRect(
-                    color = Color.Red,
-                    topLeft = Offset(
-                        car.position.x - Car.SIZE/2,
-                        car.position.y - Car.SIZE/2
-                    ),
-                    size = androidx.compose.ui.geometry.Size(Car.SIZE, Car.SIZE)
+                    Color.Red,
+                    Offset(carScreenPos.x - Car.SIZE / 2, carScreenPos.y - Car.SIZE / 2),
+                    Size(Car.SIZE, Car.SIZE)
                 )
             }
 
-            if (touchPosition != Offset.Zero) {
+            // Draw target (опционально)
+            touchPosition?.let { touchPos ->
                 drawCircle(
-                    color = Color.Blue,
-                    center = touchPosition,
-                    radius = 20f
+                    color = Color.Blue.copy(alpha = 0.5f),
+                    radius = 20f,
+                    center = touchPos
                 )
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CarGamePreview() {
-    CarGameScreen()
 }
