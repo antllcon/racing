@@ -56,11 +56,11 @@ kotlin {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:2.3.12") // Основной клиент Ktor
-    implementation("io.ktor:ktor-client-websockets:2.3.12") // Для работы с WebSocket
-    implementation("io.ktor:ktor-client-cio:2.3.12") // Движок HTTP-клиента (CIO подходит для Android/JVM)
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.12") // Для автоматической сериализации/десериализации
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12") // Интеграция Ktor с kotlinx.serialization.json
+    implementation("io.ktor:ktor-client-core:2.3.12")
+    implementation("io.ktor:ktor-client-websockets:2.3.12")
+    implementation("io.ktor:ktor-client-cio:2.3.12")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
