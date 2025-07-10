@@ -11,7 +11,6 @@ class GameCamera(
     initialViewportSize: Size,
     private val mapSize: Int = 10
 ) {
-    // Константы
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
         private const val FIXED_ZOOM = 4f
