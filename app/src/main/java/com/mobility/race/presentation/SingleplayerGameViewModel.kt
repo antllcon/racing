@@ -12,9 +12,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
 
 class SingleplayerGameViewModel : ViewModel(), IGameplay {
-    private val touchPosition = mutableStateOf<Offset?>(null)
+    private var touchPosition = mutableStateOf<Offset>(Offset(0f, 0f))
     private var gameCycle: Job? = null
     private var isGameRunning = true
     private lateinit var car: Car
@@ -45,7 +48,7 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
                         val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
                         car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
 
-                        if (touchPosition != null) {
+                        if (touchPosition.value != Offset(0f, 0f)) {
                             car.accelerate(deltaTime)
                         } else {
                             car.decelerate(deltaTime)
@@ -66,5 +69,29 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
 
     override fun stopGame() {
         gameCycle?.cancel()
+    }
+
+    override fun movePlayer(touchCoordinates: Offset) {
+        touchPosition.value = touchCoordinates
+
+        touchPosition.let { touchPos ->
+            val worldTouchPos = camera.screenToWorld(touchPos.value)
+            val angle = atan2(
+                worldTouchPos.y - car.position.y,
+                worldTouchPos.x - car.position.x
+            )
+            var diff = angle - car.direction
+
+            // Нормализуем угол
+            while (diff > PI) diff -= 2 * PI.toFloat()
+            while (diff < -PI) diff += 2 * PI.toFloat()
+
+            // Если касание сзади (угол > 90 градусов), игнорируем
+            if (abs(diff) < PI.toFloat() / 2) {
+                car.startTurn(if (diff > 0) 1f else -1f)
+            } else {
+                car.stopTurn()
+            }
+        }
     }
 }

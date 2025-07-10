@@ -45,7 +45,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     val density = LocalDensity.current
 
     var gameTime by remember { mutableLongStateOf(0L) }
-    var touchPosition by remember { mutableStateOf<Offset?>(null) }
+    var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
@@ -64,11 +64,13 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 when (event.action) {
                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                         touchPosition = Offset(event.x, event.y)
+                        viewModel.movePlayer(touchPosition)
                         true
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        touchPosition = null
+                        touchPosition = Offset(0f, 0f)
+                        viewModel.movePlayer(touchPosition)
                         car.stopTurn()
                         true
                     }
@@ -88,74 +90,58 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     viewportSize = Size(size.width.toFloat(), size.height.toFloat())
                     camera.setViewportSize(viewportSize)
                 }
-        ) {
-            if (viewportSize.width <= 0) return@Canvas
+        )   {
+                if (viewportSize.width <= 0) return@Canvas
 
-            val (cameraPos, zoom) = camera.getViewMatrix()
-            val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
-            val scaledCellSize = baseCellSize * zoom
+                val (cameraPos, zoom) = camera.getViewMatrix()
+                val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
+                val scaledCellSize = baseCellSize * zoom
 
-            for (i in 0 until gameMap.size) {
-                for (j in 0 until gameMap.size) {
-                    val worldPos = Offset(j.toFloat(), i.toFloat())
-                    val screenPos = camera.worldToScreen(worldPos)
+                for (i in 0 until gameMap.size) {
+                    for (j in 0 until gameMap.size) {
+                        val worldPos = Offset(j.toFloat(), i.toFloat())
+                        val screenPos = camera.worldToScreen(worldPos)
 
-                    val color = when (gameMap.getTerrainAt(i, j)) {
-                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
-                        GameMap.TerrainType.ROAD -> Color(0xFF616161)
+                        val color = when (gameMap.getTerrainAt(i, j)) {
+                            GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
+                            GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
+                            GameMap.TerrainType.ROAD -> Color(0xFF616161)
+                        }
+
+
+                        drawRect(color, screenPos, Size(scaledCellSize, scaledCellSize))
+                        drawRect(
+                            Color.Black.copy(alpha = 0.3f),
+                            screenPos,
+                            Size(scaledCellSize, scaledCellSize),
+                            style = Stroke(1f)
+                        )
                     }
-
-
-                    drawRect(color, screenPos, Size(scaledCellSize, scaledCellSize))
-                    drawRect(
-                        Color.Black.copy(alpha = 0.3f),
-                        screenPos,
-                        Size(scaledCellSize, scaledCellSize),
-                        style = Stroke(1f)
-                    )
                 }
-            }
 
-            val carScreenPos = camera.worldToScreen(car.position)
-            val carSizePx = Car.SIZE * scaledCellSize
+                val carScreenPos = camera.worldToScreen(car.position)
+                val carSizePx = Car.SIZE * scaledCellSize
 
-            rotate(
-                degrees = car.visualDirection * (180f / PI.toFloat()),
-                pivot = carScreenPos
-            ) {
-                drawRect(
-                    Color.Red,
-                    Offset(carScreenPos.x - carSizePx / 2, carScreenPos.y - carSizePx / 2),
-                    Size(carSizePx, carSizePx)
-                )
-            }
-
-            touchPosition?.let { touchPos ->
-                val worldTouchPos = camera.screenToWorld(touchPos)
-                val angle = atan2(
-                    worldTouchPos.y - car.position.y,
-                    worldTouchPos.x - car.position.x
-                )
-                var diff = angle - car.direction
-
-                // Нормализуем угол
-                while (diff > PI) diff -= 2 * PI.toFloat()
-                while (diff < -PI) diff += 2 * PI.toFloat()
-
-                // Если касание сзади (угол > 90 градусов), игнорируем
-                if (abs(diff) < PI.toFloat() / 2) {
-                    car.startTurn(if (diff > 0) 1f else -1f)
-                } else {
-                    car.stopTurn()
+                rotate(
+                    degrees = car.visualDirection * (180f / PI.toFloat()),
+                    pivot = carScreenPos
+                ) {
+                    drawRect(
+                        Color.Red,
+                        Offset(carScreenPos.x - carSizePx / 2, carScreenPos.y - carSizePx / 2),
+                        Size(carSizePx, carSizePx)
+                    )
                 }
 
                 drawCircle(
                     Color.Blue.copy(alpha = 0.5f),
-                    radius = 20f,
-                    center = touchPos
+                    radius = 30f,
+                    center = touchPosition
                 )
             }
         }
     }
+
+fun handleTouch(event: MotionEvent) {
+
 }
