@@ -1,6 +1,8 @@
 package com.mobility.race.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -15,22 +17,40 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun EnterRoomScreen(
-    navigateToMultiplayer: (String) -> Unit
+    navigateToMultiplayer: (String, String) -> Unit
 ) {
-    var name: String by remember { mutableStateOf("") }
-
+    var roomName: String by remember { mutableStateOf("") }
+    var playerName by remember { mutableStateOf("") }
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            TextField(
+                value = playerName,
+                onValueChange = { playerName = it },
+                label = { Text("Your name") }
+            )
+            TextField(
+                value = roomName,
+                onValueChange = { roomName = it },
+                label = { Text("Room name") }
+            )
 
-        TextField(
-            value = name,
-            onValueChange = { newName -> name = newName }
-        )
-
-        Button(onClick = { navigateToMultiplayer(name) }) {
-            Text(text = "Enter game")
+            Button(
+                onClick = {
+                    if (playerName.isNotBlank() && roomName.isNotBlank()) {
+                        navigateToMultiplayer(playerName, roomName)
+                    }
+                },
+                enabled = playerName.isNotBlank() && roomName.isNotBlank()
+            ) {
+                Text("Join game")
+            }
         }
     }
 }
