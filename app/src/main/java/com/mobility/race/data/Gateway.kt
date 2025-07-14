@@ -12,8 +12,8 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 
 class Gateway(
     private val client: HttpClient,
-    private val serverHost: String = "c332cdc2167f.ngrok-free.app",
-    private val serverPort: Int = 443,
+    private val serverHost: String = "thecorpus.ru",
+    private val serverPort: Int = 8080,
     private val serverPath: String = "/",
     private val onServerMessage: (ServerMessage) -> Unit,
     private val onError: (String) -> Unit
@@ -74,7 +74,8 @@ class Gateway(
     }
 
     suspend fun initPlayer(name: String) {
-        // Может использоваться для локальной инициализации игровой логики, которая не зависит от сетевого подключения
+        // Может использоваться для локальной инициализации игровой логики,
+        // которая не зависит от сетевого подключения
         println("Gateway: init player with name: $name")
         sendMessage(InitPlayerRequest(name = name))
     }
@@ -100,7 +101,6 @@ class Gateway(
     }
 
     private suspend fun setWebSocketSession(): WebSocketSession {
-        println("Очень хочу запуститься")
         return client.webSocketSession(host = serverHost, path = serverPath) {
             url {
                 protocol = URLProtocol.WSS

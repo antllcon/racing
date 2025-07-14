@@ -19,8 +19,9 @@ import com.mobility.race.presentation.MultiplayerGameViewModel
 
 @Composable
 fun MultiplayerGameScreen(
-    roomName: String,
     playerName: String,
+    roomName: String,
+    isCreatingRoom: Boolean,
     viewModel: MultiplayerGameViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -60,13 +61,13 @@ fun MultiplayerGameScreen(
     }
 
     Column(modifier = modifier) {
-        Text("Multiplayer Game in Room: $roomName")
-        Text("Game Status: $gameStatus")
+        Text("Multiplayer room name: $roomName")
+        Text("Game status: $gameStatus")
+        Text("User status: ${if (isCreatingRoom) "admin" else "player"}")
         errorMessage?.let {
             Text("Error: $it")
         }
 
         Text("Players: ${players.joinToString { it.playerName }}")
-        // TODO: Добавить в будущем здесь UI для игры и обработку касаний
     }
 }

@@ -21,9 +21,13 @@ object SingleplayerGame
 object EnterRoom
 
 @Serializable
+object CreateRoom
+
+@Serializable
 data class MultiplayerGame(
+    val playerName: String,
     val roomName: String,
-    val playerName: String
+    val isCreatingRoom: Boolean
 )
 
 @Composable
@@ -37,6 +41,7 @@ fun AppNavHost(
         composable<Menu> {
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
+                navigateToCreateRoom = { navController.navigate(route = CreateRoom) },
                 navigateToJoinRoom = { navController.navigate(route = EnterRoom) }
             )
         }
@@ -48,19 +53,27 @@ fun AppNavHost(
         }
 
         composable<EnterRoom> {
-            EnterRoomScreen(navigateToMultiplayer = { roomName, playerName ->
-                navController.navigate(route = MultiplayerGame(roomName, playerName))
+            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
+                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
+            })
+        }
+
+        composable<CreateRoom> {
+            CreateRoomScreen(navigateToMultiplayer = { playerName, roomName ->
+                navController.navigate(route = MultiplayerGame(playerName, roomName, true))
             })
         }
 
         composable<MultiplayerGame> { entry ->
             val roomName: String = entry.toRoute<MultiplayerGame>().roomName
             val playerName: String = entry.toRoute<MultiplayerGame>().playerName
+            val isCreatingRoom: Boolean = entry.toRoute<MultiplayerGame>().isCreatingRoom
             val viewModel: MultiplayerGameViewModel = viewModel()
 
             MultiplayerGameScreen(
-                roomName = roomName,
                 playerName = playerName,
+                roomName = roomName,
+                isCreatingRoom = isCreatingRoom,
                 viewModel = viewModel
             )
         }

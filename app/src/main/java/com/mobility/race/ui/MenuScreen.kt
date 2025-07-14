@@ -12,7 +12,8 @@ import androidx.compose.ui.Modifier
 @Composable
 fun MenuScreen(
     navigateToSingleplayer: () -> Unit,
-    navigateToJoinRoom: () -> Unit,
+    navigateToCreateRoom: () -> Unit,
+    navigateToJoinRoom: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -22,6 +23,11 @@ fun MenuScreen(
         Button(onClick = navigateToSingleplayer)
         {
             Text(text = "Singleplayer Game")
+        }
+
+        Button(onClick = navigateToCreateRoom)
+        {
+            Text(text = "CreateRoom Game")
         }
 
         Button(onClick = navigateToJoinRoom) {

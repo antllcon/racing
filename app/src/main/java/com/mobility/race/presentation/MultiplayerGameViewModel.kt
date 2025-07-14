@@ -36,6 +36,8 @@ class MultiplayerGameViewModel(
 
     private val _playerName: String = checkNotNull(savedStateHandle["playerName"])
     private val _roomName: String = checkNotNull(savedStateHandle["roomName"])
+    private val _isCreatingRoom: Boolean = checkNotNull(savedStateHandle["isCreatingRoom"])
+
 
     private val _httpClient: HttpClient = HttpClient(engineFactory = CIO) {
         install(plugin = WebSockets)
@@ -46,8 +48,8 @@ class MultiplayerGameViewModel(
 
     private val _gateway: Gateway = Gateway(
         client = _httpClient,
-        serverHost = "e3b31291d038.ngrok-free.app",
-        serverPort = 443,
+        serverHost = "130.193.44.108",
+        serverPort = 8080,
         serverPath = "/",
         onServerMessage = ::handleServerMessage,
         onError = ::handleGatewayError
@@ -65,19 +67,20 @@ class MultiplayerGameViewModel(
     init {
         viewModelScope.launch {
             try {
-                println("ViewModel: Starting connection and initial setup flow.")
                 _gateway.connect()
-                delay(500)
-
-                println("ViewModel: Initializing player: $_playerName")
+                delay(1000)
                 _gateway.initPlayer(_playerName)
-                delay(500)
+                delay(1000)
 
-                println("ViewModel: Attempting to join room: $_roomName")
-                _gateway.joinRoom(_roomName)
-                delay(500)
+                if (_isCreatingRoom) {
+                    _gateway.createRoom(_roomName)
+                } else {
+                    _gateway.joinRoom(_roomName)
+                }
+                _gateway.createRoom(_roomName)
+                delay(1000)
 
-                println("ViewModel: Initial setup complete.")
+                println("ViewModel: Player $_playerName create room --> $_roomName")
 
             } catch (e: Exception) {
                 println("ViewModel: Error during initial setup: ${e.message}")
@@ -94,8 +97,8 @@ class MultiplayerGameViewModel(
 
     override fun runGame() {
         println("ViewModel: IGameplay.runGame called. Game logic should now start.")
-        // Здесь можно писать игровую логику, которая будет использовать сетевые данные
         println("ViewModel: try to join room $_roomName")
+        // Здесь можно писать игровую логику, которая будет использовать сетевые данные
     }
 
     override fun stopGame() {

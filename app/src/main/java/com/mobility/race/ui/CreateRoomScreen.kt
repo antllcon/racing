@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun EnterRoomScreen(
+fun CreateRoomScreen(
     navigateToMultiplayer: (String, String) -> Unit
 ) {
     var playerName: String by remember { mutableStateOf("") }
@@ -51,7 +51,7 @@ fun EnterRoomScreen(
                 },
                 enabled = playerName.isNotBlank() && roomName.isNotBlank()
             ) {
-                Text("Join room")
+                Text("Create room")
             }
         }
     }
