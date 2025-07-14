@@ -25,14 +25,16 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import kotlinx.coroutines.flow.asStateFlow
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MultiplayerGameViewModel(
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel(), IGameplay {
 
+    private val _playerName: String = checkNotNull(savedStateHandle["playerName"])
     private val _roomName: String = checkNotNull(savedStateHandle["roomName"])
 
     private val _httpClient: HttpClient = HttpClient(engineFactory = CIO) {
@@ -44,8 +46,8 @@ class MultiplayerGameViewModel(
 
     private val _gateway: Gateway = Gateway(
         client = _httpClient,
-        serverHost = "localhost",
-        serverPort = 8080,
+        serverHost = "e3b31291d038.ngrok-free.app",
+        serverPort = 443,
         serverPath = "/",
         onServerMessage = ::handleServerMessage,
         onError = ::handleGatewayError
@@ -54,23 +56,46 @@ class MultiplayerGameViewModel(
     private val _players = MutableStateFlow<List<Car>>(value = emptyList())
     val players: StateFlow<List<Car>> = _players.asStateFlow()
 
-    private val _gameStatus = MutableStateFlow<String>(value = "Not Started")
+    private val _gameStatus = MutableStateFlow(value = "Not Started")
     val gameStatus: StateFlow<String> = _gameStatus.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(value = null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
+    init {
         viewModelScope.launch {
-            _gateway.connect()
+            try {
+                println("ViewModel: Starting connection and initial setup flow.")
+                _gateway.connect()
+                delay(500)
+
+                println("ViewModel: Initializing player: $_playerName")
+                _gateway.initPlayer(_playerName)
+                delay(500)
+
+                println("ViewModel: Attempting to join room: $_roomName")
+                _gateway.joinRoom(_roomName)
+                delay(500)
+
+                println("ViewModel: Initial setup complete.")
+
+            } catch (e: Exception) {
+                println("ViewModel: Error during initial setup: ${e.message}")
+                _errorMessage.value = "Initial setup failed: ${e.message}"
+            }
         }
     }
 
+    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
+        println("ViewModel: IGameplay.init() called")
+        // Здесь можно инициализировать локальное состояние игры, которое не зависит от сети
+        // Например, сохранить playerCar, playerGameMap, playerCamera для рендеринга
+    }
+
     override fun runGame() {
+        println("ViewModel: IGameplay.runGame called. Game logic should now start.")
+        // Здесь можно писать игровую логику, которая будет использовать сетевые данные
         println("ViewModel: try to join room $_roomName")
-        viewModelScope.launch {
-            _gateway.joinRoom(_roomName)
-        }
     }
 
     override fun stopGame() {
@@ -94,7 +119,7 @@ class MultiplayerGameViewModel(
                     println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
                     _players.value = _players.value + Car(
                         playerName = message.playerName,
-                        isPlayer = true,
+                        isPlayer = false,
                         isMultiplayer = true,
                         id = message.playerId
                     )
@@ -128,6 +153,7 @@ class MultiplayerGameViewModel(
                 is LeftRoomResponse -> {
                     println("ViewModel: Left room: ${message.roomId}")
                     _gameStatus.value = "Left room: ${message.roomId}"
+                    _players.value = emptyList()
                 }
 
                 is RoomUpdatedResponse -> {

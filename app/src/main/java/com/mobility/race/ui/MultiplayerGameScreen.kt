@@ -33,7 +33,7 @@ fun MultiplayerGameScreen(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 ON_CREATE -> {
-                    val playerCar = Car(playerName = playerName)
+                    val playerCar = Car(id = "localPlayerId", playerName = playerName)
                     val playerGameMap = GameMap.createRaceTrackMap()
 
                     viewModel.init(
@@ -47,9 +47,8 @@ fun MultiplayerGameScreen(
                     )
                 }
 
-                ON_START -> viewModel.runGame()
-                ON_STOP -> viewModel.stopGame()
-                // ON_RESUME, ON_PAUSE, ON_DESTROY, ON_ANY - пока не использую
+//                ON_START -> viewModel.runGame() // Сигнал для запуска игровой логики
+                ON_STOP -> viewModel.stopGame() // Сигнал для остановки игровой логики
                 else -> {}
             }
         }
@@ -68,7 +67,6 @@ fun MultiplayerGameScreen(
         }
 
         Text("Players: ${players.joinToString { it.playerName }}")
-
         // TODO: Добавить в будущем здесь UI для игры и обработку касаний
     }
 }
