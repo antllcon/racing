@@ -128,7 +128,7 @@ class Gateway(
         }
     }
 
-    private suspend fun processIncomingFrame(frame: Frame) {
+    private fun processIncomingFrame(frame: Frame) {
         if (frame is Frame.Text) {
             val text = frame.readText()
 //            println("Gateway: get raw: $text")
