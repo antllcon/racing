@@ -42,21 +42,7 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
                     val deltaTime = (currentTime - lastTime).coerceAtMost(50) / 1000f
                     lastTime = currentTime
 
-                    // Ограничиваем частоту обновления физики
-                    if (deltaTime > 0) {
-                        val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
-                        val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
-                        car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
-
-                        if (touchPosition.value != Offset(0f, 0f)) {
-                            car.accelerate(deltaTime)
-                        } else {
-                            car.decelerate(deltaTime)
-                        }
-
-                        car.update(deltaTime)
-                        camera.update(deltaTime)
-                    }
+                    updateCar(deltaTime)
 
                     val sleepTime = frameTime - (System.currentTimeMillis() - lastTime)
                     if (sleepTime > 0) {
@@ -73,25 +59,23 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
 
     override fun movePlayer(touchCoordinates: Offset) {
         touchPosition.value = touchCoordinates
+    }
 
-        touchPosition.let { touchPos ->
-            val worldTouchPos = camera.screenToWorld(touchPos.value)
-            val angle = atan2(
-                worldTouchPos.y - car.position.y,
-                worldTouchPos.x - car.position.x
-            )
-            var diff = angle - car.direction
+    private fun updateCar(deltaTime: Float) {
+        // Ограничиваем частоту обновления физики
+        if (deltaTime > 0) {
+            val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
+            val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
+            car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
 
-            // Нормализуем угол
-            while (diff > PI) diff -= 2 * PI.toFloat()
-            while (diff < -PI) diff += 2 * PI.toFloat()
-
-            // Если касание сзади (угол > 90 градусов), игнорируем
-            if (abs(diff) < PI.toFloat() / 2) {
-                car.startTurn(if (diff > 0) 1f else -1f)
+            if (touchPosition.value != Offset(0f, 0f)) {
+                car.accelerate(deltaTime)
             } else {
-                car.stopTurn()
+                car.decelerate(deltaTime)
             }
+
+            car.update(deltaTime)
+            camera.update(deltaTime)
         }
     }
 }

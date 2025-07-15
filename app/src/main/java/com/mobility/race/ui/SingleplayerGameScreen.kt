@@ -1,18 +1,17 @@
 package com.mobility.race.ui
 
-import android.view.MotionEvent
+import android.content.res.Resources
+import android.util.DisplayMetrics
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,18 +19,18 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.ControllingStick
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.IGameplay
-import kotlinx.coroutines.delay
+import com.mobility.race.ui.drawUtils.drawControllingStick
 import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.min
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -42,10 +41,6 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     }
 
     val gameMap = remember { GameMap.createRaceTrackMap() }
-    val density = LocalDensity.current
-
-    var gameTime by remember { mutableLongStateOf(0L) }
-    var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
@@ -55,29 +50,12 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
             mapSize = gameMap.size
         )
     }
+    val controllingStick = remember { ControllingStick(Resources.getSystem().getDisplayMetrics().widthPixels) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-            .pointerInteropFilter { event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                        touchPosition = Offset(event.x, event.y)
-                        viewModel.movePlayer(touchPosition)
-                        true
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        touchPosition = Offset(0f, 0f)
-                        viewModel.movePlayer(touchPosition)
-                        car.stopTurn()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
             .onGloballyPositioned {
                 viewModel.init(car, gameMap, camera)
                 viewModel.runGame()
@@ -89,6 +67,13 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 .onSizeChanged { size ->
                     viewportSize = Size(size.width.toFloat(), size.height.toFloat())
                     camera.setViewportSize(viewportSize)
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, _ ->
+                        if (controllingStick.isDragInsideStick(change.position)) {
+                            viewModel.movePlayer(change.position)
+                        }
+                    }
                 }
         )   {
                 if (viewportSize.width <= 0) return@Canvas
@@ -119,6 +104,8 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     }
                 }
 
+                drawControllingStick(controllingStick)
+
                 val carScreenPos = camera.worldToScreen(car.position)
                 val carSizePx = Car.SIZE * scaledCellSize
 
@@ -132,16 +119,6 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                         Size(carSizePx, carSizePx)
                     )
                 }
-
-                drawCircle(
-                    Color.Blue.copy(alpha = 0.5f),
-                    radius = 30f,
-                    center = touchPosition
-                )
             }
         }
     }
-
-fun handleTouch(event: MotionEvent) {
-
-}

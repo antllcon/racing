@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 
 class Gateway(
     private val client: HttpClient,
-    private val serverHost: String = "thecorpus.ru",
+    private val serverHost: String = "158.160.184.74",
     private val serverPort: Int = 8080,
     private val serverPath: String = "/",
     private val onServerMessage: (ServerMessage) -> Unit,
@@ -103,7 +103,7 @@ class Gateway(
     private suspend fun setWebSocketSession(): WebSocketSession {
         return client.webSocketSession(host = serverHost, path = serverPath) {
             url {
-                protocol = URLProtocol.WSS
+                protocol = URLProtocol.WS
                 port = serverPort
             }
         }
