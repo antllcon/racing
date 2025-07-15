@@ -120,16 +120,17 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 }
 
                 val carScreenPos = camera.worldToScreen(car.position)
-                val carSizePx = Car.SIZE * scaledCellSize
 
                 rotate(
                     degrees = car.visualDirection * (180f / PI.toFloat()),
                     pivot = carScreenPos
                 ) {
+                    val carWidthPx = Car.WIDTH * scaledCellSize
+                    val carLengthPx = Car.LENGTH * scaledCellSize
                     drawRect(
                         Color.Red,
-                        Offset(carScreenPos.x - carSizePx / 2, carScreenPos.y - carSizePx / 2),
-                        Size(carSizePx, carSizePx)
+                        Offset(carScreenPos.x - carLengthPx / 2, carScreenPos.y - carWidthPx / 2),
+                        Size(carLengthPx, carWidthPx)
                     )
                 }
 

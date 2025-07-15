@@ -1,6 +1,8 @@
 package com.mobility.race.domain
 
+import android.annotation.SuppressLint
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import kotlin.math.*
 import kotlin.math.PI
 
@@ -12,20 +14,20 @@ class Car(
     initialPosition: Offset = Offset.Zero
 ) {
     companion object {
-        // Физика движения
         const val MIN_SPEED = 0f
-        const val MAX_SPEED = 3f
-        const val ACCELERATION = 0.5f
-        const val DECELERATION = 0.8f
+        const val MAX_SPEED = 0.2f
+        const val ACCELERATION = 0.02f
+        const val DECELERATION = 0.1f
         const val BASE_TURN_RATE = 1.2f
         const val DRIFT_TURN_RATE = 2.5f
         const val DRIFT_SPEED_THRESHOLD = 1.8f
-        const val SIZE = 0.2f
-        const val MAP_SIZE = 10f // Размер карты из GameMap
+        const val WIDTH = 0.035f
+        const val LENGTH = 0.06f
+        const val MAP_SIZE = 10f
 
-        // Анимация
         const val VISUAL_LAG_SPEED = 0.05f
         const val DRIFT_ANGLE_OFFSET = 0.2f
+
     }
 
     var position: Offset = initialPosition
@@ -37,6 +39,9 @@ class Car(
     private var _turnInput: Float = 0f
     private var _isDrifting: Boolean = false
     private var _speedModifier: Float = 1f
+    private var _targetSpeed: Float = 0f
+    private var _targetTurnInput: Float = 0f
+
 
     val speed: Float get() = _speed
     val direction: Float get() = _direction
@@ -48,12 +53,17 @@ class Car(
     }
 
     fun update(deltaTime: Float) {
+        val safeDeltaTime = deltaTime.coerceIn(0.001f, 0.1f) // Ограничиваем слишком большие и малые значения
+        updateTurnInput(safeDeltaTime)
         updateDriftState()
-        updateTurning(deltaTime)
-        updatePosition(deltaTime)
-        updateVisualDirection(deltaTime)
+        updateTurning(safeDeltaTime)
+        updatePosition(safeDeltaTime)
+        updateVisualDirection(safeDeltaTime)
     }
 
+    private fun updateTurnInput(deltaTime: Float) {
+        _turnInput = lerp(_turnInput, _targetTurnInput, 0.2f, deltaTime)
+    }
     private fun updateDriftState() {
         _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
                 abs(_turnInput) > 0.7f
@@ -63,7 +73,8 @@ class Car(
         if (_speed == 0f || _turnInput == 0f) return
 
         val turnRate = if (_isDrifting) DRIFT_TURN_RATE else BASE_TURN_RATE
-        val turnAmount = _turnInput * turnRate * deltaTime * (_speed / MAX_SPEED)
+        // Добавляем зависимость от deltaTime и плавность поворота
+        val turnAmount = _turnInput * turnRate * deltaTime * sqrt(_speed / MAX_SPEED)
         _direction += turnAmount
     }
 
@@ -71,16 +82,15 @@ class Car(
         if (_speed == 0f) return
 
         val moveDistance = _speed * deltaTime
+        val maxMove = MAP_SIZE * 0.5f // Ограничение максимального перемещения
+        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
+
         val newPosition = Offset(
-            x = position.x + moveDistance * cos(_direction),
-            y = position.y + moveDistance * sin(_direction)
+            x = (position.x + actualMove * cos(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH),
+            y = (position.y + actualMove * sin(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH)
         )
 
-        // Ограничиваем позицию в пределах карты с учетом размера машины
-        position = Offset(
-            x = newPosition.x.coerceIn(0f, MAP_SIZE - SIZE),
-            y = newPosition.y.coerceIn(0f, MAP_SIZE - SIZE)
-        )
+        position = newPosition
     }
 
     private fun updateVisualDirection(deltaTime: Float) {
@@ -90,26 +100,30 @@ class Car(
             _direction
         }
 
-        _visualDirection += (targetDirection - _visualDirection) *
-                VISUAL_LAG_SPEED * (1 + _speed / MAX_SPEED)
+        // Более стабильный расчет с учетом deltaTime
+        val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
+        _visualDirection = lerp(_visualDirection, targetDirection, lagFactor.coerceIn(0f, 0.5f), deltaTime)
     }
 
     fun accelerate(deltaTime: Float) {
-        _speed = min(_speed + ACCELERATION * deltaTime * _speedModifier,
-            MAX_SPEED * _speedModifier)
+        _targetSpeed = min(MAX_SPEED * _speedModifier, _targetSpeed + ACCELERATION * deltaTime * _speedModifier)
+        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
     }
 
     fun decelerate(deltaTime: Float) {
-        _speed = max(_speed - DECELERATION * deltaTime * _speedModifier, MIN_SPEED)
+        _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
+        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
     }
 
+    private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
+        return start + (end - start) * factor * deltaTime * 60f // Нормализация к 60 FPS
+    }
     fun startTurn(direction: Float) {
-        // Если касание сзади (определяется в обработчике касаний), поворот не происходит
-        _turnInput = direction.coerceIn(-1f, 1f)
+        _targetTurnInput = direction.coerceIn(-1f, 1f)
     }
 
     fun stopTurn() {
-        _turnInput = 0f
+        _targetTurnInput = 0f
     }
 
     fun reset(position: Offset = Offset(5f, 5f)) {
