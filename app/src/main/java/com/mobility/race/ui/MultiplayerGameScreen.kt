@@ -3,15 +3,10 @@ package com.mobility.race.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
-import androidx.lifecycle.Lifecycle.Event.*
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
@@ -29,36 +24,27 @@ fun MultiplayerGameScreen(
     val gameStatus: String by viewModel.gameStatus.collectAsState()
     val errorMessage: String? by viewModel.errorMessage.collectAsState()
 
-    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                ON_CREATE -> {
-                    val playerCar = Car(id = "localPlayerId", playerName = playerName)
-                    val playerGameMap = GameMap.createRaceTrackMap()
+    LifecycleEventHandler(
+        onCreate = {
+            val playerCar = Car(id = "придумать как получать id", playerName = playerName)
+            val playerGameMap = GameMap.createRaceTrackMap()
 
-                    viewModel.init(
-                        playerCar = playerCar,
-                        playerGameMap = playerGameMap,
-                        playerCamera = GameCamera(
-                            targetCar = playerCar,
-                            initialViewportSize = Size.Zero,
-                            mapSize = playerGameMap.size
-                        )
-                    )
-                }
+            viewModel.init(
+                playerCar = playerCar,
+                playerGameMap = playerGameMap,
+                playerCamera = GameCamera(
+                    targetCar = playerCar,
+                    initialViewportSize = Size.Zero,
+                    mapSize = playerGameMap.size
+                )
+            )
+        },
 
-//                ON_START -> viewModel.runGame() // Сигнал для запуска игровой логики
-                ON_STOP -> viewModel.stopGame() // Сигнал для остановки игровой логики
-                else -> {}
-            }
-        }
+        // другие колбеки
 
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
+        onStop = { viewModel.stopGame() }
+    )
+
 
     Column(modifier = modifier) {
         Text("Multiplayer room name: $roomName")
