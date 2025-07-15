@@ -1,6 +1,5 @@
 package com.mobility.race.data
 
-import com.mobility.race.data.Server
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.URLProtocol
