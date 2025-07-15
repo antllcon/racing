@@ -1,14 +1,22 @@
 package com.mobility.race.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.mobility.race.data.AppJson
 import com.mobility.race.presentation.MultiplayerGameViewModel
+import com.mobility.race.presentation.MultiplayerGameViewModelFactory
 import com.mobility.race.presentation.SingleplayerGameViewModel
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -34,6 +42,15 @@ data class MultiplayerGame(
 fun AppNavHost(
     navController: NavHostController = rememberNavController()
 ) {
+    val httpClient = remember {
+        HttpClient(CIO) {
+            install(WebSockets)
+            install(ContentNegotiation) {
+                json(AppJson)
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Menu
@@ -65,15 +82,18 @@ fun AppNavHost(
         }
 
         composable<MultiplayerGame> { entry ->
-            val roomName: String = entry.toRoute<MultiplayerGame>().roomName
-            val playerName: String = entry.toRoute<MultiplayerGame>().playerName
-            val isCreatingRoom: Boolean = entry.toRoute<MultiplayerGame>().isCreatingRoom
-            val viewModel: MultiplayerGameViewModel = viewModel()
+            val args = entry.toRoute<MultiplayerGame>()
+
+            val factory = remember(httpClient) {
+                MultiplayerGameViewModelFactory(httpClient)
+            }
+
+            val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
 
             MultiplayerGameScreen(
-                playerName = playerName,
-                roomName = roomName,
-                isCreatingRoom = isCreatingRoom,
+                playerName = args.playerName,
+                roomName = args.roomName,
+                isCreatingRoom = args.isCreatingRoom,
                 viewModel = viewModel
             )
         }
