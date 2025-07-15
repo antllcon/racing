@@ -6,11 +6,12 @@ import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
 import kotlin.math.*
 import kotlin.math.PI
 
+// TODO: исправить поле ID (для мультиплеера на Int (много где...))
 class Car(
     val playerName: String = "Player",
     var isPlayer: Boolean = true,
     var isMultiplayer: Boolean = false,
-    var numberPlayer: Int = 1,
+    var id: String = "1",
     initialPosition: Offset = Offset.Zero
 ) {
     companion object {

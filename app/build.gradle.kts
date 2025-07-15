@@ -35,9 +35,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
     buildFeatures {
         compose = true
     }
@@ -51,18 +48,35 @@ android {
     }
 }
 
+// Новый блок kotlin для настройки compilerOptions
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+    }
+}
+
 dependencies {
+    // Ktor Client Dependencies
+    implementation("io.ktor:ktor-client-core:2.3.12")
+    implementation("io.ktor:ktor-client-websockets:2.3.12")
+    implementation("io.ktor:ktor-client-cio:2.3.12")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+
+    // AndroidX Lifecycle & Navigation
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
     implementation("androidx.navigation:navigation-compose:2.9.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
+    // KotlinX Coroutines & Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+
+    // Compose
     implementation("androidx.compose.ui:ui:1.5.0")
     implementation("androidx.compose.foundation:foundation:1.5.0")
     implementation("androidx.compose.material3:material3:1.1.1")
-    implementation("androidx.activity:activity-compose:1.7.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("androidx.activity:activity-compose:1.8.2")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
