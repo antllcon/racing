@@ -4,7 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mobility.race.Server
+import com.mobility.race.data.Server
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway

@@ -1,4 +1,4 @@
-package com.mobility.race
+package com.mobility.race.data
 
 data class Server(
     val host: String,
