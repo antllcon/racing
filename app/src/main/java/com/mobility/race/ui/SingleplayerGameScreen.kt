@@ -4,6 +4,7 @@ import android.content.res.Resources
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -70,8 +71,10 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 }
                 .pointerInput(Unit) {
                     detectDragGestures { change, _ ->
-                        if (controllingStick.isDragInsideStick(change.position)) {
-                            
+                        if (controllingStick.isTouchInsideStick(change.position)) {
+                            viewModel.setTouchPosition(change.position)
+                        } else {
+                            viewModel.setTouchPosition(null)
                         }
                     }
                 }

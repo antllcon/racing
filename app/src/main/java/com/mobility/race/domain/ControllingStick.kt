@@ -2,10 +2,11 @@ package com.mobility.race.domain
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import kotlin.math.atan2
 import kotlin.math.sqrt
 
 class ControllingStick(private val minScreenSize: Int) {
-    fun isDragInsideStick(dragPosition: Offset): Boolean {
+    fun isTouchInsideStick(dragPosition: Offset): Boolean {
         val catheterX = dragPosition.x - getCenter().x
         val catheterY = dragPosition.y - getCenter().y
         val hypotenuse = sqrt(catheterX * catheterX + catheterY * catheterY)
@@ -23,6 +24,15 @@ class ControllingStick(private val minScreenSize: Int) {
 
     fun getColor(): Color {
         return Color.Gray
+    }
+
+    fun getTouchAngle(touchPosition: Offset): Float {
+        val angle = atan2(
+            x = touchPosition.x,
+            y = touchPosition.y
+        )
+
+        return angle
     }
 
     companion object {

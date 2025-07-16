@@ -10,5 +10,6 @@ interface IGameplay {
     fun runGame()
     fun movePlayer(elapsedTime: Float)
     fun moveCamera(elapsedTime: Float)
+    fun setTouchPosition(newTouchPosition: Offset?)
     fun stopGame()
 }

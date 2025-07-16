@@ -65,10 +65,30 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
                 car.decelerate(elapsedTime)
             }
         }
+
+        touchPosition?.let { touchPos ->
+            val worldTouchPos = camera.screenToWorld(touchPos)
+            val angle = atan2(
+                worldTouchPos.y - car.position.y,
+                worldTouchPos.x - car.position.x
+            )
+            var diff = angle - car.direction
+
+            // Нормализуем угол
+            while (diff > PI) diff -= 2 * PI.toFloat()
+            while (diff < -PI) diff += 2 * PI.toFloat()
+
+            // Если касание сзади (угол > 90 градусов), игнорируем
+            car.startTurn(if (diff > 0) 1f else -1f)
+        }
     }
 
     override fun moveCamera(elapsedTime: Float) {
         camera.update(elapsedTime)
+    }
+
+    override fun setTouchPosition(newTouchPosition: Offset?) {
+        touchPosition = newTouchPosition
     }
 
     override fun stopGame() {

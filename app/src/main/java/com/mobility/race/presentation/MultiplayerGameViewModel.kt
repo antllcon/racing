@@ -109,6 +109,10 @@ class MultiplayerGameViewModel(
         TODO("Not yet implemented")
     }
 
+    override fun setTouchPosition(newTouchPosition: Offset?) {
+        TODO("Not yet implemented")
+    }
+
     override fun stopGame() {
         println("ViewModel: try to leave room $_roomName")
         viewModelScope.launch {
