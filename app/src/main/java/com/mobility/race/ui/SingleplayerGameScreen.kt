@@ -182,19 +182,21 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
 }
 
 private fun handleCollision(car1: Car, car2: Car) {
-    val direction = atan2(
+    val collisionDirection = atan2(
         car2.position.y - car1.position.y,
         car2.position.x - car1.position.x
     )
 
-    val moveDistance = 0.05f // в будущем переделать на зависимость от скорости
+    val totalSpeed = (car1.speed + car2.speed) * 0.5f
+
+    val moveDistance = totalSpeed
+
     car1.position = Offset(
-        car1.position.x - cos(direction) * moveDistance,
-        car1.position.y - sin(direction) * moveDistance
+        car1.position.x - cos(collisionDirection) * moveDistance,
+        car1.position.y - sin(collisionDirection) * moveDistance
     )
     car2.position = Offset(
-        car2.position.x + cos(direction) * moveDistance,
-        car2.position.y + sin(direction) * moveDistance
+        car2.position.x + cos(collisionDirection) * moveDistance,
+        car2.position.y + sin(collisionDirection) * moveDistance
     )
-
 }
