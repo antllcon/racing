@@ -9,7 +9,8 @@ enum class ClientMessageType {
     CREATE_ROOM,
     JOIN_ROOM,
     LEAVE_ROOM,
-    PLAYER_ACTION
+    PLAYER_ACTION,
+    PLAYER_INPUT
 }
 
 enum class ServerMessageType {
@@ -21,7 +22,8 @@ enum class ServerMessageType {
     JOINED_ROOM,
     LEFT_ROOM,
     ROOM_UPDATE,
-    PLAYER_ACTION
+    PLAYER_ACTION,
+    GAME_STATE_UPDATE
 }
 
 @Serializable
@@ -47,7 +49,6 @@ data class JoinRoomRequest(val name: String) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.JOIN_ROOM
 }
 
-// This message needs no data from the client, so it can be an 'object'.
 @Serializable
 @SerialName("LEAVE_ROOM")
 object LeaveRoomRequest : ClientMessage {
@@ -59,6 +60,13 @@ object LeaveRoomRequest : ClientMessage {
 data class PlayerActionRequest(val name: String) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_ACTION
 }
+
+@Serializable
+@SerialName("PLAYER_INPUT")
+data class PlayerInputRequest(val isAccelerating: Boolean, val turnDirection: Float) : ClientMessage {
+    override val type: ClientMessageType get() = ClientMessageType.PLAYER_INPUT
+}
+
 
 @Serializable
 sealed interface ServerMessage {
@@ -117,4 +125,19 @@ data class RoomUpdatedResponse(val roomId: String) : ServerMessage {
 @SerialName("PLAYER_ACTION")
 data class PlayerActionResponse(val name: String) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.PLAYER_ACTION
+}
+
+
+@Serializable
+data class PlayerStateDto(
+    val id: String,
+    val posX: Float,
+    val posY: Float,
+    val direction: Float
+)
+
+@Serializable
+@SerialName("GAME_STATE_UPDATE")
+data class GameStateUpdateResponse(val players: List<PlayerStateDto>) : ServerMessage {
+    override val type: ServerMessageType get() = ServerMessageType.GAME_STATE_UPDATE
 }

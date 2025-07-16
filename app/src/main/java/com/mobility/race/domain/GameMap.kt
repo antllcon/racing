@@ -1,5 +1,10 @@
 package com.mobility.race.domain
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -70,5 +75,40 @@ class GameMap private constructor(
 
     fun getSpeedModifier(x: Int, y: Int): Float {
         return getTerrainAt(x, y).speedModifier
+    }
+
+    fun drawMap(
+        camera: GameCamera,
+        baseCellSize: Float,
+        zoom: Float,
+        drawScope: DrawScope
+    ) {
+        val scaledCellSize = baseCellSize * zoom
+
+        for (i in 0 until size) {
+            for (j in 0 until size) {
+                val worldPos = Offset(j.toFloat(), i.toFloat())
+                val screenPos = camera.worldToScreen(worldPos)
+
+                val color = when (getTerrainAt(i, j)) {
+                    TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
+                    TerrainType.GRASS -> Color(0xFF4CAF50)
+                    TerrainType.ROAD -> Color(0xFF616161)
+                }
+
+                drawScope.drawRect(
+                    color = color,
+                    topLeft = screenPos,
+                    size = Size(scaledCellSize, scaledCellSize)
+                )
+
+                drawScope.drawRect(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    topLeft = screenPos,
+                    size = Size(scaledCellSize, scaledCellSize),
+                    style = Stroke(1f)
+                )
+            }
+        }
     }
 }

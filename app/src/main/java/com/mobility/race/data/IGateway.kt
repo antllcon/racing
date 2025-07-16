@@ -7,5 +7,5 @@ interface IGateway {
     suspend fun createRoom(name: String)
     suspend fun joinRoom(name: String)
     suspend fun leaveRoom()
-    suspend fun playerAction(name: String)
+    suspend fun playerAction(name: PlayerInputRequest)
 }

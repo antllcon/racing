@@ -1,11 +1,13 @@
 package com.mobility.race.presentation
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.Server
 import com.mobility.race.data.ErrorResponse
+import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.InfoResponse
@@ -14,6 +16,7 @@ import com.mobility.race.data.LeftRoomResponse
 import com.mobility.race.data.PlayerActionResponse
 import com.mobility.race.data.PlayerConnectedResponse
 import com.mobility.race.data.PlayerDisconnectedResponse
+import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.RoomUpdatedResponse
 import com.mobility.race.data.ServerMessage
@@ -21,16 +24,21 @@ import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.atan2
 
 class MultiplayerGameViewModel(
     savedStateHandle: SavedStateHandle,
     private val httpClient: HttpClient
-) : ViewModel() {
+) : ViewModel(), IGameplay {
 
     private val _gateway: IGateway = Gateway(
         client = httpClient,
@@ -39,18 +47,38 @@ class MultiplayerGameViewModel(
         onError = this::handleGatewayError
     )
 
+    // Текущий игрок, комната
     private val _playerName: String = checkNotNull(savedStateHandle["playerName"])
     private val _roomName: String = checkNotNull(savedStateHandle["roomName"])
     private val _isCreatingRoom: Boolean = checkNotNull(savedStateHandle["isCreatingRoom"])
 
+    // Массивы
     private val _players = MutableStateFlow<List<Car>>(value = emptyList())
-    val players: StateFlow<List<Car>> = _players.asStateFlow()
-
     private val _gameStatus = MutableStateFlow(value = "Not Started")
     val gameStatus: StateFlow<String> = _gameStatus.asStateFlow()
-
     private val _errorMessage = MutableStateFlow<String?>(value = null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    // Состояние всей игры для UI
+    private val _gameState = MutableStateFlow(GameState())
+    val gameState: StateFlow<GameState> = _gameState.asStateFlow()
+
+    private var _touchPosition = mutableStateOf(Offset(0f, 0f))
+
+    // Игровой движок
+    private lateinit var gameEngine: GameEngine
+    private var gameLoopJob: Job? = null
+
+    private var _playerInput = PlayerInput()
+
+    lateinit var camera: GameCamera
+        private set
+
+    lateinit var gameMap: GameMap
+        private set
+
+    lateinit var car: Car
+        private set
 
     init {
         viewModelScope.launch {
@@ -75,25 +103,76 @@ class MultiplayerGameViewModel(
         }
     }
 
-    fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
-        println("ViewModel: init")
+    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
+        this.gameEngine = GameEngine(
+            gameMap = playerGameMap,
+            camera = playerCamera,
+            localPlayerId = playerCar.id
+        )
+
+        this.car = playerCar
+        this.gameMap = playerGameMap
+        this.camera = playerCamera
+
+        _gameState.value = GameState(
+            players = listOf(playerCar),
+            localPlayerId = playerCar.id
+        )
     }
 
-    fun runGame() {
-        println("ViewModel: run game")
-    }
+    override fun runGame() {
+        gameLoopJob?.cancel()
+        gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
+            var lastTime = System.currentTimeMillis()
+            while (isActive) {
+                val currentTime = System.currentTimeMillis()
+                val deltaTime = (currentTime - lastTime) / 1000f
+                lastTime = currentTime
 
-    fun stopGame() {
-        println("ViewModel: try to leave room $_roomName")
-        viewModelScope.launch {
-            _gateway.leaveRoom()
+                // Получаем текущий ввод от игрока (из movePlayer)
+                val playerInput = calculatePlayerInput()
+
+                // Обновляем движок и получаем новое состояние
+                val newState = gameEngine.update(deltaTime, playerInput)
+
+                // Отправляем новое состояние в UI
+                _gameState.value = newState
+
+                delay(16)
+            }
         }
     }
 
-    fun movePlayer(touchCoordinates: Offset) {
-        println("ViewModel: Player move action at $touchCoordinates")
+    override fun movePlayer(touchCoordinates: Offset) {
+        if (!::camera.isInitialized || !::car.isInitialized) return
+
+        val isAccelerating: Boolean = touchCoordinates != Offset.Zero
+        var turnDirection = 0f
+
+        if (isAccelerating) {
+            val worldRouchPos = camera.screenToWorld(touchCoordinates)
+            val angle = atan2(
+                worldRouchPos.y - car.position.y,
+                worldRouchPos.x - car.position.x
+            )
+            var diff = angle - car.direction
+
+            while (diff > Math.PI) diff -= 2 * Math.PI.toFloat()
+            while (diff < -Math.PI) diff += 2 * Math.PI.toFloat()
+
+            if (abs(diff) < Math.PI.toFloat() / 2) {
+                turnDirection = (diff / (Math.PI.toFloat() / 2)).coerceIn(-1f, 1f)
+            }
+        }
+
+        // Сохраняем ввод
+        this._playerInput = PlayerInput(isAccelerating, turnDirection)
+
+        // Отправляем на сервер
         viewModelScope.launch {
-            _gateway.playerAction("Move to X:${touchCoordinates.x}, Y:${touchCoordinates.y}")
+            _gateway.playerAction(
+                PlayerInputRequest(isAccelerating, turnDirection)
+            )
         }
     }
 
@@ -102,18 +181,30 @@ class MultiplayerGameViewModel(
             when (message) {
                 is PlayerConnectedResponse -> {
                     println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
-                    _players.value = _players.value + Car(
-                        playerName = message.playerName,
-                        isPlayer = false,
-                        isMultiplayer = true,
-                        id = message.playerId
-                    )
                 }
 
                 is PlayerDisconnectedResponse -> {
                     println("ViewModel: Player ${message.playerId} disconnected")
-                    _players.value = _players.value.filter { it.id != message.playerId }
                 }
+
+                is GameStateUpdateResponse -> {
+                    gameEngine.applyServerState(message.players)
+                }
+
+//                is PlayerConnectedResponse -> {
+//                    println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
+//                    _players.value = _players.value + Car(
+//                        playerName = message.playerName,
+//                        isPlayer = false,
+//                        isMultiplayer = true,
+//                        id = message.playerId
+//                    )
+//                }
+//
+//                is PlayerDisconnectedResponse -> {
+//                    println("ViewModel: Player ${message.playerId} disconnected")
+//                    _players.value = _players.value.filter { it.id != message.playerId }
+//                }
 
                 is InfoResponse -> {
                     println("ViewModel: Info: ${message.message}")
@@ -150,6 +241,17 @@ class MultiplayerGameViewModel(
                 }
             }
         }
+    }
+
+    override fun stopGame() {
+        println("ViewModel: try to leave room $_roomName")
+        viewModelScope.launch {
+            _gateway.leaveRoom()
+        }
+    }
+
+    private fun calculatePlayerInput(): PlayerInput {
+        return this._playerInput
     }
 
     fun handleGatewayError(errorMessage: String) {

@@ -93,9 +93,9 @@ class Gateway(
         sendMessage(LeaveRoomRequest)
     }
 
-    override suspend fun playerAction(name: String) {
-        println("Gateway: player action with name: $name")
-        sendMessage(JoinRoomRequest(name = name))
+    override suspend fun playerAction(name: PlayerInputRequest) {
+        println("Gateway: player action with input: $name")
+        sendMessage(name)
     }
 
     private fun startGettingMessages(session: WebSocketSession): Job {

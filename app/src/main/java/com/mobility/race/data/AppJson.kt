@@ -1,5 +1,6 @@
 package com.mobility.race.data
 
+import com.mobility.race.presentation.PlayerInput
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import kotlinx.serialization.encodeToString
@@ -21,6 +22,7 @@ val AppJson = Json {
             subclass(JoinRoomRequest::class)
             subclass(LeaveRoomRequest::class)
             subclass(PlayerActionRequest::class)
+            subclass(PlayerInputRequest::class)
         }
         polymorphic(ServerMessage::class) {
             subclass(PlayerConnectedResponse::class)
@@ -32,6 +34,7 @@ val AppJson = Json {
             subclass(LeftRoomResponse::class)
             subclass(RoomUpdatedResponse::class)
             subclass(PlayerActionResponse::class)
+            subclass(GameStateUpdateResponse::class)
         }
     }
 }

@@ -1,10 +1,17 @@
 package com.mobility.race.domain
 
-import android.annotation.SuppressLint
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.fontscaling.MathUtils.lerp
-import kotlin.math.*
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.rotate
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 // TODO: исправить поле ID (для мультиплеера на Int (много где...))
 class Car(
@@ -32,7 +39,6 @@ class Car(
     }
 
     var position: Offset = initialPosition
-        private set
 
     private var _speed: Float = 0f
     private var _direction: Float = 0f
@@ -46,7 +52,8 @@ class Car(
 
     val speed: Float get() = _speed
     val direction: Float get() = _direction
-    val visualDirection: Float get() = _visualDirection
+    var visualDirection: Float = 0.0f
+
     val isDrifting: Boolean get() = _isDrifting
 
     fun setSpeedModifier(modifier: Float) {
@@ -60,6 +67,63 @@ class Car(
         updateTurning(safeDeltaTime)
         updatePosition(safeDeltaTime)
         updateVisualDirection(safeDeltaTime)
+    }
+
+    fun drawCar(
+        camera: GameCamera,
+        baseCellSize: Float,
+        zoom: Float,
+        drawScope: DrawScope,
+        isLocalPlayer: Boolean = false
+    ) {
+        val scaledCellSize = baseCellSize * zoom
+        val carScreenPos = camera.worldToScreen(position)
+        val carColor = if (isLocalPlayer) Color.Blue else Color.Red
+
+        drawScope.rotate(
+            degrees = visualDirection * (180f / PI.toFloat()),
+            pivot = carScreenPos
+        ) {
+            val carWidthPx = WIDTH * scaledCellSize
+            val carLengthPx = LENGTH * scaledCellSize
+
+            drawScope.drawRect(
+                color = carColor,
+                topLeft = Offset(carScreenPos.x - carLengthPx / 2, carScreenPos.y - carWidthPx / 2),
+                size = Size(carLengthPx, carWidthPx)
+            )
+        }
+    }
+
+    fun accelerate(deltaTime: Float) {
+        _targetSpeed = min(MAX_SPEED * _speedModifier, _targetSpeed + ACCELERATION * deltaTime * _speedModifier)
+        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+    }
+
+    fun decelerate(deltaTime: Float) {
+        _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
+        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+    }
+
+    private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
+        return start + (end - start) * factor * deltaTime * 60f // Нормализация к 60 FPS
+    }
+    fun startTurn(direction: Float) {
+        _targetTurnInput = direction.coerceIn(-1f, 1f)
+    }
+
+    fun stopTurn() {
+        _targetTurnInput = 0f
+    }
+
+    fun reset(position: Offset = Offset(5f, 5f)) {
+        this.position = position
+        _speed = 0f
+        _direction = 0f
+        _visualDirection = 0f
+        _turnInput = 0f
+        _isDrifting = false
+        _speedModifier = 1f
     }
 
     private fun updateTurnInput(deltaTime: Float) {
@@ -104,36 +168,5 @@ class Car(
         // Более стабильный расчет с учетом deltaTime
         val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
         _visualDirection = lerp(_visualDirection, targetDirection, lagFactor.coerceIn(0f, 0.5f), deltaTime)
-    }
-
-    fun accelerate(deltaTime: Float) {
-        _targetSpeed = min(MAX_SPEED * _speedModifier, _targetSpeed + ACCELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
-    }
-
-    fun decelerate(deltaTime: Float) {
-        _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
-    }
-
-    private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
-        return start + (end - start) * factor * deltaTime * 60f // Нормализация к 60 FPS
-    }
-    fun startTurn(direction: Float) {
-        _targetTurnInput = direction.coerceIn(-1f, 1f)
-    }
-
-    fun stopTurn() {
-        _targetTurnInput = 0f
-    }
-
-    fun reset(position: Offset = Offset(5f, 5f)) {
-        this.position = position
-        _speed = 0f
-        _direction = 0f
-        _visualDirection = 0f
-        _turnInput = 0f
-        _isDrifting = false
-        _speedModifier = 1f
     }
 }
