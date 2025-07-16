@@ -84,7 +84,7 @@ class MultiplayerGameViewModel(
     init {
         viewModelScope.launch {
             try {
-                val defaultCar = Car(id = "temp_id", playerName = _playerName)
+                val defaultCar = Car(id = "local_player", playerName = _playerName)
                 val defaultGameMap = GameMap.createRaceTrackMap()
                 val defaultGameCamera = GameCamera(defaultCar, Size.Zero)
 

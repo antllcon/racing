@@ -20,7 +20,7 @@ data class PlayerInput(
 class GameEngine(
     private val gameMap: GameMap,
     private val camera: GameCamera,
-    private val localPlayerId: String
+    private var localPlayerId: String
 ) {
     private var state = GameState(localPlayerId = localPlayerId)
     private val remoteCarTargets = mutableMapOf<String, Offset>()

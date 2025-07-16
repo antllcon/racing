@@ -36,7 +36,7 @@ fun MultiplayerGameScreen(
     LaunchedEffect(key1 = localPlayerId) {
 
         // Первое создание объектов для передачи их во viewModel
-        if (localPlayerId.isNotBlank() && !isInitialized) {
+        if (!isInitialized) {
             val playerCar = Car(id = localPlayerId, playerName = playerName)
             val playerGameMap = GameMap.createRaceTrackMap()
             val playerCamera = GameCamera(
