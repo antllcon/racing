@@ -2,6 +2,7 @@ package com.mobility.race.presentation
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -66,8 +67,8 @@ class MultiplayerGameViewModel(
     private var _touchPosition = mutableStateOf(Offset(0f, 0f))
 
     // Игровой движок
-    private lateinit var gameEngine: GameEngine
-    private var gameLoopJob: Job? = null
+    private lateinit var _gameEngine: GameEngine
+    private var _gameLoopJob: Job? = null
 
     private var _playerInput = PlayerInput()
 
@@ -83,6 +84,20 @@ class MultiplayerGameViewModel(
     init {
         viewModelScope.launch {
             try {
+                val defaultCar = Car(id = "temp_id", playerName = _playerName)
+                val defaultGameMap = GameMap.createRaceTrackMap()
+                val defaultGameCamera = GameCamera(defaultCar, Size.Zero)
+
+                gameMap = defaultGameMap
+                camera = defaultGameCamera
+                car = defaultCar
+
+                _gameEngine = GameEngine(
+                    gameMap = gameMap,
+                    camera = camera,
+                    localPlayerId = car.id
+                )
+
                 _gateway.connect()
                 delay(1000)
                 _gateway.initPlayer(_playerName)
@@ -93,7 +108,6 @@ class MultiplayerGameViewModel(
                 } else {
                     _gateway.joinRoom(_roomName)
                 }
-                _gateway.createRoom(_roomName)
                 delay(1000)
 
             } catch (e: Exception) {
@@ -104,7 +118,7 @@ class MultiplayerGameViewModel(
     }
 
     override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
-        this.gameEngine = GameEngine(
+        this._gameEngine = GameEngine(
             gameMap = playerGameMap,
             camera = playerCamera,
             localPlayerId = playerCar.id
@@ -121,8 +135,14 @@ class MultiplayerGameViewModel(
     }
 
     override fun runGame() {
-        gameLoopJob?.cancel()
-        gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
+        if (!this::_gameEngine.isInitialized) {
+            println("ViewModel: GameEngine not initialized, cannot run game.")
+            _errorMessage.value = "Game engine not ready."
+            return
+        }
+
+        _gameLoopJob?.cancel()
+        _gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
             var lastTime = System.currentTimeMillis()
             while (isActive) {
                 val currentTime = System.currentTimeMillis()
@@ -133,7 +153,7 @@ class MultiplayerGameViewModel(
                 val playerInput = calculatePlayerInput()
 
                 // Обновляем движок и получаем новое состояние
-                val newState = gameEngine.update(deltaTime, playerInput)
+                val newState = _gameEngine.update(deltaTime, playerInput)
 
                 // Отправляем новое состояние в UI
                 _gameState.value = newState
@@ -188,7 +208,7 @@ class MultiplayerGameViewModel(
                 }
 
                 is GameStateUpdateResponse -> {
-                    gameEngine.applyServerState(message.players)
+                    _gameEngine.applyServerState(message.players)
                 }
 
 //                is PlayerConnectedResponse -> {
