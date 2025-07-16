@@ -1,10 +1,8 @@
 package com.mobility.race.ui
 
 import android.content.res.Resources
-import android.util.DisplayMetrics
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import com.mobility.race.domain.Car
@@ -32,9 +27,7 @@ import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.IGameplay
 import com.mobility.race.ui.drawUtils.drawControllingStick
-import com.mobility.race.ui.drawUtils.drawControllingStick
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
@@ -46,16 +39,8 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     val playerCar = remember {
         Car("Player", initialPosition = Offset(5f, 5f))
     }
-    val enemyCar = remember {
-        Car("Enemy", isPlayer = false, initialPosition = Offset(4f, 5f))
-    }
 
     val gameMap = remember { GameMap.createRaceTrackMap() }
-    val density = LocalDensity.current
-
-    var gameTime by remember { mutableLongStateOf(0L) }
-    var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
-    var lastFrameTime by remember { mutableLongStateOf(0L) }
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
@@ -66,25 +51,6 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
         )
     }
     val controllingStick = remember { ControllingStick(Resources.getSystem().getDisplayMetrics().widthPixels) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameMillis { frameTime ->
-                val deltaTime = if (lastFrameTime == 0L) 0f else (frameTime - lastFrameTime) / 1000f
-                lastFrameTime = frameTime
-
-                playerCar.update(deltaTime)
-                enemyCar.update(deltaTime)
-
-                if (playerCar.checkCollision(enemyCar)) {
-                    handleCollision(playerCar, enemyCar)
-                }
-
-                gameTime = frameTime
-            }
-            delay(16)
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -105,13 +71,11 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 .pointerInput(Unit) {
                     detectDragGestures { change, _ ->
                         if (controllingStick.isDragInsideStick(change.position)) {
-                            viewModel.movePlayer(change.position)
+                            
                         }
                     }
                 }
         )   {
-                if (viewportSize.width <= 0) return@Canvas
-        ) {
             if (viewportSize.width <= 0) return@Canvas
 
             val (cameraPos, zoom) = camera.getViewMatrix()
@@ -140,23 +104,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 }
             }
 
-            val enemyScreenPos = camera.worldToScreen(enemyCar.position)
-            rotate(
-                degrees = enemyCar.visualDirection * (180f / PI.toFloat()),
-                pivot = enemyScreenPos
-            ) {
-                val carWidthPx = Car.WIDTH * scaledCellSize
-                val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Green,
-                    Offset(enemyScreenPos.x - carLengthPx / 2, enemyScreenPos.y - carWidthPx / 2),
-                    Size(carLengthPx, carWidthPx)
-                )
-            }
-                drawControllingStick(controllingStick)
-
-                val carScreenPos = camera.worldToScreen(car.position)
-                val carSizePx = Car.SIZE * scaledCellSize
+            drawControllingStick(controllingStick)
 
             val playerScreenPos = camera.worldToScreen(playerCar.position)
             rotate(
@@ -171,12 +119,6 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     Size(carLengthPx, carWidthPx)
                 )
             }
-
-            drawCircle(
-                Color.Blue.copy(alpha = 0.5f),
-                radius = 30f,
-                center = touchPosition
-            )
         }
     }
 }
@@ -196,5 +138,4 @@ private fun handleCollision(car1: Car, car2: Car) {
         car2.position.x + cos(direction) * moveDistance,
         car2.position.y + sin(direction) * moveDistance
     )
-
 }

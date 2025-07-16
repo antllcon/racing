@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
+import com.mobility.race.domain.MainLogic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -17,9 +18,10 @@ import kotlin.math.abs
 import kotlin.math.atan2
 
 class SingleplayerGameViewModel : ViewModel(), IGameplay {
-    private var touchPosition = mutableStateOf<Offset>(Offset(0f, 0f))
+    private var touchPosition: Offset? = null
     private var gameCycle: Job? = null
     private var isGameRunning = true
+    private var logic = MainLogic(this)
     private lateinit var car: Car
     private lateinit var gameMap: GameMap
     private lateinit var camera: GameCamera
@@ -31,51 +33,45 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
     }
 
     override fun runGame() {
-        val targetFps = 60
-        val frameTime = 1000L / targetFps
         var lastTime = System.currentTimeMillis()
+        var currentTime: Long
+        var elapsedTime: Float
 
         gameCycle = viewModelScope.launch {
             withContext(Dispatchers.Default) {
                 while (isGameRunning) {
-                    val currentTime = System.currentTimeMillis()
-                    val deltaTime = (currentTime - lastTime).coerceAtMost(50) / 1000f
+                    currentTime = System.currentTimeMillis()
+                    elapsedTime = (currentTime - lastTime).toFloat()
+
+                    logic.handleGameCycle(elapsedTime)
+
                     lastTime = currentTime
-
-                    updateCar(deltaTime)
-
-                    val sleepTime = frameTime - (System.currentTimeMillis() - lastTime)
-                    if (sleepTime > 0) {
-                        delay(sleepTime) // Теперь это допустимо, так как мы внутри корутины
-                    }
                 }
             }
-         }
+        }
     }
 
-    override fun stopGame() {
-        gameCycle?.cancel()
-    }
+    override fun movePlayer(elapsedTime: Float) {
+        car.update(elapsedTime)
 
-    override fun movePlayer(touchCoordinates: Offset) {
-        touchPosition.value = touchCoordinates
-    }
-
-    private fun updateCar(deltaTime: Float) {
-        // Ограничиваем частоту обновления физики
-        if (deltaTime > 0) {
+        if (elapsedTime > 0) {
             val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
             val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
             car.setSpeedModifier(gameMap.getSpeedModifier(cellX, cellY))
 
-            if (touchPosition.value != Offset(0f, 0f)) {
-                car.accelerate(deltaTime)
+            if (touchPosition != null) {
+                car.accelerate(elapsedTime)
             } else {
-                car.decelerate(deltaTime)
+                car.decelerate(elapsedTime)
             }
-
-            car.update(deltaTime)
-            camera.update(deltaTime)
         }
+    }
+
+    override fun moveCamera(elapsedTime: Float) {
+        camera.update(elapsedTime)
+    }
+
+    override fun stopGame() {
+        gameCycle?.cancel()
     }
 }

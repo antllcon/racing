@@ -101,17 +101,18 @@ class MultiplayerGameViewModel(
         // Здесь можно писать игровую логику, которая будет использовать сетевые данные
     }
 
+    override fun movePlayer(elapsedTime: Float) {
+        TODO("Not yet implemented")
+    }
+
+    override fun moveCamera(elapsedTime: Float) {
+        TODO("Not yet implemented")
+    }
+
     override fun stopGame() {
         println("ViewModel: try to leave room $_roomName")
         viewModelScope.launch {
             _gateway.leaveRoom()
-        }
-    }
-
-    override fun movePlayer(touchCoordinates: Offset) {
-        println("ViewModel: Player move action at $touchCoordinates")
-        viewModelScope.launch {
-            _gateway.playerAction("Move to X:${touchCoordinates.x}, Y:${touchCoordinates.y}")
         }
     }
 

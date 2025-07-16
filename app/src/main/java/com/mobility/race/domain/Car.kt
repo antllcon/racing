@@ -12,24 +12,8 @@ class Car(
     var id: String = "1",
     initialPosition: Offset = Offset.Zero
 ) {
-    companion object {
-        const val MIN_SPEED = 0f
-        const val MAX_SPEED = 0.2f
-        const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.1f
-        const val BASE_TURN_RATE = 1.2f
-        const val DRIFT_TURN_RATE = 2.5f
-        const val DRIFT_SPEED_THRESHOLD = 1.8f
-        const val WIDTH = 0.035f
-        const val LENGTH = 0.06f
-        const val MAP_SIZE = 10f
-
-        const val VISUAL_LAG_SPEED = 0.05f
-        const val DRIFT_ANGLE_OFFSET = 0.2f
-    }
-
     var position: Offset = initialPosition
-    var corners: List<Offset> = emptyList()
+    private var corners: List<Offset> = emptyList()
         private set
 
     private var _speed: Float = 0f
@@ -233,5 +217,21 @@ class Car(
         _isDrifting = false
         _speedModifier = 1f
         updateCorners()
+    }
+
+    companion object {
+        const val MIN_SPEED = 0f
+        const val MAX_SPEED = 0.2f
+        const val ACCELERATION = 0.02f
+        const val DECELERATION = 0.1f
+        const val BASE_TURN_RATE = 1.2f
+        const val DRIFT_TURN_RATE = 2.5f
+        const val DRIFT_SPEED_THRESHOLD = 1.8f
+        const val WIDTH = 0.035f
+        const val LENGTH = 0.06f
+        const val MAP_SIZE = 10f
+
+        const val VISUAL_LAG_SPEED = 0.05f
+        const val DRIFT_ANGLE_OFFSET = 0.2f
     }
 }
