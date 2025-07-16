@@ -23,18 +23,14 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.IGameplay
+import com.mobility.race.domain.handleCollision
 import kotlinx.coroutines.delay
 import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.sin
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -47,7 +43,6 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     }
 
     val gameMap = remember { GameMap.createRaceTrackMap() }
-    val density = LocalDensity.current
 
     var gameTime by remember { mutableLongStateOf(0L) }
     var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
@@ -71,9 +66,12 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 playerCar.update(deltaTime)
                 enemyCar.update(deltaTime)
 
-                if (playerCar.checkCollision(enemyCar)) {
-                    handleCollision(playerCar, enemyCar)
+                // --- ОБНОВЛЕННЫЙ БЛОК ОБРАБОТКИ СТОЛКНОВЕНИЙ ---
+                val collisionResult = playerCar.checkCollision(enemyCar)
+                if (collisionResult.isColliding) {
+                    handleCollision(playerCar, enemyCar, collisionResult)
                 }
+                // --- КОНЕЦ ОБНОВЛЕННОГО БЛОКА ---
 
                 gameTime = frameTime
             }
@@ -179,24 +177,4 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
             )
         }
     }
-}
-
-private fun handleCollision(car1: Car, car2: Car) {
-    val collisionDirection = atan2(
-        car2.position.y - car1.position.y,
-        car2.position.x - car1.position.x
-    )
-
-    val totalSpeed = (car1.speed + car2.speed) * 0.5f
-
-    val moveDistance = totalSpeed
-
-    car1.position = Offset(
-        car1.position.x - cos(collisionDirection) * moveDistance,
-        car1.position.y - sin(collisionDirection) * moveDistance
-    )
-    car2.position = Offset(
-        car2.position.x + cos(collisionDirection) * moveDistance,
-        car2.position.y + sin(collisionDirection) * moveDistance
-    )
 }

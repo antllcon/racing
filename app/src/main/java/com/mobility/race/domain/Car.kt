@@ -45,6 +45,10 @@ class Car(
     val direction: Float get() = _direction
     val visualDirection: Float get() = _visualDirection
     val isDrifting: Boolean get() = _isDrifting
+    val mass: Float = 1f
+    // Формула для момента инерции сплошного прямоугольника
+    val momentOfInertia: Float = (1f / 12f) * mass * (WIDTH * WIDTH + LENGTH * LENGTH)
+    var angularVelocity: Float = 0f
 
     fun setSpeedModifier(modifier: Float) {
         _speedModifier = modifier.coerceIn(0f, 1f)
@@ -52,13 +56,20 @@ class Car(
 
     fun update(deltaTime: Float) {
         val safeDeltaTime = deltaTime.coerceIn(0.001f, 0.1f)
+
+        // Обновляем вращение от столкновений
+        _direction += angularVelocity * safeDeltaTime
+        // Затухание вращения
+        angularVelocity *= 0.98f
+
         updateTurnInput(safeDeltaTime)
         updateDriftState()
-        updateTurning(safeDeltaTime)
+        updateTurning(safeDeltaTime) // Это вращение от игрока
         updatePosition(safeDeltaTime)
         updateVisualDirection(safeDeltaTime)
         updateCorners()
     }
+
 
     private fun updateCorners() {
         val halfLength = LENGTH / 2
@@ -87,14 +98,22 @@ class Car(
         )
     }
 
-    fun checkCollision(other: Car): Boolean {
-        if (this.corners.isEmpty() || other.corners.isEmpty()) return false
-
-        if (!getBoundingBox().overlaps(other.getBoundingBox())) {
-            return false
+    fun checkCollision(other: Car): CollisionResult {
+        if (this.corners.isEmpty() || other.corners.isEmpty()) {
+            return CollisionResult(isColliding = false)
         }
-
-        return satCollisionCheck(this, other)
+        // Оптимизация: быстрая проверка по ограничивающим прямоугольникам
+        if (!getBoundingBox().overlaps(other.getBoundingBox())) {
+            return CollisionResult(isColliding = false)
+        }
+        // Полная проверка с помощью SAT
+        return detectCollision(this, other)
+    }
+    fun setSpeedAndDirectionFromVelocity(velocity: Offset) {
+        this._speed = velocity.getDistance()
+        if (this._speed > 0.001f) { // Избегаем деления на ноль и резких скачков направления при остановке
+            this._direction = atan2(velocity.y, velocity.x)
+        }
     }
 
     private fun getBoundingBox(): Rect {
@@ -106,57 +125,6 @@ class Car(
         val maxY = corners.maxOf { it.y }
 
         return Rect(minX, minY, maxX, maxY)
-    }
-
-    private fun satCollisionCheck(car1: Car, car2: Car): Boolean {
-        val axes = mutableListOf<Offset>()
-
-        for (i in 0 until car1.corners.size) {
-            val p1 = car1.corners[i]
-            val p2 = car1.corners[(i + 1) % car1.corners.size]
-            val edge = p1 - p2
-            axes.add(Offset(edge.y, -edge.x).normalized())
-        }
-
-        for (i in 0 until car2.corners.size) {
-            val p1 = car2.corners[i]
-            val p2 = car2.corners[(i + 1) % car2.corners.size]
-            val edge = p1 - p2
-            axes.add(Offset(edge.y, -edge.x).normalized())
-        }
-
-        for (axis in axes) {
-            if (!overlapOnAxis(car1, car2, axis)) {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    private fun overlapOnAxis(car1: Car, car2: Car, axis: Offset): Boolean {
-        val proj1 = projectCorners(car1.corners, axis)
-        val proj2 = projectCorners(car2.corners, axis)
-
-        return proj1.first <= proj2.second && proj2.first <= proj1.second
-    }
-
-    private fun projectCorners(corners: List<Offset>, axis: Offset): Pair<Float, Float> {
-        var min = Float.POSITIVE_INFINITY
-        var max = Float.NEGATIVE_INFINITY
-
-        for (corner in corners) {
-            val dot = corner.x * axis.x + corner.y * axis.y
-            min = minOf(min, dot)
-            max = maxOf(max, dot)
-        }
-
-        return Pair(min, max)
-    }
-
-    private fun Offset.normalized(): Offset {
-        val length = sqrt(x * x + y * y)
-        return if (length > 0) Offset(x / length, y / length) else this
     }
 
     private fun updateTurnInput(deltaTime: Float) {
