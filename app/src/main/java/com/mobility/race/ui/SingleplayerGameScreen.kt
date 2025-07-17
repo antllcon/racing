@@ -66,12 +66,10 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 playerCar.update(deltaTime)
                 enemyCar.update(deltaTime)
 
-                // --- ОБНОВЛЕННЫЙ БЛОК ОБРАБОТКИ СТОЛКНОВЕНИЙ ---
                 val collisionResult = playerCar.checkCollision(enemyCar)
                 if (collisionResult.isColliding) {
                     handleCollision(playerCar, enemyCar, collisionResult)
                 }
-                // --- КОНЕЦ ОБНОВЛЕННОГО БЛОКА ---
 
                 gameTime = frameTime
             }

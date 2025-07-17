@@ -24,7 +24,7 @@ class Car(
         const val LENGTH = 0.06f
         const val MAP_SIZE = 10f
 
-        const val VISUAL_LAG_SPEED = 0.05f
+        const val VISUAL_LAG_SPEED = 0.7f
         const val DRIFT_ANGLE_OFFSET = 0.2f
     }
 
@@ -46,7 +46,6 @@ class Car(
     val visualDirection: Float get() = _visualDirection
     val isDrifting: Boolean get() = _isDrifting
     val mass: Float = 1f
-    // Формула для момента инерции сплошного прямоугольника
     val momentOfInertia: Float = (1f / 12f) * mass * (WIDTH * WIDTH + LENGTH * LENGTH)
     var angularVelocity: Float = 0f
 
@@ -55,16 +54,14 @@ class Car(
     }
 
     fun update(deltaTime: Float) {
-        val safeDeltaTime = deltaTime.coerceIn(0.001f, 0.1f)
+        val safeDeltaTime = deltaTime.coerceIn(0.001f, 0.016f)
 
-        // Обновляем вращение от столкновений
         _direction += angularVelocity * safeDeltaTime
-        // Затухание вращения
         angularVelocity *= 0.98f
 
         updateTurnInput(safeDeltaTime)
         updateDriftState()
-        updateTurning(safeDeltaTime) // Это вращение от игрока
+        updateTurning(safeDeltaTime)
         updatePosition(safeDeltaTime)
         updateVisualDirection(safeDeltaTime)
         updateCorners()
@@ -102,16 +99,14 @@ class Car(
         if (this.corners.isEmpty() || other.corners.isEmpty()) {
             return CollisionResult(isColliding = false)
         }
-        // Оптимизация: быстрая проверка по ограничивающим прямоугольникам
         if (!getBoundingBox().overlaps(other.getBoundingBox())) {
             return CollisionResult(isColliding = false)
         }
-        // Полная проверка с помощью SAT
         return detectCollision(this, other)
     }
     fun setSpeedAndDirectionFromVelocity(velocity: Offset) {
         this._speed = velocity.getDistance()
-        if (this._speed > 0.001f) { // Избегаем деления на ноль и резких скачков направления при остановке
+        if (this._speed > 0.001f) {
             this._direction = atan2(velocity.y, velocity.x)
         }
     }
@@ -128,12 +123,12 @@ class Car(
     }
 
     private fun updateTurnInput(deltaTime: Float) {
-        _turnInput = lerp(_turnInput, _targetTurnInput, 0.2f, deltaTime)
+        _turnInput = lerp(_turnInput, _targetTurnInput, 0.01f, deltaTime)
     }
 
     private fun updateDriftState() {
         _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
-                abs(_turnInput) > 0.7f
+                abs(_turnInput) > 0.5f
     }
 
     private fun updateTurning(deltaTime: Float) {
@@ -148,7 +143,7 @@ class Car(
         if (_speed == 0f) return
 
         val moveDistance = _speed * deltaTime
-        val maxMove = MAP_SIZE * 0.5f
+        val maxMove = MAP_SIZE
         val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
 
         val newPosition = Offset(
@@ -167,17 +162,17 @@ class Car(
         }
 
         val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
-        _visualDirection = lerp(_visualDirection, targetDirection, lagFactor.coerceIn(0f, 0.5f), deltaTime)
+        _visualDirection = lerp(_visualDirection, targetDirection, lagFactor.coerceIn(0.01f, 1f), deltaTime)
     }
 
     fun accelerate(deltaTime: Float) {
         _targetSpeed = min(MAX_SPEED * _speedModifier, _targetSpeed + ACCELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+        _speed = lerp(_speed, _targetSpeed, 0.001f, deltaTime)
     }
 
     fun decelerate(deltaTime: Float) {
         _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+        _speed = lerp(_speed, _targetSpeed, 0.001f, deltaTime)
     }
 
     private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
