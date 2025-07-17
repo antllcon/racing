@@ -13,7 +13,7 @@ class Camera(
 ) {
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
-        private const val FIXED_ZOOM = 2f
+        private const val FIXED_ZOOM = 28f
         private const val FPS_NORMALIZATION = 60f
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
@@ -41,23 +41,15 @@ class Camera(
     fun getViewMatrix(): Pair<Offset, Float> = _currentPosition to FIXED_ZOOM
 
     fun worldToScreen(worldPos: Offset): Offset {
-        val scaledCellSize = min(_viewportSize.width, _viewportSize.height) / mapSize * FIXED_ZOOM
-        return (worldPos - _currentPosition) * scaledCellSize +
+        val cellSize = calculateCellSize()
+        return (worldPos - _currentPosition) * cellSize * FIXED_ZOOM +
                 Offset(_viewportSize.width / 2, _viewportSize.height / 2)
-
-//        val cellSize = calculateCellSize()
-//        return (worldPos - _currentPosition) * cellSize * FIXED_ZOOM +
-//                Offset(_viewportSize.width / 2, _viewportSize.height / 2)
     }
 
     fun screenToWorld(screenPos: Offset): Offset {
-        val scaledCellSize = min(_viewportSize.width, _viewportSize.height) / mapSize * FIXED_ZOOM
+        val cellSize = calculateCellSize()
         return (screenPos - Offset(_viewportSize.width / 2, _viewportSize.height / 2)) /
-                scaledCellSize + _currentPosition
-
-    //        val cellSize = calculateCellSize()
-//        return (screenPos - Offset(_viewportSize.width / 2, _viewportSize.height / 2)) /
-//                (cellSize * FIXED_ZOOM) + _currentPosition
+                (cellSize * FIXED_ZOOM) + _currentPosition
     }
 
     fun setViewportSize(newSize: Size) {
@@ -73,9 +65,9 @@ class Camera(
         return targetCar.position + lookAhead
     }
 
-//    private fun calculateCellSize(): Float {
-//        return min(_viewportSize.width, _viewportSize.height) / mapSize
-//    }
+    private fun calculateCellSize(): Float {
+        return min(_viewportSize.width, _viewportSize.height) / mapSize
+    }
 
     private fun lerp(start: Float, end: Float, amount: Float): Float {
         return start + (end - start) * amount.coerceIn(0f, 1f)

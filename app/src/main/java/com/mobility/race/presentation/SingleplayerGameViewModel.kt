@@ -39,10 +39,9 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
             withContext(Dispatchers.Default) {
                 while (isGameRunning) {
                     val currentTime = System.currentTimeMillis()
-                    val deltaTime = (currentTime - lastTime).coerceAtMost(50) / 1000f
+                    val deltaTime = (currentTime - lastTime).coerceAtMost(5) / 1000f
                     lastTime = currentTime
 
-                    // Ограничиваем частоту обновления физики
                     if (deltaTime > 0) {
                         val cellX = car.position.x.toInt().coerceIn(0, gameMap.size - 1)
                         val cellY = car.position.y.toInt().coerceIn(0, gameMap.size - 1)
@@ -60,7 +59,7 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
 
                     val sleepTime = frameTime - (System.currentTimeMillis() - lastTime)
                     if (sleepTime > 0) {
-                        delay(sleepTime) // Теперь это допустимо, так как мы внутри корутины
+                        delay(sleepTime)
                     }
                 }
             }
@@ -82,11 +81,9 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
             )
             var diff = angle - car.direction
 
-            // Нормализуем угол
             while (diff > PI) diff -= 2 * PI.toFloat()
             while (diff < -PI) diff += 2 * PI.toFloat()
 
-            // Если касание сзади (угол > 90 градусов), игнорируем
             if (abs(diff) < PI.toFloat() / 2) {
                 car.startTurn(if (diff > 0) 1f else -1f)
             } else {
