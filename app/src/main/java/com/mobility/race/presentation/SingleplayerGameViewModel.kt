@@ -5,8 +5,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.GameCamera
-import com.mobility.race.domain.GameMap
+import com.mobility.race.domain.Camera
+import com.mobility.race.domain.Map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -21,10 +21,10 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
     private var gameCycle: Job? = null
     private var isGameRunning = true
     private lateinit var car: Car
-    private lateinit var gameMap: GameMap
-    private lateinit var camera: GameCamera
+    private lateinit var gameMap: Map
+    private lateinit var camera: Camera
 
-    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
+    override fun init(playerCar: Car, playerGameMap: Map, playerCamera: Camera) {
         car = playerCar
         gameMap = playerGameMap
         camera = playerCamera

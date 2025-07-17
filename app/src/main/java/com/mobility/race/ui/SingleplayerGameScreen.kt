@@ -6,13 +6,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -25,13 +23,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.GameCamera
-import com.mobility.race.domain.GameMap
+import com.mobility.race.domain.Camera
+import com.mobility.race.domain.Map
 import com.mobility.race.presentation.IGameplay
-import kotlinx.coroutines.delay
 import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.min
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -41,7 +36,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
         Car("Player", initialPosition = Offset(5f, 5f))
     }
 
-    val gameMap = remember { GameMap.createRaceTrackMap() }
+    val gameMap = remember { Map.createRaceTrackMap() }
     val density = LocalDensity.current
 
     var gameTime by remember { mutableLongStateOf(0L) }
@@ -49,7 +44,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
-        GameCamera(
+        Camera(
             targetCar = car,
             initialViewportSize = Size.Zero,
             mapSize = gameMap.size
@@ -103,9 +98,9 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                         val screenPos = camera.worldToScreen(worldPos)
 
                         val color = when (gameMap.getTerrainAt(i, j)) {
-                            GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                            GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
-                            GameMap.TerrainType.ROAD -> Color(0xFF616161)
+                            Map.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
+                            Map.TerrainType.GRASS -> Color(0xFF4CAF50)
+                            Map.TerrainType.ROAD -> Color(0xFF616161)
                         }
 
 

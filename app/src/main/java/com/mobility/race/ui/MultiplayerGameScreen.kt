@@ -3,18 +3,16 @@ package com.mobility.race.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import com.mobility.race.domain.Car
-import com.mobility.race.domain.GameCamera
-import com.mobility.race.domain.GameMap
+import com.mobility.race.presentation.GameState
 import com.mobility.race.presentation.MultiplayerGameViewModel
 import kotlin.math.min
 
@@ -26,78 +24,93 @@ fun MultiplayerGameScreen(
     viewModel: MultiplayerGameViewModel,
     modifier: Modifier = Modifier
 ) {
-    // Состояние игры
     val gameState by viewModel.gameState.collectAsState()
     val localPlayerId = gameState.localPlayerId
+    val isViewModelReady by viewModel.isViewModelReady.collectAsState()
 
-    // Флаг инициализации
-    var isInitialized by remember { mutableStateOf(false) }
-
-    LaunchedEffect(key1 = localPlayerId) {
-
-        // Первое создание объектов для передачи их во viewModel
-        if (!isInitialized) {
-            val playerCar = Car(id = localPlayerId, playerName = playerName)
-            val playerGameMap = GameMap.createRaceTrackMap()
-            val playerCamera = GameCamera(
-                targetCar = playerCar,
-                initialViewportSize = Size.Zero,
-                mapSize = playerGameMap.size
-            )
-
-            // Передаем их во viewModel
-            viewModel.init(
-                playerCar = playerCar,
-                playerGameMap = playerGameMap,
-                playerCamera = playerCamera
-            )
-
-            // Запуск цикла
-            viewModel.runGame()
-            isInitialized = true
-        }
-    }
-
-    // Обработчик жизненного цикла для остановки игры
     LifecycleEventHandler(onStop = { viewModel.stopGame() })
 
-    // Пока нет viewModel мы ничего не рисуем
-    if (!isInitialized) {
-        // Можно показать какой-нибудь индикатор загрузки
-//         LoadingIndicator()
+    if (!isViewModelReady) {
+        // Можно показать какой-нибудь индикатор загрузки, текст "Загрузка..."
         return
     }
 
     Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .onSizeChanged { size ->
-                viewModel.camera.setViewportSize(
-                    Size(
-                        size.width.toFloat(),
-                        size.height.toFloat()
-                    )
-                )
-
-            }
+        modifier = Modifier.createGameCanvasModifier(viewModel)
     ) {
-        val (_, zoom) = viewModel.camera.getViewMatrix()
-        val baseCellSize = min(size.width, size.height) / viewModel.gameMap.size.toFloat()
+        drawGameContent(viewModel, gameState, localPlayerId, size)
+    }
+}
 
-        viewModel.gameMap.drawMap(
-            camera = viewModel.camera,
-            baseCellSize = baseCellSize,
-            zoom = zoom, drawScope = this
-        )
-
-        gameState.players.forEach { car ->
-            car.drawCar(
-                camera = viewModel.camera,
-                baseCellSize = baseCellSize,
-                zoom = zoom,
-                drawScope = this,
-                isLocalPlayer = car.id == localPlayerId
+@Composable
+private fun Modifier.createGameCanvasModifier(viewModel: MultiplayerGameViewModel): Modifier {
+    return this
+        .fillMaxSize()
+        .onSizeChanged { size ->
+            viewModel.camera.setViewportSize(
+                Size(
+                    size.width.toFloat(),
+                    size.height.toFloat()
+                )
             )
         }
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+
+                    when (event.type) {
+                        // Если палец движется (или просто нажат и не отпущен)
+                        PointerEventType.Move -> {
+                            // Получаем позицию первого пальца (или любого активного указателя)
+                            val pointer = event.changes.firstOrNull()
+                            pointer?.let {
+                                viewModel.movePlayer(it.position) // Отправляем текущую позицию
+                                it.consume() // Потребляем событие, чтобы оно не распространялось дальше
+                            }
+                        }
+                        // Если палец отпущен
+                        PointerEventType.Release -> {
+                            viewModel.movePlayer(Offset.Zero) // Отправляем Offset.Zero, чтобы остановить машину
+                        }
+                        // Дополнительно можно обработать PointerEventType.Press, если нужно реагировать на первое нажатие
+                        PointerEventType.Press -> {
+                            val pointer = event.changes.firstOrNull()
+                            pointer?.let {
+                                viewModel.movePlayer(it.position) // Начинаем движение сразу при нажатии
+                                it.consume()
+                            }
+                        }
+                        else -> {
+                            // Игнорируем другие типы событий
+                        }
+                    }
+                }
+            }
+        }
+}
+
+private fun DrawScope.drawGameContent(
+    viewModel: MultiplayerGameViewModel,
+    gameState: GameState,
+    localPlayerId: String,
+    size: Size
+) {
+    val (_, zoom) = viewModel.camera.getViewMatrix()
+    val baseCellSize = min(size.width, size.height) / viewModel.map.size.toFloat()
+
+    viewModel.map.drawMap(
+        camera = viewModel.camera,
+        baseCellSize = baseCellSize,
+        zoom = zoom,
+        drawScope = this
+    )
+
+    gameState.players.forEach { car ->
+        car.drawCar(
+            camera = viewModel.camera,
+            drawScope = this,
+            isLocalPlayer = car.id == localPlayerId
+        )
     }
 }

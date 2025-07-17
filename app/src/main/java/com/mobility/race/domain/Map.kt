@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import kotlin.math.abs
 import kotlin.math.max
 
-class GameMap private constructor(
+class Map private constructor(
     private val _terrainGrid: Array<Array<TerrainType>>
 ) {
     enum class TerrainType(val speedModifier: Float) {
@@ -24,7 +24,7 @@ class GameMap private constructor(
         private const val MIDDLE_ZONE = 3.0
         private const val OUTER_TRACK = 4.5
 
-        fun createRaceTrackMap(): GameMap {
+        fun createRaceTrackMap(): Map {
             val mapData = Array(MAP_SIZE) { IntArray(MAP_SIZE) { 1 } }
 
             for (i in 0 until MAP_SIZE) {
@@ -39,7 +39,7 @@ class GameMap private constructor(
                 }
             }
 
-            return GameMap(validateAndConvert(mapData))
+            return Map(validateAndConvert(mapData))
         }
 
         private fun validateAndConvert(mapData: Array<IntArray>): Array<Array<TerrainType>> {
@@ -78,7 +78,7 @@ class GameMap private constructor(
     }
 
     fun drawMap(
-        camera: GameCamera,
+        camera: Camera,
         baseCellSize: Float,
         zoom: Float,
         drawScope: DrawScope

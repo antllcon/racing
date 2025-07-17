@@ -14,12 +14,12 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 // TODO: исправить поле ID (для мультиплеера на Int (много где...))
-class Car(
+data class Car(
     val playerName: String = "Player",
     var isPlayer: Boolean = true,
     var isMultiplayer: Boolean = false,
     var id: String = "1",
-    initialPosition: Offset = Offset.Zero
+    val initialPosition: Offset = Offset.Zero
 ) {
     companion object {
         const val MIN_SPEED = 0f
@@ -70,26 +70,27 @@ class Car(
     }
 
     fun drawCar(
-        camera: GameCamera,
-        baseCellSize: Float,
-        zoom: Float,
+        camera: Camera,
+//        baseCellSize: Float,
+//        zoom: Float,
         drawScope: DrawScope,
         isLocalPlayer: Boolean = false
     ) {
-        val scaledCellSize = baseCellSize * zoom
-        val carScreenPos = camera.worldToScreen(position)
+        val screenPosition = camera.worldToScreen(position)
+//        val scaledCellSize = baseCellSize * zoom
+//        val carScreenPos = camera.worldToScreen(position)
         val carColor = if (isLocalPlayer) Color.Blue else Color.Red
 
         drawScope.rotate(
             degrees = visualDirection * (180f / PI.toFloat()),
-            pivot = carScreenPos
+            pivot = screenPosition
         ) {
-            val carWidthPx = WIDTH * scaledCellSize
-            val carLengthPx = LENGTH * scaledCellSize
+            val carWidthPx = WIDTH
+            val carLengthPx = LENGTH
 
             drawScope.drawRect(
                 color = carColor,
-                topLeft = Offset(carScreenPos.x - carLengthPx / 2, carScreenPos.y - carWidthPx / 2),
+                topLeft = Offset(screenPosition.x - carLengthPx / 2, screenPosition.y - carWidthPx / 2),
                 size = Size(carLengthPx, carWidthPx)
             )
         }
@@ -97,17 +98,18 @@ class Car(
 
     fun accelerate(deltaTime: Float) {
         _targetSpeed = min(MAX_SPEED * _speedModifier, _targetSpeed + ACCELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+        _speed = lerp(_speed, _targetSpeed, 0.1f * deltaTime * 60f)
     }
 
     fun decelerate(deltaTime: Float) {
         _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.1f, deltaTime)
+        _speed = lerp(_speed, _targetSpeed, 0.1f * deltaTime * 60f)
     }
 
-    private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
-        return start + (end - start) * factor * deltaTime * 60f // Нормализация к 60 FPS
+    private fun lerp(start: Float, end: Float, amount: Float): Float {
+        return start + (end - start) * amount.coerceIn(0f, 1f)
     }
+
     fun startTurn(direction: Float) {
         _targetTurnInput = direction.coerceIn(-1f, 1f)
     }
@@ -127,7 +129,7 @@ class Car(
     }
 
     private fun updateTurnInput(deltaTime: Float) {
-        _turnInput = lerp(_turnInput, _targetTurnInput, 0.2f, deltaTime)
+        _turnInput = lerp(_speed, _targetSpeed, 0.1f * deltaTime * 60f)
     }
     private fun updateDriftState() {
         _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
@@ -159,14 +161,14 @@ class Car(
     }
 
     private fun updateVisualDirection(deltaTime: Float) {
-        val targetDirection = if (_isDrifting) {
+        if (_isDrifting) {
             _direction + (DRIFT_ANGLE_OFFSET * _turnInput)
         } else {
             _direction
         }
 
         // Более стабильный расчет с учетом deltaTime
-        val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
-        _visualDirection = lerp(_visualDirection, targetDirection, lagFactor.coerceIn(0f, 0.5f), deltaTime)
+        VISUAL_LAG_SPEED * deltaTime * 60f
+        _visualDirection = lerp(_speed, _targetSpeed, 0.1f * deltaTime * 60f)
     }
 }
