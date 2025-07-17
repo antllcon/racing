@@ -31,7 +31,7 @@ fun MultiplayerGameScreen(
     LifecycleEventHandler(onStop = { viewModel.stopGame() })
 
     if (!isViewModelReady) {
-        // Можно показать какой-нибудь индикатор загрузки, текст "Загрузка..."
+        LoadingScreen()
         return
     }
 
@@ -69,10 +69,12 @@ private fun Modifier.createGameCanvasModifier(viewModel: MultiplayerGameViewMode
                                 it.consume() // Потребляем событие, чтобы оно не распространялось дальше
                             }
                         }
+
                         // Если палец отпущен
                         PointerEventType.Release -> {
                             viewModel.movePlayer(Offset.Zero) // Отправляем Offset.Zero, чтобы остановить машину
                         }
+
                         // Дополнительно можно обработать PointerEventType.Press, если нужно реагировать на первое нажатие
                         PointerEventType.Press -> {
                             val pointer = event.changes.firstOrNull()
