@@ -27,9 +27,10 @@ class ControllingStick(private val minScreenSize: Int) {
     }
 
     fun getTouchAngle(touchPosition: Offset): Float {
+        val center = getCenter()
         val angle = atan2(
-            x = touchPosition.x,
-            y = touchPosition.y
+            x = touchPosition.x - center.x,
+            y = touchPosition.y - center.y
         )
 
         return angle

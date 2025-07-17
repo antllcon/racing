@@ -109,7 +109,7 @@ class MultiplayerGameViewModel(
         TODO("Not yet implemented")
     }
 
-    override fun setTouchPosition(newTouchPosition: Offset?) {
+    override fun setDirectionAngle(angle: Float?) {
         TODO("Not yet implemented")
     }
 

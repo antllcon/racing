@@ -27,6 +27,7 @@ import com.mobility.race.domain.ControllingStick
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.IGameplay
+import androidx.compose.ui.platform.LocalDensity
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -42,6 +43,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     }
 
     val gameMap = remember { GameMap.createRaceTrackMap() }
+    val density = LocalDensity.current
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
@@ -51,7 +53,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
             mapSize = gameMap.size
         )
     }
-    val controllingStick = remember { ControllingStick(Resources.getSystem().getDisplayMetrics().widthPixels) }
+    val controllingStick = remember { ControllingStick(Resources.getSystem().displayMetrics.widthPixels) }
 
     Box(
         modifier = Modifier
@@ -70,16 +72,33 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     camera.setViewportSize(viewportSize)
                 }
                 .pointerInput(Unit) {
-                    detectDragGestures { change, _ ->
-                        if (controllingStick.isTouchInsideStick(change.position)) {
-                            viewModel.setTouchPosition(change.position)
-                        } else {
-                            viewModel.setTouchPosition(null)
+                    detectDragGestures (
+                        onDrag = { change, _ ->
+                            if (controllingStick.isTouchInsideStick(change.position)) {
+                                viewModel.setDirectionAngle(controllingStick.getTouchAngle(change.position))
+                            } else {
+                                viewModel.setDirectionAngle(null)
+                            }
+                        },
+                        onDragEnd = {
+                            viewModel.setDirectionAngle(null)
                         }
-                    }
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = { offset ->
+                            if (controllingStick.isTouchInsideStick(offset)) {
+                                viewModel.setDirectionAngle(controllingStick.getTouchAngle(offset))
+                            }
+                            if (tryAwaitRelease()) {
+                                viewModel.setDirectionAngle(null)
+                            }
+                        }
+                    )
                 }
         )   {
-            if (viewportSize.width <= 0) return@Canvas
+            //if (viewportSize.width <= 0) return@Canvas
 
             val (cameraPos, zoom) = camera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
@@ -109,7 +128,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
 
             drawControllingStick(controllingStick)
 
-            val playerScreenPos = camera.worldToScreen(playerCar.position)
+            val playerScreenPos = camera.worldToScreen(playerCar.position.value)
             rotate(
                 degrees = playerCar.visualDirection * (180f / PI.toFloat()),
                 pivot = playerScreenPos
@@ -126,19 +145,19 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     }
 }
 
-private fun handleCollision(car1: Car, car2: Car) {
-    val direction = atan2(
-        car2.position.y - car1.position.y,
-        car2.position.x - car1.position.x
-    )
-
-    val moveDistance = 0.05f // в будущем переделать на зависимость от скорости
-    car1.position = Offset(
-        car1.position.x - cos(direction) * moveDistance,
-        car1.position.y - sin(direction) * moveDistance
-    )
-    car2.position = Offset(
-        car2.position.x + cos(direction) * moveDistance,
-        car2.position.y + sin(direction) * moveDistance
-    )
-}
+//private fun handleCollision(car1: Car, car2: Car) {
+//    val direction = atan2(
+//        car2.position.y - car1.position.y,
+//        car2.position.x - car1.position.x
+//    )
+//
+//    val moveDistance = 0.05f // в будущем переделать на зависимость от скорости
+//    car1.position = Offset(
+//        car1.position.x - cos(direction) * moveDistance,
+//        car1.position.y - sin(direction) * moveDistance
+//    )
+//    car2.position = Offset(
+//        car2.position.x + cos(direction) * moveDistance,
+//        car2.position.y + sin(direction) * moveDistance
+//    )
+//}
