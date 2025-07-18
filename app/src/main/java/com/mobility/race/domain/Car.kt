@@ -26,22 +26,6 @@ class Car(
     var id: String = "1",
     initialPosition: Offset = Offset.Zero
 ) {
-    companion object {
-        const val MIN_SPEED = 0f
-        const val MAX_SPEED = 0.2f
-        const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.1f
-        const val BASE_TURN_RATE = 1.2f
-        const val DRIFT_TURN_RATE = 2.5f
-        const val DRIFT_SPEED_THRESHOLD = 1.8f
-        const val WIDTH = 0.035f
-        const val LENGTH = 0.06f
-        const val MAP_SIZE = 10f
-
-        const val VISUAL_LAG_SPEED = 0.7f
-        const val DRIFT_ANGLE_OFFSET = 0.2f
-    }
-
     // ✅ Ключевое изменение: используем mutableStateOf с делегатом
     var position by mutableStateOf(initialPosition)
     var corners: List<Offset> = emptyList()
@@ -58,10 +42,11 @@ class Car(
     val speed: Float get() = _speed
     var direction: Float = 0.0f
     var visualDirection: Float = 0f
-    val isDrifting: Boolean get() = _isDrifting
+//    val isDrifting: Boolean get() = _isDrifting
     val mass: Float = 1f
     val momentOfInertia: Float = (1f / 12f) * mass * (WIDTH * WIDTH + LENGTH * LENGTH)
     var angularVelocity: Float = 0f
+    var isAccelerating = false
 
     // ✅ Ручная реализация copy, которая правильно работает с MutableState
     fun copy(
@@ -90,59 +75,106 @@ class Car(
         _speedModifier = modifier.coerceIn(0f, 1f)
     }
 
-    fun update(deltaTime: Float) {
-        val safeDeltaTime = deltaTime.coerceIn(0.001f, 0.016f)
+    fun update(elapsedTime: Float, directionAngle: Float?, gameMap: GameMap) {
+        updatePosition(elapsedTime)
 
-        _direction += angularVelocity * safeDeltaTime
+        _direction += angularVelocity * elapsedTime
         angularVelocity *= 0.98f
 
-        updateTurnInput(safeDeltaTime)
-        updateDriftState()
-        updateTurning(safeDeltaTime)
-        updatePosition(safeDeltaTime)
-        updateVisualDirection(safeDeltaTime)
-        updateCorners()
-    }
-
-
-    private fun updateCorners() {
-        val halfLength = LENGTH / 2
-        val halfWidth = WIDTH / 2
-
-        val frontLeft = Offset(-halfLength, -halfWidth)
-        val frontRight = Offset(-halfLength, halfWidth)
-        val rearLeft = Offset(halfLength, -halfWidth)
-        val rearRight = Offset(halfLength, halfWidth)
-
-        val rotatedCorners = listOf(frontLeft, frontRight, rearLeft, rearRight).map { corner ->
-            rotatePoint(corner, _direction)
+        if (directionAngle == null) {
+            isAccelerating = false
+            decelerate(elapsedTime)
+        } else {
+            isAccelerating = true
+            accelerate(elapsedTime)
         }
 
-        // При обращении к position.x и position.y .value не нужно благодаря делегату
-        corners = rotatedCorners.map { corner ->
-            Offset(position.x + corner.x, position.y + corner.y)
-        }
+        setSpeedModifier(gameMap)
+        println(speed)
+        handleAnglesDiff(directionAngle)
     }
 
-    private fun rotatePoint(point: Offset, angle: Float): Offset {
-        val cosA = cos(angle)
-        val sinA = sin(angle)
-        return Offset(
-            x = point.x * cosA - point.y * sinA,
-            y = point.x * sinA + point.y * cosA
+    private fun handleAnglesDiff(newAngle: Float?) {
+        if (newAngle != null) {
+            _direction = newAngle
+        }
+
+        updateVisualDirection()
+    }
+
+    private fun updateVisualDirection() {
+        var directionShift =
+            (_direction - visualDirection) * VISUAL_LAG_SPEED * (1 + _speed / MAX_SPEED)
+
+        if (abs(directionShift) > MAX_DIRECTION_CHANGE) {
+            if (directionShift > 0) {
+                directionShift = MAX_DIRECTION_CHANGE
+            } else {
+                directionShift = -MAX_DIRECTION_CHANGE
+            }
+        }
+
+        visualDirection += directionShift
+    }
+
+    private fun updatePosition(deltaTime: Float) {
+        val moveDistance = _speed * deltaTime * _speedModifier
+        val maxMove = MAP_SIZE * 0.5f
+        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
+
+        val newPosition = Offset(
+            x = (position.x + actualMove * cos(visualDirection)),
+            y = (position.y + actualMove * sin(visualDirection))
         )
+
+        position = newPosition
     }
 
-    fun checkCollision(other: Car): CollisionResult {
-        if (this.corners.isEmpty() || other.corners.isEmpty()) {
-            return CollisionResult(isColliding = false)
-        }
-        if (!getBoundingBox().overlaps(other.getBoundingBox())) {
-            return CollisionResult(isColliding = false)
-        }
-        // Замените detectCollision на вашу реализацию
-        return CollisionResult(isColliding = false) // Placeholder
+    private fun setSpeedModifier(gameMap: GameMap) {
+        val cellX = position.x.toInt().coerceIn(0, gameMap.size - 1)
+        val cellY = position.y.toInt().coerceIn(0, gameMap.size - 1)
+
+        _speedModifier = gameMap.getSpeedModifier(cellX, cellY).coerceIn(0f, 1f)
     }
+
+//    private fun updateCorners() {
+//        val halfLength = LENGTH / 2
+//        val halfWidth = WIDTH / 2
+//
+//        val frontLeft = Offset(-halfLength, -halfWidth)
+//        val frontRight = Offset(-halfLength, halfWidth)
+//        val rearLeft = Offset(halfLength, -halfWidth)
+//        val rearRight = Offset(halfLength, halfWidth)
+//
+//        val rotatedCorners = listOf(frontLeft, frontRight, rearLeft, rearRight).map { corner ->
+//            rotatePoint(corner, _direction)
+//        }
+//
+//        // При обращении к position.x и position.y .value не нужно благодаря делегату
+//        corners = rotatedCorners.map { corner ->
+//            Offset(position.x + corner.x, position.y + corner.y)
+//        }
+//    }
+
+//    private fun rotatePoint(point: Offset, angle: Float): Offset {
+//        val cosA = cos(angle)
+//        val sinA = sin(angle)
+//        return Offset(
+//            x = point.x * cosA - point.y * sinA,
+//            y = point.x * sinA + point.y * cosA
+//        )
+//    }
+
+//    fun checkCollision(other: Car): CollisionResult {
+//        if (this.corners.isEmpty() || other.corners.isEmpty()) {
+//            return CollisionResult(isColliding = false)
+//        }
+//        if (!getBoundingBox().overlaps(other.getBoundingBox())) {
+//            return CollisionResult(isColliding = false)
+//        }
+//        // Замените detectCollision на вашу реализацию
+//        return CollisionResult(isColliding = false) // Placeholder
+//    }
 
     fun setSpeedAndDirectionFromVelocity(velocity: Offset) {
         this._speed = velocity.getDistance()
@@ -151,72 +183,77 @@ class Car(
         }
     }
 
-    private fun getBoundingBox(): Rect {
-        if (corners.isEmpty()) return Rect(position, Size.Zero)
+//    private fun getBoundingBox(): Rect {
+//        if (corners.isEmpty()) return Rect(position, Size.Zero)
+//
+//        val minX = corners.minOf { it.x }
+//        val minY = corners.minOf { it.y }
+//        val maxX = corners.maxOf { it.x }
+//        val maxY = corners.maxOf { it.y }
+//
+//        return Rect(minX, minY, maxX, maxY)
+//    }
 
-        val minX = corners.minOf { it.x }
-        val minY = corners.minOf { it.y }
-        val maxX = corners.maxOf { it.x }
-        val maxY = corners.maxOf { it.y }
+//    private fun updateTurnInput(deltaTime: Float) {
+//        _turnInput = lerp(_turnInput, _targetTurnInput, 0.01f, deltaTime)
+//    }
+//
+//    private fun updateDriftState() {
+//        _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
+//                abs(_turnInput) > 0.5f
+//    }
+//
+//    private fun updateTurning(deltaTime: Float) {
+//        if (_speed == 0f || _turnInput == 0f) return
+//
+//        val turnRate = if (_isDrifting) DRIFT_TURN_RATE else BASE_TURN_RATE
+//        val turnAmount = _turnInput * turnRate * deltaTime * sqrt(_speed / MAX_SPEED)
+//        _direction += turnAmount
+//    }
 
-        return Rect(minX, minY, maxX, maxY)
-    }
+//    private fun updatePosition(deltaTime: Float) {
+//        if (_speed == 0f) return
+//
+//        val moveDistance = _speed * deltaTime
+//        val maxMove = MAP_SIZE
+//        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
+//
+//        val newPosition = Offset(
+//            x = (position.x + actualMove * cos(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH),
+//            y = (position.y + actualMove * sin(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH)
+//        )
+//        // ✅ Это присваивание теперь вызовет рекомпозицию
+//        position = newPosition
+//    }
 
-    private fun updateTurnInput(deltaTime: Float) {
-        _turnInput = lerp(_turnInput, _targetTurnInput, 0.01f, deltaTime)
-    }
-
-    private fun updateDriftState() {
-        _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
-                abs(_turnInput) > 0.5f
-    }
-
-    private fun updateTurning(deltaTime: Float) {
-        if (_speed == 0f || _turnInput == 0f) return
-
-        val turnRate = if (_isDrifting) DRIFT_TURN_RATE else BASE_TURN_RATE
-        val turnAmount = _turnInput * turnRate * deltaTime * sqrt(_speed / MAX_SPEED)
-        _direction += turnAmount
-    }
-
-    private fun updatePosition(deltaTime: Float) {
-        if (_speed == 0f) return
-
-        val moveDistance = _speed * deltaTime
-        val maxMove = MAP_SIZE
-        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
-
-        val newPosition = Offset(
-            x = (position.x + actualMove * cos(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH),
-            y = (position.y + actualMove * sin(_direction)).coerceIn(WIDTH, MAP_SIZE - WIDTH)
-        )
-        // ✅ Это присваивание теперь вызовет рекомпозицию
-        position = newPosition
-    }
-
-    private fun updateVisualDirection(deltaTime: Float) {
-        val targetDirection = if (_isDrifting) {
-            _direction + (DRIFT_ANGLE_OFFSET * _turnInput)
-        } else {
-            _direction
-        }
-
-        val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
-        visualDirection =
-            lerp(visualDirection, targetDirection, lagFactor.coerceIn(0.01f, 1f), deltaTime)
-    }
+//    private fun updateVisualDirection(deltaTime: Float) {
+//        val targetDirection = if (_isDrifting) {
+//            _direction + (DRIFT_ANGLE_OFFSET * _turnInput)
+//        } else {
+//            _direction
+//        }
+//
+//        val lagFactor = VISUAL_LAG_SPEED * deltaTime * 60f
+//        visualDirection =
+//            lerp(visualDirection, targetDirection, lagFactor.coerceIn(0.01f, 1f), deltaTime)
+//    }
 
     fun accelerate(deltaTime: Float) {
-        _targetSpeed = min(
-            MAX_SPEED * _speedModifier,
-            _targetSpeed + ACCELERATION * deltaTime * _speedModifier
-        )
-        _speed = lerp(_speed, _targetSpeed, 0.001f, deltaTime)
+        if (_speed < MAX_SPEED) {
+            _speed += ACCELERATION
+        }
+        if (_speed > MAX_SPEED) {
+            _speed = MAX_SPEED
+        }
     }
 
     fun decelerate(deltaTime: Float) {
-        _targetSpeed = max(MIN_SPEED, _targetSpeed - DECELERATION * deltaTime * _speedModifier)
-        _speed = lerp(_speed, _targetSpeed, 0.001f, deltaTime)
+        if (_speed > MIN_SPEED) {
+            _speed -= DECELERATION
+        }
+        if (_speed < MIN_SPEED) {
+            _speed = MIN_SPEED
+        }
     }
 
     private fun lerp(start: Float, end: Float, factor: Float, deltaTime: Float): Float {
@@ -231,15 +268,32 @@ class Car(
         _targetTurnInput = 0f
     }
 
-    fun reset(newPosition: Offset = Offset(5f, 5f)) {
-        this.position = newPosition
-        _speed = 0f
-        _direction = 0f
-        visualDirection = 0f
-        _turnInput = 0f
-        _isDrifting = false
-        _speedModifier = 1f
-        updateCorners()
+//    fun reset(newPosition: Offset = Offset(5f, 5f)) {
+//        this.position = newPosition
+//        _speed = 0f
+//        _direction = 0f
+//        visualDirection = 0f
+//        _turnInput = 0f
+//        _isDrifting = false
+//        _speedModifier = 1f
+//        updateCorners()
+//    }
+
+    companion object {
+        const val MIN_SPEED = 0f
+        const val MAX_SPEED = 0.2f
+        const val ACCELERATION = 0.025f
+        const val DECELERATION = 0.1f
+        const val BASE_TURN_RATE = 1.2f
+        const val DRIFT_TURN_RATE = 2.5f
+        const val DRIFT_SPEED_THRESHOLD = 1.8f
+        const val WIDTH = 0.035f
+        const val LENGTH = 0.06f
+        const val MAP_SIZE = 10f
+        const val MAX_DIRECTION_CHANGE = 0.01f
+
+        const val VISUAL_LAG_SPEED = 0.7f
+        const val DRIFT_ANGLE_OFFSET = 0.2f
     }
 }
 // Placeholder, чтобы код компилировался. У вас должна быть своя реализация.

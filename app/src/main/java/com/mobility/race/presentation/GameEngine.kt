@@ -21,7 +21,7 @@ class GameEngine(
     private val remoteCarTargets = mutableMapOf<String, Offset>()
     private val interpolation = 0.15f // Фактор интерполяции для удаленных машин
 
-    fun update(deltaTime: Float, playerInput: PlayerInput): GameState {
+    fun update(deltaTime: Float, playerInput: PlayerInput, directionAngle: Float?): GameState {
         val currentPlayersMap = state.players.associateBy { it.id }.toMutableMap()
 
         // Обновление локального игрока
@@ -42,7 +42,7 @@ class GameEngine(
             val cellY = localPlayer.position.y.toInt().coerceIn(0, map.size - 1)
             localPlayer.setSpeedModifier(map.getSpeedModifier(cellX, cellY))
 
-            localPlayer.update(deltaTime)
+            localPlayer.update(deltaTime, directionAngle, map)
         }
 
         // Обновление чужих машин с интерполяцией
@@ -59,7 +59,7 @@ class GameEngine(
                 val cellX = car.position.x.toInt().coerceIn(0, map.size - 1)
                 val cellY = car.position.y.toInt().coerceIn(0, map.size - 1)
                 car.setSpeedModifier(map.getSpeedModifier(cellX, cellY))
-                car.update(deltaTime)
+                car.update(deltaTime, directionAngle, map)
             }
         }
 

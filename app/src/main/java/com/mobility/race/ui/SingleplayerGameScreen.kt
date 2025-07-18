@@ -128,7 +128,7 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
 
             drawControllingStick(controllingStick)
 
-            val playerScreenPos = camera.worldToScreen(playerCar.position.value)
+            val playerScreenPos = camera.worldToScreen(playerCar.position)
             rotate(
                 degrees = playerCar.visualDirection * (180f / PI.toFloat()),
                 pivot = playerScreenPos

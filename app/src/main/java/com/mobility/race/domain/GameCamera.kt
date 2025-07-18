@@ -18,7 +18,7 @@ class GameCamera(
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
 
-    private var _currentPosition: Offset = targetCar.position.value
+    private var _currentPosition: Offset = targetCar.position
     private var _viewportSize: Size = initialViewportSize
 
     val viewportSize: Size
@@ -67,7 +67,7 @@ class GameCamera(
             sin(targetCar.direction) * LOOK_AHEAD_FACTOR
         ) * targetCar.speed.coerceIn(0f, 1f)
 
-        return targetCar.position.value + lookAhead
+        return targetCar.position + lookAhead
     }
 
     private fun calculateCellSize(): Float {

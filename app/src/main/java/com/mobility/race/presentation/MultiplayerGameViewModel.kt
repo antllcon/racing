@@ -52,6 +52,8 @@ class MultiplayerGameViewModel(
         onError = this::handleGatewayError
     )
 
+    private var directionAngle: Float? = null
+
     private val _playerName: String = checkNotNull(savedStateHandle["playerName"])
     private val _roomName: String = checkNotNull(savedStateHandle["roomName"])
     private val _isCreatingRoom: Boolean = checkNotNull(savedStateHandle["isCreatingRoom"])
@@ -154,35 +156,14 @@ class MultiplayerGameViewModel(
         startGameLoop()
     }
 
-    override fun movePlayer(touchCoordinates: Offset) {
+    override fun movePlayer(elapsedTime: Float) {
         if (!_isViewModelReady.value || !::car.isInitialized) return
 
-        val isAccelerating = touchCoordinates != Offset.Zero
-        var turnDirection = 0f
-
-        if (isAccelerating) {
-            val worldTouchPos = camera.screenToWorld(touchCoordinates)
-            val angle = atan2(
-                worldTouchPos.y - car.position.y,
-                worldTouchPos.x - car.position.x
-            )
-            // Разница с текущим направлением машины
-            var diff = angle - car.direction
-
-            // Нормализуем угол, чтобы он был в диапазоне [-PI, PI]
-            while (diff > Math.PI) diff -= 2 * Math.PI.toFloat()
-            while (diff < -Math.PI) diff += 2 * Math.PI.toFloat()
-
-            if (abs(diff) < Math.PI.toFloat() / 2) {
-                turnDirection = if (diff > 0) 1f else -1f
-            }
-        }
-
-        _playerInput.value = PlayerInput(isAccelerating, turnDirection)
+        _playerInput.value = PlayerInput(car.isAccelerating , car.direction)
 
         viewModelScope.launch {
             _gateway.playerAction(
-                PlayerInputRequest(isAccelerating, turnDirection)
+                PlayerInputRequest(car.isAccelerating , car.direction)
             )
         }
     }
@@ -324,7 +305,7 @@ class MultiplayerGameViewModel(
 
     private fun updateGameState(deltaTime: Float) {
         val playerInput = _playerInput.value
-        val newState = _gameEngine.update(deltaTime, playerInput)
+        val newState = _gameEngine.update(deltaTime, playerInput, directionAngle)
         _gameState.value = newState
     }
 
@@ -342,5 +323,13 @@ class MultiplayerGameViewModel(
             _gateway.disconnect()
             httpClient.close()
         }
+    }
+
+    override fun moveCamera(elapsedTime: Float) {
+
+    }
+
+    override fun setDirectionAngle(angle: Float?) {
+        directionAngle = angle
     }
 }
