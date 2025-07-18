@@ -84,6 +84,7 @@ fun AppNavHost(
         composable<MultiplayerGame> { entry ->
             val args = entry.toRoute<MultiplayerGame>()
 
+            println(" ===== Я в navHost - multiplayer")
             val factory = remember(httpClient) {
                 MultiplayerGameViewModelFactory(httpClient)
             }

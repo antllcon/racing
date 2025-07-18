@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import com.mobility.race.domain.drawCar
 import com.mobility.race.presentation.GameState
 import com.mobility.race.presentation.MultiplayerGameViewModel
 import kotlin.math.min
@@ -47,7 +48,7 @@ private fun Modifier.createGameCanvasModifier(viewModel: MultiplayerGameViewMode
     return this
         .fillMaxSize()
         .onSizeChanged { size ->
-            viewModel.camera.setViewportSize(
+            viewModel.onCanvasSizeChanged(
                 Size(
                     size.width.toFloat(),
                     size.height.toFloat()
@@ -60,32 +61,33 @@ private fun Modifier.createGameCanvasModifier(viewModel: MultiplayerGameViewMode
                     val event = awaitPointerEvent()
 
                     when (event.type) {
-                        // Если палец движется (или просто нажат и не отпущен)
                         PointerEventType.Move -> {
-                            // Получаем позицию первого пальца (или любого активного указателя)
                             val pointer = event.changes.firstOrNull()
                             pointer?.let {
-                                viewModel.movePlayer(it.position) // Отправляем текущую позицию
-                                it.consume() // Потребляем событие, чтобы оно не распространялось дальше
-                            }
-                        }
-
-                        // Если палец отпущен
-                        PointerEventType.Release -> {
-                            viewModel.movePlayer(Offset.Zero) // Отправляем Offset.Zero, чтобы остановить машину
-                        }
-
-                        // Дополнительно можно обработать PointerEventType.Press, если нужно реагировать на первое нажатие
-                        PointerEventType.Press -> {
-                            val pointer = event.changes.firstOrNull()
-                            pointer?.let {
-                                viewModel.movePlayer(it.position) // Начинаем движение сразу при нажатии
+                                if (viewModel.isCanvasReady.value) { // Только если Canvas готов
+                                    viewModel.movePlayer(it.position)
+                                }
                                 it.consume()
                             }
                         }
-                        else -> {
-                            // Игнорируем другие типы событий
+
+                        PointerEventType.Release -> {
+                            if (viewModel.isCanvasReady.value) { // Только если Canvas готов
+                                viewModel.movePlayer(Offset.Zero)
+                            }
                         }
+
+                        PointerEventType.Press -> {
+                            val pointer = event.changes.firstOrNull()
+                            pointer?.let {
+                                if (viewModel.isCanvasReady.value) { // Только если Canvas готов
+                                    viewModel.movePlayer(it.position)
+                                }
+                                it.consume()
+                            }
+                        }
+
+                        else -> {}
                     }
                 }
             }
@@ -112,7 +114,8 @@ private fun DrawScope.drawGameContent(
         car.drawCar(
             camera = viewModel.camera,
             drawScope = this,
-            isLocalPlayer = car.id == localPlayerId
+            isLocalPlayer = car.id == localPlayerId,
+            scaledCellSize = baseCellSize * zoom
         )
     }
 }

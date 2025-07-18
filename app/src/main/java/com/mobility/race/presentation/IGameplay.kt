@@ -2,11 +2,11 @@ package com.mobility.race.presentation
 
 import androidx.compose.ui.geometry.Offset
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.Camera
-import com.mobility.race.domain.Map
+import com.mobility.race.domain.GameCamera
+import com.mobility.race.domain.GameMap
 
 interface IGameplay {
-    fun init(playerCar: Car, playerGameMap: Map, playerCamera: Camera)
+    fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera)
     fun runGame()
     fun stopGame()
     fun movePlayer(touchCoordinates: Offset)

@@ -5,8 +5,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.Camera
-import com.mobility.race.domain.Map
+import com.mobility.race.domain.GameCamera
+import com.mobility.race.domain.GameMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -17,14 +17,14 @@ import kotlin.math.abs
 import kotlin.math.atan2
 
 class SingleplayerGameViewModel : ViewModel(), IGameplay {
-    private var touchPosition = mutableStateOf<Offset>(Offset(0f, 0f))
+    private var touchPosition = mutableStateOf(Offset(0f, 0f))
     private var gameCycle: Job? = null
     private var isGameRunning = true
     private lateinit var car: Car
-    private lateinit var gameMap: Map
-    private lateinit var camera: Camera
+    private lateinit var gameMap: GameMap
+    private lateinit var camera: GameCamera
 
-    override fun init(playerCar: Car, playerGameMap: Map, playerCamera: Camera) {
+    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
         car = playerCar
         gameMap = playerGameMap
         camera = playerCamera

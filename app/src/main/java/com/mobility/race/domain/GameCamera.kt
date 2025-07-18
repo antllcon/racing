@@ -6,14 +6,14 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.min
 
-class Camera(
-    private val targetCar: Car,
+class GameCamera(
+    private var targetCar: Car,
     initialViewportSize: Size,
     private val mapSize: Int = 10
 ) {
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
-        private const val FIXED_ZOOM = 28f
+        private const val FIXED_ZOOM = 20f
         private const val FPS_NORMALIZATION = 60f
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
@@ -29,6 +29,10 @@ class Camera(
 
     val zoom: Float
         get() = FIXED_ZOOM
+
+    fun setTargetCar(newCar: Car) {
+        this.targetCar = newCar
+    }
 
     fun update(deltaTime: Float) {
         _currentPosition = lerp(
@@ -53,6 +57,7 @@ class Camera(
     }
 
     fun setViewportSize(newSize: Size) {
+        println("Camera: Viewport Size: $viewportSize")
         _viewportSize = newSize
     }
 

@@ -8,7 +8,7 @@ data class Server(
 ) {
     companion object {
         fun default() = Server(
-            host = "51.250.32.73",
+            host = "158.160.131.253",
             port = 8080,
             path = "/"
         )

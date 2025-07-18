@@ -5,7 +5,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mobility.race.data.Server
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.Gateway
@@ -19,10 +18,11 @@ import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.RoomUpdatedResponse
+import com.mobility.race.data.Server
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.Camera
-import com.mobility.race.domain.Map
+import com.mobility.race.domain.GameCamera
+import com.mobility.race.domain.GameMap
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,6 +34,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.atan2
+
+data class PlayerInput(
+    val isAccelerating: Boolean = false,
+    val turnDirection: Float = 0f
+)
 
 class MultiplayerGameViewModel(
     savedStateHandle: SavedStateHandle,
@@ -54,6 +59,9 @@ class MultiplayerGameViewModel(
     private val _gameState = MutableStateFlow(GameState())
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
+    private val _isCanvasReady = MutableStateFlow(false)
+    val isCanvasReady: StateFlow<Boolean> = _isCanvasReady.asStateFlow()
+
     private val _isViewModelReady = MutableStateFlow(false)
     val isViewModelReady: StateFlow<Boolean> = _isViewModelReady.asStateFlow()
 
@@ -65,27 +73,29 @@ class MultiplayerGameViewModel(
     lateinit var car: Car
         private set
 
-    lateinit var map: Map
+    lateinit var map: GameMap
         private set
 
-    lateinit var camera: Camera
+    lateinit var camera: GameCamera
         private set
 
-    private var isGameStarted = false
+    private var _isGameStarted = false
 
     init {
         viewModelScope.launch {
             try {
-                car = Car(id = "temp_local_player", playerName = _playerName)
-                map = Map.createRaceTrackMap()
-                camera = Camera(car, Size.Zero)
+                println(" ===== я в init ")
+
+                car =
+                    Car(id = "TEMP_ID", playerName = _playerName, initialPosition = Offset(5f, 5f))
+                map = GameMap.createRaceTrackMap()
+                camera = GameCamera(car, Size.Zero)
 
                 _gameEngine = GameEngine(
                     localPlayerId = car.id,
                     map = map,
-                    camera = camera
+                    camera = camera,
                 )
-
                 _gameState.value = GameState(
                     players = listOf(car),
                     localPlayerId = car.id
@@ -103,10 +113,6 @@ class MultiplayerGameViewModel(
                 }
                 delay(1000)
 
-                if (!isGameStarted) {
-                    runGame()
-                    isGameStarted = true
-                }
                 _isViewModelReady.value = true
 
             } catch (e: Exception) {
@@ -115,12 +121,25 @@ class MultiplayerGameViewModel(
         }
     }
 
-    // TODO: попробывать перенести сюда всю логику
-    override fun init(playerCar: Car, playerGameMap: Map, playerCamera: Camera) {
+    fun onCanvasSizeChanged(size: Size) {
+        if (camera.viewportSize != size) {
+            camera.setViewportSize(size)
+            println("==== поставили размеры для камеры $size")
+        }
+
+        if (_isViewModelReady.value && !_isCanvasReady.value && size.width > 0 && size.height > 0) {
+            _isCanvasReady.value = true
+            runGame()
+            println("==== канвас готов и запустили игровой цикл")
+        }
+    }
+
+    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
         println("Пустой метод")
     }
 
     override fun runGame() {
+        println(" ==== запуск runGame")
 
         if (!isGameEngineInitialized()) {
             logGameEngineNotInitialized()
@@ -138,29 +157,29 @@ class MultiplayerGameViewModel(
     override fun movePlayer(touchCoordinates: Offset) {
         if (!_isViewModelReady.value || !::car.isInitialized) return
 
-        val isAccelerating: Boolean = touchCoordinates != Offset.Zero
+        val isAccelerating = touchCoordinates != Offset.Zero
         var turnDirection = 0f
 
         if (isAccelerating) {
-            val worldRouchPos = camera.screenToWorld(touchCoordinates)
+            val worldTouchPos = camera.screenToWorld(touchCoordinates)
             val angle = atan2(
-                worldRouchPos.y - car.position.y,
-                worldRouchPos.x - car.position.x
+                worldTouchPos.y - car.position.y,
+                worldTouchPos.x - car.position.x
             )
+            // Разница с текущим направлением машины
             var diff = angle - car.direction
 
+            // Нормализуем угол, чтобы он был в диапазоне [-PI, PI]
             while (diff > Math.PI) diff -= 2 * Math.PI.toFloat()
             while (diff < -Math.PI) diff += 2 * Math.PI.toFloat()
 
             if (abs(diff) < Math.PI.toFloat() / 2) {
-                turnDirection = (diff / (Math.PI.toFloat() / 2)).coerceIn(-1f, 1f)
+                turnDirection = if (diff > 0) 1f else -1f
             }
         }
 
-        // Сохраняем ввод
         _playerInput.value = PlayerInput(isAccelerating, turnDirection)
 
-        // Отправляем на сервер
         viewModelScope.launch {
             _gateway.playerAction(
                 PlayerInputRequest(isAccelerating, turnDirection)
@@ -170,15 +189,17 @@ class MultiplayerGameViewModel(
 
     fun handleServerMessage(message: ServerMessage) {
         viewModelScope.launch {
-             when (message) {
+            when (message) {
                 is PlayerConnectedResponse -> {
                     println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
-                    if (message.playerName == _playerName && car.id == "temp_local_player") {
+                    if (message.playerName == _playerName && car.id == "TEMP_ID") {
                         val updatedCar = car.copy(id = message.playerId)
                         car = updatedCar
 
+                        camera.setTargetCar(updatedCar)
+
                         val updatedPlayers = _gameState.value.players.map { player ->
-                            if (player.id == "temp_local_player") {
+                            if (player.id == "TEMP_ID") {
                                 updatedCar
                             } else {
                                 player
@@ -214,9 +235,14 @@ class MultiplayerGameViewModel(
 
                 is GameStateUpdateResponse -> {
                     _gameEngine.applyServerState(message.players)
+
+                    //  TODO: убрать
+                    val receivedPlayerState =
+                        message.players.find { it.id == _gameEngine.getCurrentState().localPlayerId }
+                    println("Client: Raw PlayerStateDto received: posX=${receivedPlayerState?.posX}, posY=${receivedPlayerState?.posY}")
+
                     val updatedStateFromEngine = _gameEngine.getCurrentState()
                     _gameState.value = updatedStateFromEngine
-
                 }
 
                 is InfoResponse -> {
@@ -253,7 +279,6 @@ class MultiplayerGameViewModel(
     override fun stopGame() {
         println("ViewModel: try to leave room $_roomName")
         _gameLoopJob?.cancel()
-        isGameStarted = false
         viewModelScope.launch {
             _gateway.leaveRoom()
         }
@@ -274,12 +299,16 @@ class MultiplayerGameViewModel(
     }
 
     private fun startGameLoop() {
+        // TODO: возможно оставить с проверками
         _gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
+            println(" ==== игровой цикл ")
+
             var lastTime = System.currentTimeMillis()
 
             while (isActive) {
                 val (deltaTime, newLastTime) = calculateDeltaTime(lastTime)
                 lastTime = newLastTime
+//                println(deltaTime)
 
                 updateGameState(deltaTime)
                 delay(16)

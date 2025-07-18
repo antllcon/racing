@@ -13,6 +13,9 @@ class MultiplayerGameViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         if (modelClass.isAssignableFrom(MultiplayerGameViewModel::class.java)) {
             val savedStateHandle = extras.createSavedStateHandle()
+
+            println(" ===== фабрика")
+
             return MultiplayerGameViewModel(
                 savedStateHandle = savedStateHandle,
                 httpClient = httpClient
