@@ -1,10 +1,13 @@
 package com.mobility.race.domain
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.min
+import kotlin.math.sin
 
 class GameCamera(
     private var targetCar: Car,
@@ -18,7 +21,7 @@ class GameCamera(
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
 
-    private var _currentPosition: Offset = targetCar.position
+    private var _currentPosition by mutableStateOf(targetCar.position)
     private var _viewportSize: Size = initialViewportSize
 
     val viewportSize: Size

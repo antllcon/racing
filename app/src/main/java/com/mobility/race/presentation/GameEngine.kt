@@ -12,19 +12,6 @@ data class GameState(
     val localPlayerId: String = ""
 )
 
-/**
- * Плавно интерполирует угол, учитывая переход через PI.
- */
-private fun lerpAngle(start: Float, end: Float, factor: Float): Float {
-    var delta = end - start
-    if (delta > Math.PI) {
-        delta -= 2 * Math.PI.toFloat()
-    } else if (delta < -Math.PI) {
-        delta += 2 * Math.PI.toFloat()
-    }
-    return start + delta * factor
-}
-
 class GameEngine(
     private var localPlayerId: String,
     private val map: GameMap,
@@ -32,44 +19,47 @@ class GameEngine(
 ) {
     private var state = GameState(localPlayerId = localPlayerId)
     private val remoteCarTargets = mutableMapOf<String, Offset>()
-    // ✅ Добавляем хранилище для целевого направления чужих машин
-    private val remoteDirectionTargets = mutableMapOf<String, Float>()
-    private val interpolation = 0.15f // Фактор интерполяции
+    private val interpolation = 0.15f // Фактор интерполяции для удаленных машин
 
     fun update(deltaTime: Float, playerInput: PlayerInput): GameState {
         val currentPlayersMap = state.players.associateBy { it.id }.toMutableMap()
 
-        // Обновление локального игрока (как и было)
+        // Обновление локального игрока
         currentPlayersMap[localPlayerId]?.let { localPlayer ->
             if (playerInput.isAccelerating) {
                 localPlayer.accelerate(deltaTime)
             } else {
                 localPlayer.decelerate(deltaTime)
             }
+
             if (playerInput.turnDirection != 0f) {
                 localPlayer.startTurn(playerInput.turnDirection)
             } else {
                 localPlayer.stopTurn()
             }
+
             val cellX = localPlayer.position.x.toInt().coerceIn(0, map.size - 1)
             val cellY = localPlayer.position.y.toInt().coerceIn(0, map.size - 1)
             localPlayer.setSpeedModifier(map.getSpeedModifier(cellX, cellY))
+
             localPlayer.update(deltaTime)
         }
 
-        // ✅ Обновление чужих машин: только интерполяция, без физики
+        // Обновление чужих машин с интерполяцией
         currentPlayersMap.values.forEach { car ->
             if (car.id != localPlayerId) {
-                // Интерполируем позицию
-                remoteCarTargets[car.id]?.let { targetPosition ->
+                val targetPosition = remoteCarTargets[car.id]
+                if (targetPosition != null) {
                     car.position = lerp(car.position, targetPosition, interpolation)
                 }
-                // Интерполируем направление
-                remoteDirectionTargets[car.id]?.let { targetDirection ->
-                    car.visualDirection = lerpAngle(car.visualDirection, targetDirection, interpolation)
-                    // Синхронизируем физическое направление с визуальным для консистентности
-                    car.direction = car.visualDirection
-                }
+                // Чужие машины также должны обновлять свою внутреннюю логику (скорость, направление и т.д.)
+                // исходя из серверных данных или собственной симуляции, если это необходимо.
+                // В данном случае, мы обновляем их position и visualDirection из serverPlayerStates,
+                // а затем Car.update() для плавности.
+                val cellX = car.position.x.toInt().coerceIn(0, map.size - 1)
+                val cellY = car.position.y.toInt().coerceIn(0, map.size - 1)
+                car.setSpeedModifier(map.getSpeedModifier(cellX, cellY))
+                car.update(deltaTime)
             }
         }
 
@@ -87,20 +77,24 @@ class GameEngine(
             val existingPlayer = currentPlayersById[serverPlayerDto.id]
 
             if (existingPlayer != null) {
+                // Обновляем существующего игрока
                 if (existingPlayer.id == localPlayerId) {
-                    // Для локального игрока применяем коррекцию от сервера
+                    // Для локального игрока: всегда применяем серверную позицию для коррекции,
+                    // так как локальная симуляция может разойтись
                     val serverPosition = Offset(serverPlayerDto.posX, serverPlayerDto.posY)
+                    //println("!!!$serverPosition - вот гад!!!") // Теперь это покажет реальные float значения
                     existingPlayer.position = serverPosition
                     existingPlayer.visualDirection = serverPlayerDto.direction
-                    existingPlayer.direction = serverPlayerDto.direction
+                    existingPlayer.direction = serverPlayerDto.direction // Также синхронизируем _direction
                 } else {
-                    // ✅ Для удаленных игроков: просто сохраняем целевые значения для интерполяции
-                    remoteCarTargets[existingPlayer.id] = Offset(serverPlayerDto.posX, serverPlayerDto.posY)
-                    remoteDirectionTargets[existingPlayer.id] = serverPlayerDto.direction
+                    // Для удаленных игроков: обновляем их Car объект и цель для интерполяции
+                    remoteCarTargets[serverPlayerDto.id] = Offset(serverPlayerDto.posX, serverPlayerDto.posY)
+                    existingPlayer.visualDirection = serverPlayerDto.direction
+                    existingPlayer.direction = serverPlayerDto.direction // Синхронизируем направление для расчетов
                 }
                 newPlayers.add(existingPlayer)
             } else {
-                // ✅ Добавляем нового игрока с корректным начальным направлением
+                // Добавляем нового игрока
                 val newCar = Car(
                     id = serverPlayerDto.id,
                     playerName = "Player ${serverPlayerDto.id.take(2)}",
@@ -108,28 +102,17 @@ class GameEngine(
                     isMultiplayer = true,
                     initialPosition = Offset(serverPlayerDto.posX, serverPlayerDto.posY)
                 )
-                // Устанавливаем начальное направление
-                newCar.direction = serverPlayerDto.direction
-                newCar.visualDirection = serverPlayerDto.direction
-
                 newPlayers.add(newCar)
-
-                // И сразу задаем цель для интерполяции
-                remoteCarTargets[newCar.id] = newCar.position
-                remoteDirectionTargets[newCar.id] = newCar.direction
+                remoteCarTargets[serverPlayerDto.id] = newCar.position
             }
         }
 
+        // Отфильтровываем игроков, которые отключились
         val playersToKeep = newPlayers.filter { serverPlayerIds.contains(it.id) || it.id == localPlayerId }
         val disconnectedPlayers = currentPlayersById.values.filterNot { serverPlayerIds.contains(it.id) || it.id == localPlayerId }
 
         this.state = state.copy(players = playersToKeep)
-
-        // Удаляем цели для отключившихся игроков
-        disconnectedPlayers.forEach {
-            remoteCarTargets.remove(it.id)
-            remoteDirectionTargets.remove(it.id)
-        }
+        disconnectedPlayers.forEach { remoteCarTargets.remove(it.id) }
     }
 
     fun updateLocalPlayerId(newId: String) {
