@@ -42,7 +42,6 @@ class Car(
         const val DRIFT_ANGLE_OFFSET = 0.2f
     }
 
-    // ✅ Ключевое изменение: используем mutableStateOf с делегатом
     var position by mutableStateOf(initialPosition)
     var corners: List<Offset> = emptyList()
         private set
@@ -63,13 +62,12 @@ class Car(
     val momentOfInertia: Float = (1f / 12f) * mass * (WIDTH * WIDTH + LENGTH * LENGTH)
     var angularVelocity: Float = 0f
 
-    // ✅ Ручная реализация copy, которая правильно работает с MutableState
     fun copy(
         playerName: String = this.playerName,
         isPlayer: Boolean = this.isPlayer,
         isMultiplayer: Boolean = this.isMultiplayer,
         id: String = this.id,
-        initialPosition: Offset = this.position // Берем текущую позицию для новой машины
+        initialPosition: Offset = this.position
     ): Car {
         val newCar = Car(playerName, isPlayer, isMultiplayer, id, initialPosition)
         // Копируем внутреннее состояние
