@@ -1,18 +1,17 @@
 package com.mobility.race.ui
 
-import android.view.MotionEvent
+import android.content.res.Resources
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -20,17 +19,21 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.ControllingStick
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.IGameplay
-import com.mobility.race.domain.handleCollision
-import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalDensity
+import com.mobility.race.ui.drawUtils.drawControllingStick
 import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -38,15 +41,9 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
     val playerCar = remember {
         Car("Player", initialPosition = Offset(5f, 5f))
     }
-    val enemyCar = remember {
-        Car("Enemy", isPlayer = false, initialPosition = Offset(4f, 5f))
-    }
 
     val gameMap = remember { GameMap.createRaceTrackMap() }
-
-    var gameTime by remember { mutableLongStateOf(0L) }
-    var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
-    var lastFrameTime by remember { mutableLongStateOf(0L) }
+    val density = LocalDensity.current
 
     var viewportSize by remember { mutableStateOf(Size.Zero) }
     val camera = remember {
@@ -56,49 +53,12 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
             mapSize = gameMap.size
         )
     }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameMillis { frameTime ->
-                val deltaTime = if (lastFrameTime == 0L) 0f else (frameTime - lastFrameTime) / 1000f
-                lastFrameTime = frameTime
-
-                playerCar.update(deltaTime)
-                enemyCar.update(deltaTime)
-
-                val collisionResult = playerCar.checkCollision(enemyCar)
-                if (collisionResult.isColliding) {
-                    handleCollision(playerCar, enemyCar, collisionResult)
-                }
-
-                gameTime = frameTime
-            }
-            delay(16)
-        }
-    }
+    val controllingStick = remember { ControllingStick(Resources.getSystem().displayMetrics.widthPixels) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-            .pointerInteropFilter { event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                        touchPosition = Offset(event.x, event.y)
-                        viewModel.movePlayer(touchPosition)
-                        true
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        touchPosition = Offset(0f, 0f)
-                        viewModel.movePlayer(touchPosition)
-                        playerCar.stopTurn()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
             .onGloballyPositioned {
                 viewModel.init(playerCar, gameMap, camera)
                 viewModel.runGame()
@@ -111,10 +71,36 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     viewportSize = Size(size.width.toFloat(), size.height.toFloat())
                     camera.setViewportSize(viewportSize)
                 }
-        ) {
+                .pointerInput(Unit) {
+                    detectDragGestures (
+                        onDrag = { change, _ ->
+                            if (controllingStick.isTouchInsideStick(change.position)) {
+                                viewModel.setDirectionAngle(controllingStick.getTouchAngle(change.position))
+                            } else {
+                                viewModel.setDirectionAngle(null)
+                            }
+                        },
+                        onDragEnd = {
+                            viewModel.setDirectionAngle(null)
+                        }
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = { offset ->
+                            if (controllingStick.isTouchInsideStick(offset)) {
+                                viewModel.setDirectionAngle(controllingStick.getTouchAngle(offset))
+                            }
+                            if (tryAwaitRelease()) {
+                                viewModel.setDirectionAngle(null)
+                            }
+                        }
+                    )
+                }
+        )   {
             if (viewportSize.width <= 0) return@Canvas
 
-            val (cameraPos, zoom) = camera.getViewMatrix()
+            val (_, zoom) = camera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom
 
@@ -140,21 +126,9 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                 }
             }
 
-            val enemyScreenPos = camera.worldToScreen(enemyCar.position)
-            rotate(
-                degrees = enemyCar.visualDirection * (180f / PI.toFloat()),
-                pivot = enemyScreenPos
-            ) {
-                val carWidthPx = Car.WIDTH * scaledCellSize
-                val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Green,
-                    Offset(enemyScreenPos.x - carLengthPx / 2, enemyScreenPos.y - carWidthPx / 2),
-                    Size(carLengthPx, carWidthPx)
-                )
-            }
+            drawControllingStick(controllingStick)
 
-            val playerScreenPos = camera.worldToScreen(playerCar.position)
+            val playerScreenPos = camera.worldToScreen(playerCar.position.value)
             rotate(
                 degrees = playerCar.visualDirection * (180f / PI.toFloat()),
                 pivot = playerScreenPos
@@ -167,12 +141,23 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     Size(carLengthPx, carWidthPx)
                 )
             }
-
-            drawCircle(
-                Color.Blue.copy(alpha = 0.5f),
-                radius = 30f,
-                center = touchPosition
-            )
         }
     }
 }
+
+//private fun handleCollision(car1: Car, car2: Car) {
+//    val direction = atan2(
+//        car2.position.y - car1.position.y,
+//        car2.position.x - car1.position.x
+//    )
+//
+//    val moveDistance = 0.05f // в будущем переделать на зависимость от скорости
+//    car1.position = Offset(
+//        car1.position.x - cos(direction) * moveDistance,
+//        car1.position.y - sin(direction) * moveDistance
+//    )
+//    car2.position = Offset(
+//        car2.position.x + cos(direction) * moveDistance,
+//        car2.position.y + sin(direction) * moveDistance
+//    )
+//}
