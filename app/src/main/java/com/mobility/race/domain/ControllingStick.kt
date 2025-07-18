@@ -37,8 +37,8 @@ class ControllingStick(private val minScreenSize: Int) {
     }
 
     companion object {
-        const val STICK_SIZE_MULTIPLIER = 0.15f
-        const val STICK_OFFSET_MULTIPLIER = 0.02f
-        const val STICK_LEFT_BORDER_OFFSET_MULTIPLIER = 0.08f
+        const val STICK_SIZE_MULTIPLIER = 0.25f
+        const val STICK_OFFSET_MULTIPLIER = 0.05f
+        const val STICK_LEFT_BORDER_OFFSET_MULTIPLIER = 0.1f
     }
 }

@@ -41,18 +41,15 @@ class Car(
         }
 
         setSpeedModifier(gameMap)
-        handleAnglesDiff(elapsedTime, directionAngle)
+        handleAnglesDiff(directionAngle)
     }
 
-    private fun handleAnglesDiff(elapsedTime: Float, newAngle: Float?) {
-        updateDriftState()
-
+    private fun handleAnglesDiff(newAngle: Float?) {
         if (newAngle != null) {
             _direction = newAngle
-
-            updateTurning(elapsedTime)
-            updateVisualDirection(elapsedTime)
         }
+
+        updateVisualDirection()
     }
 
     private fun setSpeedModifier(gameMap: GameMap) {
@@ -68,8 +65,8 @@ class Car(
         val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
 
         val newPosition = Offset(
-            x = (position.value.x + actualMove * cos(_direction)),
-            y = (position.value.y + actualMove * sin(_direction))
+            x = (position.value.x + actualMove * cos(_visualDirection)),
+            y = (position.value.y + actualMove * sin(_visualDirection))
         )
 
         position.value = newPosition
@@ -93,26 +90,32 @@ class Car(
         }
     }
 
-    private fun updateDriftState() {
-        _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
-                abs(_turnInput) > 0.7f
-    }
+    private fun updateVisualDirection() {
+        var directionShift = (_direction - _visualDirection) * VISUAL_LAG_SPEED * (1 + _speed / MAX_SPEED)
 
-    private fun updateTurning(elapsedTime: Float) {
-        val turnRate = if (_isDrifting) DRIFT_TURN_RATE else BASE_TURN_RATE
-        val turnAmount = _turnInput * turnRate * elapsedTime * (_speed / MAX_SPEED)
-        _direction += turnAmount
-    }
-
-    private fun updateVisualDirection(deltaTime: Float) {
-        val targetDirection = if (_isDrifting) {
-            _direction + (DRIFT_ANGLE_OFFSET * _turnInput)
-        } else {
-            _direction
+        if (abs(directionShift) > MAX_DIRECTION_CHANGE) {
+            if (directionShift > 0) {
+                directionShift = MAX_DIRECTION_CHANGE
+            } else {
+                directionShift = -MAX_DIRECTION_CHANGE
+            }
         }
 
-        _visualDirection += (targetDirection - _visualDirection) *
-                VISUAL_LAG_SPEED * (1 + _speed / MAX_SPEED)
+        _visualDirection += directionShift
+
+//        if (_visualDirection >= 0f) {
+//            if (_visualDirection + directionShift >= targetDirection) {
+//                _visualDirection = targetDirection
+//            } else {
+//                _visualDirection += directionShift
+//            }
+//        } else {
+//            if (_visualDirection + directionShift <= targetDirection) {
+//                _visualDirection = targetDirection
+//            } else {
+//                _visualDirection += directionShift
+//            }
+//        }
     }
 
 //    fun update(elapsedTime: Float) {
@@ -284,15 +287,16 @@ class Car(
 
     companion object {
         const val MIN_SPEED = 0f
-        const val MAX_SPEED = 0.5f
+        const val MAX_SPEED = 0.05f
         const val ACCELERATION = 0.002f
         const val DECELERATION = 0.001f
         const val BASE_TURN_RATE = 1.2f
         const val DRIFT_TURN_RATE = 2.5f
-        const val DRIFT_SPEED_THRESHOLD = 1.8f
+        const val DRIFT_SPEED_THRESHOLD = 0.03f
         const val WIDTH = 0.035f
         const val LENGTH = 0.06f
         const val MAP_SIZE = 10f
+        const val MAX_DIRECTION_CHANGE = 0.01f
 
         const val VISUAL_LAG_SPEED = 0.05f
         const val DRIFT_ANGLE_OFFSET = 0.2f
