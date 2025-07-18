@@ -29,9 +29,8 @@ class GameEngine(
 ) {
     private var state = GameState(localPlayerId = localPlayerId)
     private val remoteCarTargets = mutableMapOf<String, Offset>()
-    // ✅ Добавляем хранилище для целевого направления чужих машин
     private val remoteDirectionTargets = mutableMapOf<String, Float>()
-    private val interpolation = 0.15f // Фактор интерполяции
+    private val interpolation = 0.15f
 
     fun update(deltaTime: Float, playerInput: PlayerInput): GameState {
         val currentPlayersMap = state.players.associateBy { it.id }.toMutableMap()
@@ -93,6 +92,7 @@ class GameEngine(
                     // Для удаленных игроков: просто сохраняем целевые значения для интерполяции
                     remoteCarTargets[existingPlayer.id] = Offset(serverPlayerDto.posX, serverPlayerDto.posY)
                     remoteDirectionTargets[existingPlayer.id] = serverPlayerDto.direction
+                    println("REMOTE_PLAYER_DATA: ID=${existingPlayer.id}, ServerDir=${serverPlayerDto.direction}")
                 }
                 newPlayers.add(existingPlayer)
             } else {
@@ -137,5 +137,15 @@ class GameEngine(
 
     fun getCurrentState(): GameState {
         return this.state
+    }
+
+    fun updatePlayerInstance(player: Car) {
+        val playerIndex = state.players.indexOfFirst { it.id == "TEMP_ID" && player.id != "TEMP_ID" }
+        if (playerIndex != -1) {
+            val mutablePlayers = state.players.toMutableList()
+            mutablePlayers[playerIndex] = player
+            state = state.copy(players = mutablePlayers)
+            println("GameEngine: Player instance updated for ID ${player.id}")
+        }
     }
 }

@@ -192,11 +192,19 @@ class MultiplayerGameViewModel(
             when (message) {
                 is PlayerConnectedResponse -> {
                     println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
+
                     if (message.playerName == _playerName && car.id == "TEMP_ID") {
+
                         val updatedCar = car.copy(id = message.playerId)
+
                         car = updatedCar
 
                         camera.setTargetCar(updatedCar)
+
+                        _gameEngine.updatePlayerInstance(updatedCar)
+                        _gameEngine.updateLocalPlayerId(updatedCar.id)
+
+//                        _gameState.value = _gameEngine.getCurrentState()
 
                         val updatedPlayers = _gameState.value.players.map { player ->
                             if (player.id == "TEMP_ID") {
