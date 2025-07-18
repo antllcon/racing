@@ -31,11 +31,7 @@ class Car(
     val visualDirection: Float get() = _visualDirection
     val isDrifting: Boolean get() = _isDrifting
 
-    fun setSpeedModifier(modifier: Float) {
-        _speedModifier = modifier.coerceIn(0f, 1f)
-    }
-
-    fun update(elapsedTime: Float, directionAngle: Float?) {
+    fun update(elapsedTime: Float, directionAngle: Float?, gameMap: GameMap) {
         updatePosition(elapsedTime)
 
         if (directionAngle == null) {
@@ -44,30 +40,47 @@ class Car(
             accelerate()
         }
 
-        //обработка углов
+        setSpeedModifier(gameMap)
+        handleAnglesDiff(elapsedTime, directionAngle)
+    }
+
+    private fun handleAnglesDiff(elapsedTime: Float, newAngle: Float?) {
+        updateDriftState()
+
+        if (newAngle != null) {
+            _direction = newAngle
+
+            updateTurning(elapsedTime)
+            updateVisualDirection(elapsedTime)
+        }
+    }
+
+    private fun setSpeedModifier(gameMap: GameMap) {
+        val cellX = position.value.x.toInt().coerceIn(0, gameMap.size - 1)
+        val cellY = position.value.y.toInt().coerceIn(0, gameMap.size - 1)
+
+        _speedModifier = gameMap.getSpeedModifier(cellX, cellY).coerceIn(0f, 1f)
     }
 
     private fun updatePosition(deltaTime: Float) {
-        if (_speed == 0f) return
-
-        val moveDistance = _speed * deltaTime
+        val moveDistance = _speed * deltaTime * _speedModifier
         val maxMove = MAP_SIZE * 0.5f
         val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
 
         val newPosition = Offset(
-            x = (position.value.x + actualMove),
-            y = (position.value.y + actualMove)
+            x = (position.value.x + actualMove * cos(_direction)),
+            y = (position.value.y + actualMove * sin(_direction))
         )
 
         position.value = newPosition
     }
 
     private fun decelerate() {
-        if (_speed > 0f) {
+        if (_speed > MIN_SPEED) {
             _speed -= DECELERATION
         }
-        if (_speed < 0f) {
-            _speed = 0f
+        if (_speed < MIN_SPEED) {
+            _speed = MIN_SPEED
         }
     }
 
@@ -78,6 +91,28 @@ class Car(
         if (_speed > MAX_SPEED) {
             _speed = MAX_SPEED
         }
+    }
+
+    private fun updateDriftState() {
+        _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
+                abs(_turnInput) > 0.7f
+    }
+
+    private fun updateTurning(elapsedTime: Float) {
+        val turnRate = if (_isDrifting) DRIFT_TURN_RATE else BASE_TURN_RATE
+        val turnAmount = _turnInput * turnRate * elapsedTime * (_speed / MAX_SPEED)
+        _direction += turnAmount
+    }
+
+    private fun updateVisualDirection(deltaTime: Float) {
+        val targetDirection = if (_isDrifting) {
+            _direction + (DRIFT_ANGLE_OFFSET * _turnInput)
+        } else {
+            _direction
+        }
+
+        _visualDirection += (targetDirection - _visualDirection) *
+                VISUAL_LAG_SPEED * (1 + _speed / MAX_SPEED)
     }
 
 //    fun update(elapsedTime: Float) {
@@ -193,10 +228,6 @@ class Car(
 //        _turnInput = lerp(_turnInput, _targetTurnInput, 0.2f, deltaTime)
 //    }
 //
-//    private fun updateDriftState() {
-//        _isDrifting = _speed > DRIFT_SPEED_THRESHOLD * _speedModifier &&
-//                abs(_turnInput) > 0.7f
-//    }
 //
 //    private fun updateTurning(deltaTime: Float) {
 //        if (_speed == 0f || _turnInput == 0f) return
@@ -253,9 +284,9 @@ class Car(
 
     companion object {
         const val MIN_SPEED = 0f
-        const val MAX_SPEED = 2f
-        const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.01f
+        const val MAX_SPEED = 0.5f
+        const val ACCELERATION = 0.002f
+        const val DECELERATION = 0.001f
         const val BASE_TURN_RATE = 1.2f
         const val DRIFT_TURN_RATE = 2.5f
         const val DRIFT_SPEED_THRESHOLD = 1.8f

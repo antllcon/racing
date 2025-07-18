@@ -52,7 +52,7 @@ class SingleplayerGameViewModel : ViewModel(), IGameplay {
     }
 
     override fun movePlayer(elapsedTime: Float) {
-        car.update(elapsedTime, directionAngle)
+        car.update(elapsedTime, directionAngle, gameMap)
     }
 
     override fun moveCamera(elapsedTime: Float) {

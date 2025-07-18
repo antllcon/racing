@@ -98,9 +98,9 @@ fun SingleplayerGameScreen(viewModel: IGameplay) {
                     )
                 }
         )   {
-            //if (viewportSize.width <= 0) return@Canvas
+            if (viewportSize.width <= 0) return@Canvas
 
-            val (cameraPos, zoom) = camera.getViewMatrix()
+            val (_, zoom) = camera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom
 
