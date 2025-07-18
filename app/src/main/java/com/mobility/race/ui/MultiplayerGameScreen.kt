@@ -15,7 +15,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import com.mobility.race.presentation.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 
 @Composable
 fun MultiplayerGameScreen(
@@ -42,7 +42,7 @@ fun MultiplayerGameScreen(
                         playerGameMap = playerGameMap,
                         playerCamera = GameCamera(
                             targetCar = playerCar,
-                            initialViewportSize = Size.Zero,
+                            viewportSize = Size.Zero,
                             mapSize = playerGameMap.size
                         )
                     )

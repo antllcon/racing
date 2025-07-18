@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
-class ControllingStick(private val minScreenSize: Int) {
+class ControllingStick(private var minScreenSize: Int) {
     fun isTouchInsideStick(dragPosition: Offset): Boolean {
         val catheterX = dragPosition.x - getCenter().x
         val catheterY = dragPosition.y - getCenter().y
@@ -24,6 +24,10 @@ class ControllingStick(private val minScreenSize: Int) {
 
     fun getColor(): Color {
         return Color.Gray
+    }
+
+    fun setMinScreenSize(size: Int) {
+        minScreenSize = size
     }
 
     fun getTouchAngle(touchPosition: Offset): Float {

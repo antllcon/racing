@@ -6,10 +6,11 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.min
 
-class GameCamera(
-    private val targetCar: Car,
-    initialViewportSize: Size,
-    private val mapSize: Int = 10
+data class GameCamera(
+    val targetCar: Car,
+    var viewportSize: Size = Size.Unspecified,
+    val mapSize: Int = 10,
+    var currentPosition: Offset = targetCar.position,
 ) {
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
@@ -18,42 +19,37 @@ class GameCamera(
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
 
-    private var _currentPosition: Offset = targetCar.position.value
-    private var _viewportSize: Size = initialViewportSize
-
-    val viewportSize: Size
-        get() = _viewportSize
-
-    val currentPosition: Offset
-        get() = _currentPosition
-
     val zoom: Float
         get() = FIXED_ZOOM
 
-    fun update(deltaTime: Float) {
-        _currentPosition = lerp(
-            _currentPosition,
+    fun update(deltaTime: Float): GameCamera {
+        val newCurrentPosition = lerp(
+            currentPosition,
             calculateIdealPosition(),
             BASE_SMOOTHNESS * deltaTime * FPS_NORMALIZATION
         )
+
+        return copy(
+            currentPosition = newCurrentPosition
+        )
     }
 
-    fun getViewMatrix(): Pair<Offset, Float> = _currentPosition to FIXED_ZOOM
+    fun getViewMatrix(): Pair<Offset, Float> = currentPosition to FIXED_ZOOM
 
     fun worldToScreen(worldPos: Offset): Offset {
         val cellSize = calculateCellSize()
-        return (worldPos - _currentPosition) * cellSize * FIXED_ZOOM +
-                Offset(_viewportSize.width / 2, _viewportSize.height / 2)
+        return (worldPos - currentPosition) * cellSize * FIXED_ZOOM +
+                Offset(viewportSize.width / 2, viewportSize.height / 2)
     }
 
     fun screenToWorld(screenPos: Offset): Offset {
         val cellSize = calculateCellSize()
-        return (screenPos - Offset(_viewportSize.width / 2, _viewportSize.height / 2)) /
-                (cellSize * FIXED_ZOOM) + _currentPosition
+        return (screenPos - Offset(viewportSize.width / 2, viewportSize.height / 2)) /
+                (cellSize * FIXED_ZOOM) + currentPosition
     }
 
-    fun setViewportSize(newSize: Size) {
-        _viewportSize = newSize
+    fun setNewViewportSize(newSize: Size) {
+        viewportSize = newSize
     }
 
     private fun calculateIdealPosition(): Offset {
@@ -62,11 +58,11 @@ class GameCamera(
             sin(targetCar.direction) * LOOK_AHEAD_FACTOR
         ) * targetCar.speed.coerceIn(0f, 1f)
 
-        return targetCar.position.value + lookAhead
+        return targetCar.position + lookAhead
     }
 
     private fun calculateCellSize(): Float {
-        return min(_viewportSize.width, _viewportSize.height) / mapSize
+        return min(viewportSize.width, viewportSize.height) / mapSize
     }
 
     private fun lerp(start: Float, end: Float, amount: Float): Float {

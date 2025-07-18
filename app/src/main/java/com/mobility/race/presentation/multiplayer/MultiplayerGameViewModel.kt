@@ -1,6 +1,5 @@
-package com.mobility.race.presentation
+package com.mobility.race.presentation.multiplayer
 
-import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +18,7 @@ import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
+import com.mobility.race.presentation.IGameplay
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
