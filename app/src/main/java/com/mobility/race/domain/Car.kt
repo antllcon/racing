@@ -110,8 +110,8 @@ data class Car(
         const val MAX_SPEED = 0.80f
         const val ACCELERATION = 0.0064f
         const val DECELERATION = 0.0096f
-        const val WIDTH = 0.035f
-        const val LENGTH = 0.06f
+        const val LENGTH = 0.071f
+        const val WIDTH = 0.105f
         const val MAP_SIZE = 10f
         const val MAX_DIRECTION_CHANGE = 0.20f
 

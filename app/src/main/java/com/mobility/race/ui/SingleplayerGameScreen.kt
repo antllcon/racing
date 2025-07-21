@@ -15,21 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.imageResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mobility.race.R
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.drawControllingStick
+import com.mobility.race.ui.drawUtils.drawImageBitmap
 import kotlin.math.PI
 import kotlin.math.min
 
 @Composable
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
+    val imageBitmap = ImageBitmap.imageResource(id = R.drawable.car1_1)
 
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
@@ -127,16 +132,22 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
-                degrees = state.car.visualDirection * (180f / PI.toFloat()),
+                degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = playerScreenPos
             ) {
                 val carWidthPx = Car.WIDTH * scaledCellSize
                 val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Red,
+
+                drawImageBitmap(
+                    imageBitmap,
                     Offset(playerScreenPos.x - carLengthPx / 2, playerScreenPos.y - carWidthPx / 2),
                     Size(carLengthPx, carWidthPx)
                 )
+//                drawRect(
+//                    Color.Red,
+//                    Offset(playerScreenPos.x - carLengthPx / 2, playerScreenPos.y - carWidthPx / 2),
+//                    Size(carLengthPx, carWidthPx)
+//                )
             }
         }
     }
