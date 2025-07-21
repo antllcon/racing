@@ -128,7 +128,7 @@ data class Car(
         const val LENGTH = 0.071f
         const val WIDTH = 0.105f
         const val MAP_SIZE = 10f
-        const val MAX_DIRECTION_CHANGE = 0.20f
+        const val MAX_DIRECTION_CHANGE = 0.15f
         const val VISUAL_LAG_SPEED = 0.05f
         const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
     }
