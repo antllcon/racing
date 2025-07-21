@@ -8,34 +8,35 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class SingleplayerGameViewModel : BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default()) {
+class SingleplayerGameViewModel :
+    BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default()) {
     private var gameCycle: Job? = null
+
+    init {
+        init()
+    }
 
     fun init() {
         modifyState {
-            copy (
-                isGameRunning = true
-            )
+            copy(isGameRunning = true)
         }
+
+        runGame()
     }
 
     fun runGame() {
         var lastTime = System.currentTimeMillis()
-        var currentTime: Long
-        var elapsedTime: Float
 
         gameCycle = viewModelScope.launch {
-            withContext(Dispatchers.Default) {
-                while (stateValue.isGameRunning) {
-                    currentTime = System.currentTimeMillis()
-                    elapsedTime = (currentTime - lastTime) / 1000f
+            while (stateValue.isGameRunning) {
+                val currentTime = System.currentTimeMillis()
+                val elapsedTime = (currentTime - lastTime) / 1000f
 
-                    movePlayer(elapsedTime)
-                    moveCamera(elapsedTime)
-                    lastTime = currentTime
+                movePlayer(elapsedTime)
+                moveCamera(elapsedTime)
 
-                    delay(16)
-                }
+                lastTime = currentTime
+                delay(16)
             }
         }
     }
@@ -50,7 +51,7 @@ class SingleplayerGameViewModel : BaseViewModel<SingleplayerGameState>(Singlepla
 
     private fun moveCamera(elapsedTime: Float) {
         modifyState {
-            copy (
+            copy(
                 gameCamera = gameCamera.update(elapsedTime)
             )
         }

@@ -47,8 +47,7 @@ fun AppNavHost(
         }
 
         composable<SingleplayerGame> {
-            val viewModel = SingleplayerGameViewModel()
-            SingleplayerGameScreen(viewModel)
+            SingleplayerGameScreen()
         }
 
         composable<CreateRoom> {

@@ -9,12 +9,12 @@ import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 
 data class SingleplayerGameState(
-    var directionAngle: Float?,
-    var isGameRunning: Boolean,
-    var controllingStick: ControllingStick,
-    var car: Car,
-    var gameMap: GameMap,
-    var gameCamera: GameCamera
+    val directionAngle: Float?,
+    val isGameRunning: Boolean,
+    val controllingStick: ControllingStick,
+    val car: Car,
+    val gameMap: GameMap,
+    val gameCamera: GameCamera
 ) {
     companion object {
         fun default(): SingleplayerGameState {

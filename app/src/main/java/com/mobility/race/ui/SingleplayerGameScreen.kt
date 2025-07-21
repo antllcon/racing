@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
@@ -25,19 +25,13 @@ import kotlin.math.PI
 import kotlin.math.min
 
 @Composable
-fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
+fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-            .onGloballyPositioned {
-                if (!state.isGameRunning) {
-                    viewModel.init()
-                    viewModel.runGame()
-                }
-            }
     ) {
         Canvas(
             modifier = Modifier
