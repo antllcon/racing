@@ -2,11 +2,9 @@ package com.mobility.race.presentation.singleplayer
 
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.presentation.BaseViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class SingleplayerGameViewModel :
     BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default()) {
@@ -16,7 +14,7 @@ class SingleplayerGameViewModel :
         init()
     }
 
-    fun init() {
+    private fun init() {
         modifyState {
             copy(isGameRunning = true)
         }
@@ -24,7 +22,7 @@ class SingleplayerGameViewModel :
         runGame()
     }
 
-    fun runGame() {
+    private fun runGame() {
         var lastTime = System.currentTimeMillis()
 
         gameCycle = viewModelScope.launch {
@@ -33,9 +31,9 @@ class SingleplayerGameViewModel :
                 val elapsedTime = (currentTime - lastTime) / 1000f
 
                 movePlayer(elapsedTime)
-                moveCamera(elapsedTime)
-
+                moveCamera()
                 lastTime = currentTime
+
                 delay(16)
             }
         }
@@ -49,10 +47,10 @@ class SingleplayerGameViewModel :
         }
     }
 
-    private fun moveCamera(elapsedTime: Float) {
+    private fun moveCamera() {
         modifyState {
             copy(
-                gameCamera = gameCamera.update(elapsedTime)
+                gameCamera = gameCamera.update(car.position)
             )
         }
     }

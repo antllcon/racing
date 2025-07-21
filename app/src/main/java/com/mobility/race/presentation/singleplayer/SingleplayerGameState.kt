@@ -26,7 +26,7 @@ data class SingleplayerGameState(
                 controllingStick = ControllingStick(0),
                 car = car,
                 gameMap = GameMap.createRaceTrackMap(),
-                gameCamera = GameCamera(targetCar = car, viewportSize = Size.Unspecified)
+                gameCamera = GameCamera(position = car.position, viewportSize = Size.Unspecified)
             )
         }
     }
