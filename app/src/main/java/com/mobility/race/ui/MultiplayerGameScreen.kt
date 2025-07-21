@@ -10,7 +10,7 @@ import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import com.mobility.race.presentation.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 
 @Composable
 fun MultiplayerGameScreen(
@@ -37,7 +37,6 @@ fun MultiplayerGameScreen(
                     viewportSize = Size.Unspecified,
                     mapWidth = gameMap.width,
                     mapHeight = gameMap.height
-
                 )
             )
         },

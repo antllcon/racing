@@ -1,6 +1,5 @@
 package com.mobility.race.presentation.singleplayer
 
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.ControllingStick
@@ -18,7 +17,7 @@ data class SingleplayerGameState(
     companion object {
         fun default(): SingleplayerGameState {
             val gameMap: GameMap = GameMap.generateDungeonMap()
-            val car = Car(position = Offset(x = 5f, y = 5f))
+            val car = Car(position = gameMap.finishCellPos)
 
             return SingleplayerGameState(
                 directionAngle = null,

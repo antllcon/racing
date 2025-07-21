@@ -149,8 +149,8 @@ class GameMap private constructor(
     fun getTerrainAt(x: Int, y: Int): TerrainType {
         return when (grid[y][x] / 100) {
             1 -> TerrainType.ROAD
-            2 -> TerrainType.GRASS
-            else -> TerrainType.ABYSS
+            2 -> TerrainType.ROAD
+            else -> TerrainType.GRASS
         }
     }
 

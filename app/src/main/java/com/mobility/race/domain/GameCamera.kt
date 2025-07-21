@@ -12,7 +12,7 @@ data class GameCamera(
 ) {
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
-        private const val FIXED_ZOOM = 12f
+        private const val FIXED_ZOOM = 1f
         private const val FPS_NORMALIZATION = 60f
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
