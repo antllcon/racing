@@ -12,7 +12,11 @@ class SingleplayerGameViewModel : BaseViewModel<SingleplayerGameState>(Singlepla
     private var gameCycle: Job? = null
 
     fun init() {
-        stateValue.isGameRunning = true
+        modifyState {
+            copy (
+                isGameRunning = true
+            )
+        }
     }
 
     fun runGame() {
