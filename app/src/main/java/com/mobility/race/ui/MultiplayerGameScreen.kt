@@ -33,8 +33,7 @@ fun MultiplayerGameScreen(
                 playerCar = playerCar,
                 playerGameMap = playerGameMap,
                 playerCamera = GameCamera(
-                    targetCar = playerCar,
-                    initialViewportSize = Size.Zero,
+                    position = playerCar.position,
                     mapSize = playerGameMap.size
                 )
             )

@@ -9,9 +9,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
-import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.presentation.MultiplayerGameViewModelFactory
-import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.presentation.MultiplayerGameViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
