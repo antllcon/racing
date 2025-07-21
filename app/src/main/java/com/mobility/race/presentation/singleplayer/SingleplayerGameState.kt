@@ -23,7 +23,7 @@ data class SingleplayerGameState(
             return SingleplayerGameState(
                 directionAngle = null,
                 isGameRunning = false,
-                controllingStick = ControllingStick(0),
+                controllingStick = ControllingStick(),
                 car = car,
                 gameMap = GameMap.createRaceTrackMap(),
                 gameCamera = GameCamera(position = car.position, viewportSize = Size.Unspecified)

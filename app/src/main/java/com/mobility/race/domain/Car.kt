@@ -1,9 +1,10 @@
 package com.mobility.race.domain
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 
 data class Car(
     val playerName: String = "Player",
@@ -50,6 +51,8 @@ data class Car(
     }
 
     private fun updatePosition(deltaTime: Float): Offset {
+
+
         val moveDistance = speed * deltaTime * speedModifier
         val maxMove = MAP_SIZE * 0.5f
         val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
@@ -59,7 +62,7 @@ data class Car(
             y = (position.y + actualMove * sin(visualDirection))
         )
 
-         return newPosition
+        return newPosition
     }
 
     private fun decelerate() {
@@ -81,15 +84,19 @@ data class Car(
     }
 
     private fun updateVisualDirection(): Float {
+        var angleDiff = direction - visualDirection
+
+        while (angleDiff <= -PI) angleDiff += (2 * PI).toFloat()
+        while (angleDiff > PI) angleDiff -= (2 * PI).toFloat()
+
         var directionShift =
-            (direction - visualDirection) * VISUAL_LAG_SPEED * (1 + speed / MAX_SPEED)
+            angleDiff * VISUAL_LAG_SPEED * (1 + speed / MAX_SPEED)
 
         if (abs(directionShift) > MAX_DIRECTION_CHANGE) {
-
-            if (directionShift > 0) {
-                directionShift = MAX_DIRECTION_CHANGE
+            directionShift = if (directionShift > 0) {
+                MAX_DIRECTION_CHANGE
             } else {
-                directionShift = -MAX_DIRECTION_CHANGE
+                -MAX_DIRECTION_CHANGE
             }
         }
 
@@ -97,7 +104,6 @@ data class Car(
 
         return visualDirection
     }
-
 
     companion object {
         const val MIN_SPEED = 0f

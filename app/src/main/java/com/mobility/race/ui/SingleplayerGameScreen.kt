@@ -1,13 +1,16 @@
 package com.mobility.race.ui
 
-import android.content.res.Resources
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -28,6 +31,10 @@ import kotlin.math.min
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
 
+    var isStickActive by remember { mutableStateOf(false) }
+    var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
+    var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -37,7 +44,10 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { size ->
-                    state.controllingStick.setMinScreenSize(Resources.getSystem().displayMetrics.widthPixels)
+                    state.controllingStick.setScreenSize(
+                        size.width.toFloat(),
+                        size.height.toFloat()
+                    )
                     state.gameCamera.setNewViewportSize(
                         Size(
                             size.width.toFloat(),
@@ -47,34 +57,41 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 }
                 .pointerInput(Unit) {
                     detectDragGestures(
-                        onDrag = { change, _ ->
-                            if (state.controllingStick.isTouchInsideStick(change.position)) {
-                                viewModel.setDirectionAngle(
-                                    state.controllingStick.getTouchAngle(
-                                        change.position
-                                    )
-                                )
+                        onDragStart = { offset ->
+                            if (state.controllingStick.isInside(offset)) {
+                                isStickActive = true
+                                val angle = state.controllingStick.getTouchAngle(offset)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor = state.controllingStick.getDistanceFactor(offset)
                             } else {
-                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (isStickActive) {
+                                val angle = state.controllingStick.getTouchAngle(change.position)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor = state.controllingStick.getDistanceFactor(change.position)
                             }
                         },
                         onDragEnd = {
-                            viewModel.setDirectionAngle(null)
-                        }
-                    )
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = { offset ->
-                            if (state.controllingStick.isTouchInsideStick(offset)) {
-                                viewModel.setDirectionAngle(
-                                    state.controllingStick.getTouchAngle(
-                                        offset
-                                    )
-                                )
-                            }
-                            if (tryAwaitRelease()) {
+                            if (isStickActive) {
                                 viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDragCancel = {
+                            if (isStickActive) {
+                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
                             }
                         }
                     )
@@ -106,7 +123,7 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 }
             }
 
-            drawControllingStick(state.controllingStick)
+            drawControllingStick(state.controllingStick, currentStickInputAngle, currentStickInputDistanceFactor)
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
@@ -124,20 +141,3 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
         }
     }
 }
-
-//private fun handleCollision(car1: Car, car2: Car) {
-//    val direction = atan2(
-//        car2.position.y - car1.position.y,
-//        car2.position.x - car1.position.x
-//    )
-//
-//    val moveDistance = 0.05f // в будущем переделать на зависимость от скорости
-//    car1.position = Offset(
-//        car1.position.x - cos(direction) * moveDistance,
-//        car1.position.y - sin(direction) * moveDistance
-//    )
-//    car2.position = Offset(
-//        car2.position.x + cos(direction) * moveDistance,
-//        car2.position.y + sin(direction) * moveDistance
-//    )
-//}

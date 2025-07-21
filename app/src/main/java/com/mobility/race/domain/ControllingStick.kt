@@ -3,46 +3,64 @@ package com.mobility.race.domain
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import kotlin.math.atan2
+import kotlin.math.min
 import kotlin.math.sqrt
 
-class ControllingStick(private var minScreenSize: Int) {
-    fun isTouchInsideStick(dragPosition: Offset): Boolean {
-        val catheterX = dragPosition.x - getCenter().x
-        val catheterY = dragPosition.y - getCenter().y
-        val hypotenuse = sqrt(catheterX * catheterX + catheterY * catheterY)
+class ControllingStick(
+    private var screenWidth: Float = 0f,
+    private var screenHeight: Float = 0f
+) {
+    companion object {
+        const val SIZE_MULTIPLIER = 0.10f
+        const val BOTTOM_OFFSET_MULTIPLIER = 0.05f
+        const val STROKE_WIDTH = 20f
+    }
 
-        return getRadius() >= hypotenuse
+    fun setScreenSize(width: Float, height: Float) {
+        screenWidth = width
+        screenHeight = height
     }
 
     fun getCenter(): Offset {
-        return Offset(minScreenSize * (STICK_SIZE_MULTIPLIER + STICK_OFFSET_MULTIPLIER), minScreenSize * (STICK_SIZE_MULTIPLIER + STICK_OFFSET_MULTIPLIER + STICK_LEFT_BORDER_OFFSET_MULTIPLIER))
+        val stickRadius = getRadius()
+        val centerX = screenWidth / 2f
+        val centerY =
+            screenHeight - stickRadius - BOTTOM_OFFSET_MULTIPLIER * min(screenWidth, screenHeight)
+        return Offset(centerX, centerY)
     }
 
     fun getRadius(): Float {
-        return minScreenSize * STICK_SIZE_MULTIPLIER
+        return min(screenWidth, screenHeight) * SIZE_MULTIPLIER
     }
 
     fun getColor(): Color {
-        return Color.Gray
+        return Color.DarkGray
     }
 
-    fun setMinScreenSize(size: Int) {
-        minScreenSize = size
+    fun getStrokeColor(): Color {
+        return Color.Black
+    }
+
+    fun getStrokeWidth(): Float {
+        return STROKE_WIDTH
+    }
+
+    fun isInside(touchPosition: Offset): Boolean {
+        val center = getCenter()
+        val distance = (touchPosition - center).getDistance()
+        return distance <= getRadius()
     }
 
     fun getTouchAngle(touchPosition: Offset): Float {
-        val center = getCenter()
-        val angle = atan2(
-            x = touchPosition.x - center.x,
-            y = touchPosition.y - center.y
-        )
-
-        return angle
+        val stickCenter = getCenter()
+        return atan2(touchPosition.y - stickCenter.y, touchPosition.x - stickCenter.x)
     }
 
-    companion object {
-        const val STICK_SIZE_MULTIPLIER = 0.25f
-        const val STICK_OFFSET_MULTIPLIER = 0.05f
-        const val STICK_LEFT_BORDER_OFFSET_MULTIPLIER = 0.1f
+    fun getDistanceFactor(touchPosition: Offset): Float {
+        val stickCenter = getCenter()
+        val catheterX = touchPosition.x - stickCenter.x
+        val catheterY = touchPosition.y - stickCenter.y
+        val hypotenuse = sqrt(catheterX * catheterX + catheterY * catheterY)
+        return (hypotenuse / getRadius()).coerceAtMost(1f)
     }
 }
