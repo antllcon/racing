@@ -18,12 +18,12 @@ data class Car(
     var speedModifier: Float = 1f,
 ) {
 
-    fun update(elapsedTime: Float, directionAngle: Float?, gameMap: GameMap): Car {
+    fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
         return copy(
             direction = handleAnglesDiff(directionAngle),
             position = updatePosition(elapsedTime),
             speed = updateSpeed(directionAngle),
-            speedModifier = setSpeedModifier(gameMap),
+            speedModifier = setSpeedModifier(speedModifier),
             visualDirection = updateVisualDirection()
         )
     }
@@ -45,11 +45,8 @@ data class Car(
         return direction
     }
 
-    private fun setSpeedModifier(gameMap: GameMap): Float {
-        val cellX = position.x.toInt().coerceIn(0, gameMap.size - 1)
-        val cellY = position.y.toInt().coerceIn(0, gameMap.size - 1)
-
-        return gameMap.getSpeedModifier(cellX, cellY).coerceIn(0f, 1f)
+    private fun setSpeedModifier(speedModifier: Float): Float {
+        return speedModifier
     }
 
     private fun updatePosition(deltaTime: Float): Offset {

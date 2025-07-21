@@ -1,5 +1,6 @@
 package com.mobility.race.domain
 
+import androidx.compose.ui.geometry.Offset
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -68,7 +69,10 @@ class GameMap private constructor(
         return getTerrainAt(x, y) != TerrainType.ABYSS
     }
 
-    fun getSpeedModifier(x: Int, y: Int): Float {
-        return getTerrainAt(x, y).speedModifier
+    fun getSpeedModifier(position: Offset): Float {
+        val cellX = position.x.toInt().coerceIn(0, size - 1)
+        val cellY = position.y.toInt().coerceIn(0, size - 1)
+
+        return getTerrainAt(cellX, cellY).speedModifier
     }
 }

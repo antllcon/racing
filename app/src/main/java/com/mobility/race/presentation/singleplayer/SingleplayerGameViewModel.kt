@@ -40,9 +40,11 @@ class SingleplayerGameViewModel :
     }
 
     private fun movePlayer(elapsedTime: Float) {
+        val speedModifier = stateValue.gameMap.getSpeedModifier(stateValue.car.position)
+
         modifyState {
             copy(
-                car = car.update(elapsedTime, stateValue.directionAngle, stateValue.gameMap),
+                car = car.update(elapsedTime, stateValue.directionAngle, speedModifier),
             )
         }
     }
