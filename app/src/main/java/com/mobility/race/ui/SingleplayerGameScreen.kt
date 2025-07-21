@@ -25,8 +25,6 @@ import com.mobility.race.ui.drawUtils.drawControllingStick
 import kotlin.math.PI
 import kotlin.math.min
 
-var isRunning = false
-
 @Composable
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
     val state = viewModel.state.value
@@ -36,11 +34,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
             .fillMaxSize()
             .background(Color.LightGray)
             .onGloballyPositioned {
-                if (!isRunning) {
-                    viewModel.init()
-                    viewModel.runGame()
-                    isRunning = true
-                }
+                viewModel.init()
+                viewModel.runGame()
             }
     ) {
         Canvas(
