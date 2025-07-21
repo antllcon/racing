@@ -108,9 +108,9 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                     val screenPos = state.gameCamera.worldToScreen(worldPos)
 
                     val color = when (state.gameMap.getTerrainAt(i, j)) {
-                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
                         GameMap.TerrainType.ROAD -> Color(0xFF616161)
+                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
+                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
                     }
 
                     drawRect(color, screenPos, Size(scaledCellSize, scaledCellSize))

@@ -17,15 +17,21 @@ data class SingleplayerGameState(
 ) {
     companion object {
         fun default(): SingleplayerGameState {
-            val car = Car(position = Offset(5f, 5f))
+            val gameMap: GameMap = GameMap.generateDungeonMap()
+            val car = Car(position = Offset(x = 5f, y = 5f))
 
             return SingleplayerGameState(
                 directionAngle = null,
                 isGameRunning = false,
                 controllingStick = ControllingStick(),
                 car = car,
-                gameMap = GameMap.createRaceTrackMap(),
-                gameCamera = GameCamera(position = car.position, viewportSize = Size.Unspecified)
+                gameMap = gameMap,
+                gameCamera = GameCamera(
+                    position = car.position,
+                    viewportSize = Size.Unspecified,
+                    mapWidth = gameMap.width,
+                    mapHeight = gameMap.height
+                )
             )
         }
     }

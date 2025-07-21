@@ -51,15 +51,10 @@ data class Car(
     }
 
     private fun updatePosition(deltaTime: Float): Offset {
-
-
         val moveDistance = speed * deltaTime * speedModifier
-        val maxMove = MAP_SIZE * 0.5f
-        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
-
         val newPosition = Offset(
-            x = (position.x + actualMove * cos(visualDirection)),
-            y = (position.y + actualMove * sin(visualDirection))
+            x = (position.x + moveDistance * cos(visualDirection)),
+            y = (position.y + moveDistance * sin(visualDirection))
         )
 
         return newPosition
@@ -112,7 +107,6 @@ data class Car(
         const val DECELERATION = 0.0096f
         const val WIDTH = 0.035f
         const val LENGTH = 0.06f
-        const val MAP_SIZE = 10f
         const val MAX_DIRECTION_CHANGE = 0.20f
 
         const val VISUAL_LAG_SPEED = 0.05f
