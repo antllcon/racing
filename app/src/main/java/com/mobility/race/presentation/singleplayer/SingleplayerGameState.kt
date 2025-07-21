@@ -16,8 +16,8 @@ data class SingleplayerGameState(
     val gameCamera: GameCamera
 ) {
     companion object {
-        fun default(): SingleplayerGameState {
-            val car = Car(position = Offset(5f, 5f))
+        fun default(carId: String): SingleplayerGameState {
+            val car = Car(position = Offset(5f, 5f), id = carId)
 
             return SingleplayerGameState(
                 directionAngle = null,
