@@ -8,7 +8,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -34,8 +37,10 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
             .fillMaxSize()
             .background(Color.LightGray)
             .onGloballyPositioned {
-                viewModel.init()
-                viewModel.runGame()
+                if (!state.isGameRunning) {
+                    viewModel.init()
+                    viewModel.runGame()
+                }
             }
     ) {
         Canvas(
@@ -43,13 +48,22 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
                 .fillMaxSize()
                 .onSizeChanged { size ->
                     state.controllingStick.setMinScreenSize(Resources.getSystem().displayMetrics.widthPixels)
-                    state.gameCamera.setNewViewportSize(Size(size.width.toFloat(), size.height.toFloat()))
+                    state.gameCamera.setNewViewportSize(
+                        Size(
+                            size.width.toFloat(),
+                            size.height.toFloat()
+                        )
+                    )
                 }
                 .pointerInput(Unit) {
-                    detectDragGestures (
+                    detectDragGestures(
                         onDrag = { change, _ ->
                             if (state.controllingStick.isTouchInsideStick(change.position)) {
-                                viewModel.setDirectionAngle(state.controllingStick.getTouchAngle(change.position))
+                                viewModel.setDirectionAngle(
+                                    state.controllingStick.getTouchAngle(
+                                        change.position
+                                    )
+                                )
                             } else {
                                 viewModel.setDirectionAngle(null)
                             }
@@ -63,7 +77,11 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
                     detectTapGestures(
                         onPress = { offset ->
                             if (state.controllingStick.isTouchInsideStick(offset)) {
-                                viewModel.setDirectionAngle(state.controllingStick.getTouchAngle(offset))
+                                viewModel.setDirectionAngle(
+                                    state.controllingStick.getTouchAngle(
+                                        offset
+                                    )
+                                )
                             }
                             if (tryAwaitRelease()) {
                                 viewModel.setDirectionAngle(null)
@@ -71,7 +89,7 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel) {
                         }
                     )
                 }
-        )   {
+        ) {
             val (_, zoom) = state.gameCamera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom

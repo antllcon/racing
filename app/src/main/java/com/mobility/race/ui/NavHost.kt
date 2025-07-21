@@ -48,19 +48,18 @@ fun AppNavHost(
 
         composable<SingleplayerGame> {
             val viewModel = SingleplayerGameViewModel()
-
             SingleplayerGameScreen(viewModel)
-        }
-
-        composable<EnterRoom> {
-            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
-                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
-            })
         }
 
         composable<CreateRoom> {
             CreateRoomScreen(navigateToMultiplayer = { playerName, roomName ->
                 navController.navigate(route = MultiplayerGame(playerName, roomName, true))
+            })
+        }
+
+        composable<EnterRoom> {
+            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
+                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
             })
         }
 
