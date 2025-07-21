@@ -1,6 +1,5 @@
 package com.mobility.race.presentation.singleplayer
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
