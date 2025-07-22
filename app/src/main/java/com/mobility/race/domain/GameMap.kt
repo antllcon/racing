@@ -5,7 +5,7 @@ import kotlin.math.atan2
 import kotlin.random.Random
 
 class GameMap private constructor(
-    val grid: Array<IntArray>,
+    private val grid: Array<IntArray>,
     val width: Int,
     val height: Int,
     val finishCellPos: Offset
@@ -17,9 +17,9 @@ class GameMap private constructor(
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 24
-        private const val DEFAULT_MAP_HEIGHT = 24
-        private const val DEFAULT_CORE_POINT = 8
+        private const val DEFAULT_MAP_WIDTH = 13
+        private const val DEFAULT_MAP_HEIGHT = 13
+        private const val DEFAULT_CORE_POINT = 6
 
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
@@ -114,31 +114,45 @@ class GameMap private constructor(
         }
 
         private fun removeDeadEndsInternal(grid: Array<IntArray>) {
-            var deadEndRemovedInPass: Boolean
-            val width = grid[0].size
-            val height = grid.size
-
+            var removedSomething: Boolean
             do {
-                deadEndRemovedInPass = false
-                for (y in 1 until height - 1) {
-                    for (x in 1 until width - 1) {
-                        if (grid[y][x] == 2) {
-                            var roadNeighbors = 0
+                removedSomething = false
+                val deadEnds = findDeadEndCells(grid)
 
-                            if (grid[y - 1][x] == 1 || grid[y - 1][x] == 2) roadNeighbors++
-                            if (grid[y + 1][x] == 1 || grid[y + 1][x] == 2) roadNeighbors++
-                            if (grid[y][x - 1] == 1 || grid[y][x - 1] == 2) roadNeighbors++
-                            if (grid[y][x + 1] == 1 || grid[y][x + 1] == 2) roadNeighbors++
-
-                            if (roadNeighbors <= 1) {
-                                grid[y][x] = 0
-                                deadEndRemovedInPass = true
-                            }
-                        }
+                for ((x, y) in deadEnds) {
+                    if (getRoadNeighbors(grid, x, y).size == 1) {
+                        grid[y][x] = 0
+                        removedSomething = true
                     }
                 }
-            } while (deadEndRemovedInPass)
+            } while (removedSomething)
         }
+
+        private fun findDeadEndCells(grid: Array<IntArray>): List<Pair<Int, Int>> {
+            val deadEnds = mutableListOf<Pair<Int, Int>>()
+            for (y in 1 until grid.size - 1) {
+                for (x in 1 until grid[0].size - 1) {
+                    if (grid[y][x] in listOf(1, 2) && getRoadNeighbors(grid, x, y).size == 1) {
+                        deadEnds.add(x to y)
+                    }
+                }
+            }
+            return deadEnds
+        }
+
+        private fun getRoadNeighbors(grid: Array<IntArray>, x: Int, y: Int): List<Pair<Int, Int>> {
+            val neighbors = mutableListOf<Pair<Int, Int>>()
+            val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
+            for ((dx, dy) in directions) {
+                val nx = x + dx
+                val ny = y + dy
+                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(1, 2)) {
+                    neighbors.add(nx to ny)
+                }
+            }
+            return neighbors
+        }
+
 
         private fun determinationCellTypesInternal(grid: Array<IntArray>) {
             val width = grid[0].size
@@ -155,20 +169,21 @@ class GameMap private constructor(
                     val right = grid[y][x + 1]
 
                     if (currentCellType == 1) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 110
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 120
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 130
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 140
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 150
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 160
+                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 101
+                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 102
+                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 103
+                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 104
+                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 105
+                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 106
+                        else index = 100
                     } else if (currentCellType == 2) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 210
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 220
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 230
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 240
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 250
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 260
-                        else index = 10
+                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 201
+                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 202
+                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 203
+                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 204
+                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 205
+                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 206
+                        else index = 200
                     }
 
                     if (index != 0) {
@@ -196,12 +211,7 @@ class GameMap private constructor(
 
     val size: Int get() = height
 
-    fun getTerrainName(x: Int, y: Int): String {
-
-        return "terrain_" + grid[y][x]
-    }
-
-    private fun getTerrainAt(x: Int, y: Int): TerrainType {
+    fun getTerrainAt(x: Int, y: Int): TerrainType {
         return when (grid[y][x] / 100) {
             1 -> TerrainType.ROAD
             2 -> TerrainType.ROAD
