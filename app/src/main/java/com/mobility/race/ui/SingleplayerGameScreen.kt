@@ -21,7 +21,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawControllingStick
+import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawGameMap
 import kotlin.math.PI
 import kotlin.math.min
@@ -29,6 +31,7 @@ import kotlin.math.min
 @Composable
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
+    val bitmaps = bitmapStorage()
 
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
@@ -115,13 +118,14 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
-                degrees = state.car.visualDirection * (180f / PI.toFloat()),
+                degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = playerScreenPos
             ) {
                 val carWidthPx = Car.WIDTH * scaledCellSize
                 val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Red,
+
+                drawImageBitmap(
+                    bitmaps["car" + state.car.id + "_" + state.car.currentSprite]!!,
                     Offset(playerScreenPos.x - carLengthPx / 2, playerScreenPos.y - carWidthPx / 2),
                     Size(carLengthPx, carWidthPx)
                 )

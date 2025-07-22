@@ -14,9 +14,9 @@ data class SingleplayerGameState(
     val gameCamera: GameCamera
 ) {
     companion object {
-        fun default(): SingleplayerGameState {
+        fun default(carId: String): SingleplayerGameState {
             val gameMap: GameMap = GameMap.generateDungeonMap()
-            val car = Car(position = gameMap.finishCellPos)
+            val car = Car(position = gameMap.finishCellPos, id = carId)
 
             return SingleplayerGameState(
                 directionAngle = null,

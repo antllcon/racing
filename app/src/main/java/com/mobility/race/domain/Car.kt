@@ -8,25 +8,41 @@ import kotlin.math.sin
 
 data class Car(
     val playerName: String = "Player",
-    var isPlayer: Boolean = true,
-    var isMultiplayer: Boolean = false,
-    var id: String = "1",
-    var position: Offset = Offset.Unspecified,
-    var corners: List<Offset> = emptyList(),
+    val isPlayer: Boolean = true,
+    val isMultiplayer: Boolean = false,
+    val id: String = "1",
+    val position: Offset = Offset.Unspecified,
+    val corners: List<Offset> = emptyList(),
     var speed: Float = 0f,
     var direction: Float = 0f,
     var visualDirection: Float = 0f,
-    var speedModifier: Float = 1f,
+    val speedModifier: Float = 1f,
+    val currentSprite: Int = 1,
+    var distanceBeforeSpriteChange: Float = DEFAULT_SPRITE_CHANGE_DISTANCE
 ) {
-
     fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
         return copy(
             direction = handleAnglesDiff(directionAngle),
             position = updatePosition(elapsedTime),
             speed = updateSpeed(directionAngle),
             speedModifier = setSpeedModifier(speedModifier),
-            visualDirection = updateVisualDirection()
+            visualDirection = updateVisualDirection(),
+            currentSprite = updateCurrentSprite()
         )
+    }
+
+    private fun updateCurrentSprite(): Int {
+        if (distanceBeforeSpriteChange <= 0f) {
+            distanceBeforeSpriteChange = DEFAULT_SPRITE_CHANGE_DISTANCE
+
+            if (currentSprite == 4) {
+                return 1
+            } else {
+                return currentSprite + 1
+            }
+        }
+
+        return currentSprite
     }
 
     private fun updateSpeed(directionAngle: Float?): Float {
@@ -52,11 +68,15 @@ data class Car(
 
     private fun updatePosition(deltaTime: Float): Offset {
         val moveDistance = speed * deltaTime * speedModifier
+        val maxMove = MAP_SIZE * 0.5f
+        val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
+
         val newPosition = Offset(
-            x = (position.x + moveDistance * cos(visualDirection)),
-            y = (position.y + moveDistance * sin(visualDirection))
+            x = (position.x + actualMove * cos(visualDirection)),
+            y = (position.y + actualMove * sin(visualDirection))
         )
 
+        distanceBeforeSpriteChange -= moveDistance
         return newPosition
     }
 
@@ -102,14 +122,14 @@ data class Car(
 
     companion object {
         const val MIN_SPEED = 0f
-        const val MAX_SPEED = 1f
-        const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.02f
-        const val WIDTH = 0.035f
-        const val LENGTH = 0.06f
-        const val MAX_DIRECTION_CHANGE = 0.20f
-
+        const val MAX_SPEED = 0.80f
+        const val ACCELERATION = 0.0064f
+        const val DECELERATION = 0.0096f
+        const val LENGTH = 0.071f
+        const val WIDTH = 0.105f
+        const val MAP_SIZE = 10f
+        const val MAX_DIRECTION_CHANGE = 0.15f
         const val VISUAL_LAG_SPEED = 0.05f
-        const val DRIFT_ANGLE_OFFSET = 0.2f
+        const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
     }
 }

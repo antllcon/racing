@@ -23,9 +23,9 @@ class ControllingStick(
 
     fun getCenter(): Offset {
         val stickRadius = getRadius()
-        val centerX = screenWidth / 2f
+        val centerX = screenWidth  - stickRadius * 2
         val centerY =
-            screenHeight - stickRadius - BOTTOM_OFFSET_MULTIPLIER * min(screenWidth, screenHeight)
+            screenHeight / 2
         return Offset(centerX, centerY)
     }
 
