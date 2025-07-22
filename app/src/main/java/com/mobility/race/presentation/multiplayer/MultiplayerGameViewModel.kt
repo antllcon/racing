@@ -1,4 +1,4 @@
-package com.mobility.race.presentation
+package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size

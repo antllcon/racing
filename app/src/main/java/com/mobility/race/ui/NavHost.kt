@@ -9,9 +9,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
-import com.mobility.race.presentation.MultiplayerGameViewModel
 import com.mobility.race.presentation.MultiplayerGameViewModelFactory
-import com.mobility.race.presentation.SingleplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -64,20 +63,18 @@ fun AppNavHost(
         }
 
         composable<SingleplayerGame> {
-            val viewModel = SingleplayerGameViewModel()
-
-            SingleplayerGameScreen(viewModel)
-        }
-
-        composable<EnterRoom> {
-            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
-                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
-            })
+            SingleplayerGameScreen()
         }
 
         composable<CreateRoom> {
             CreateRoomScreen(navigateToMultiplayer = { playerName, roomName ->
                 navController.navigate(route = MultiplayerGame(playerName, roomName, true))
+            })
+        }
+
+        composable<EnterRoom> {
+            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
+                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
             })
         }
 

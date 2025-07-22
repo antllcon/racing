@@ -1,178 +1,135 @@
 package com.mobility.race.ui
 
-import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.GameCamera
-import com.mobility.race.domain.GameMap
-import com.mobility.race.presentation.IGameplay
-import com.mobility.race.domain.handleCollision
-import kotlinx.coroutines.delay
+import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.ui.drawUtils.bitmapStorage
+import com.mobility.race.ui.drawUtils.drawControllingStick
+import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawGameMap
 import kotlin.math.PI
 import kotlin.math.min
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun SingleplayerGameScreen(viewModel: IGameplay) {
-    val playerCar = remember {
-        Car("Player", initialPosition = Offset(5f, 5f))
-    }
-    val enemyCar = remember {
-        Car("Enemy", isPlayer = false, initialPosition = Offset(4f, 5f))
-    }
+fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
+    val state = viewModel.state.value
+    val bitmaps = bitmapStorage()
 
-    val gameMap = remember { GameMap.createRaceTrackMap() }
-
-    var gameTime by remember { mutableLongStateOf(0L) }
-    var touchPosition by remember { mutableStateOf<Offset>(Offset(0f, 0f)) }
-    var lastFrameTime by remember { mutableLongStateOf(0L) }
-
-    var viewportSize by remember { mutableStateOf(Size.Zero) }
-    val camera = remember {
-        GameCamera(
-            targetCar = playerCar,
-            initialViewportSize = Size.Zero,
-            mapSize = gameMap.size
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameMillis { frameTime ->
-                val deltaTime = if (lastFrameTime == 0L) 0f else (frameTime - lastFrameTime) / 1000f
-                lastFrameTime = frameTime
-
-                playerCar.update(deltaTime)
-                enemyCar.update(deltaTime)
-
-                val collisionResult = playerCar.checkCollision(enemyCar)
-                if (collisionResult.isColliding) {
-                    handleCollision(playerCar, enemyCar, collisionResult)
-                }
-
-                gameTime = frameTime
-            }
-            delay(16)
-        }
-    }
+    var isStickActive by remember { mutableStateOf(false) }
+    var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
+    var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-            .pointerInteropFilter { event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                        touchPosition = Offset(event.x, event.y)
-                        viewModel.movePlayer(touchPosition)
-                        true
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        touchPosition = Offset(0f, 0f)
-                        viewModel.movePlayer(touchPosition)
-                        playerCar.stopTurn()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-            .onGloballyPositioned {
-                viewModel.init(playerCar, gameMap, camera)
-                viewModel.runGame()
-            }
     ) {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { size ->
-                    viewportSize = Size(size.width.toFloat(), size.height.toFloat())
-                    camera.setViewportSize(viewportSize)
+                    state.controllingStick.setScreenSize(
+                        size.width.toFloat(),
+                        size.height.toFloat()
+                    )
+                    state.gameCamera.setNewViewportSize(
+                        Size(
+                            size.width.toFloat(),
+                            size.height.toFloat()
+                        )
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            if (state.controllingStick.isInside(offset)) {
+                                isStickActive = true
+                                val angle = state.controllingStick.getTouchAngle(offset)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(offset)
+                            } else {
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (isStickActive) {
+                                val angle = state.controllingStick.getTouchAngle(change.position)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(change.position)
+                            }
+                        },
+                        onDragEnd = {
+                            if (isStickActive) {
+                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDragCancel = {
+                            if (isStickActive) {
+                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        }
+                    )
                 }
         ) {
-            if (viewportSize.width <= 0) return@Canvas
-
-            val (cameraPos, zoom) = camera.getViewMatrix()
-            val baseCellSize = min(size.width, size.height) / gameMap.size.toFloat()
+            // TODO: убрать
+            val (_, zoom) = state.gameCamera.getViewMatrix()
+            val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom
 
             // Draw map
-            for (i in 0 until gameMap.size) {
-                for (j in 0 until gameMap.size) {
-                    val worldPos = Offset(j.toFloat(), i.toFloat())
-                    val screenPos = camera.worldToScreen(worldPos)
+            drawGameMap(state.gameMap, state.gameCamera, size)
 
-                    val color = when (gameMap.getTerrainAt(i, j)) {
-                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
-                        GameMap.TerrainType.ROAD -> Color(0xFF616161)
-                    }
 
-                    drawRect(color, screenPos, Size(scaledCellSize, scaledCellSize))
-                    drawRect(
-                        Color.Black.copy(alpha = 0.3f),
-                        screenPos,
-                        Size(scaledCellSize, scaledCellSize),
-                        style = Stroke(1f)
-                    )
-                }
-            }
+            drawControllingStick(
+                state.controllingStick,
+                currentStickInputAngle,
+                currentStickInputDistanceFactor
+            )
 
-            val enemyScreenPos = camera.worldToScreen(enemyCar.position)
+            val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
-                degrees = enemyCar.visualDirection * (180f / PI.toFloat()),
-                pivot = enemyScreenPos
-            ) {
-                val carWidthPx = Car.WIDTH * scaledCellSize
-                val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Green,
-                    Offset(enemyScreenPos.x - carLengthPx / 2, enemyScreenPos.y - carWidthPx / 2),
-                    Size(carLengthPx, carWidthPx)
-                )
-            }
-
-            val playerScreenPos = camera.worldToScreen(playerCar.position)
-            rotate(
-                degrees = playerCar.visualDirection * (180f / PI.toFloat()),
+                degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = playerScreenPos
             ) {
                 val carWidthPx = Car.WIDTH * scaledCellSize
                 val carLengthPx = Car.LENGTH * scaledCellSize
-                drawRect(
-                    Color.Red,
+
+                drawImageBitmap(
+                    bitmaps["car" + state.car.id + "_" + state.car.currentSprite]!!,
                     Offset(playerScreenPos.x - carLengthPx / 2, playerScreenPos.y - carWidthPx / 2),
                     Size(carLengthPx, carWidthPx)
                 )
             }
-
-            drawCircle(
-                Color.Blue.copy(alpha = 0.5f),
-                radius = 30f,
-                center = touchPosition
-            )
         }
     }
 }

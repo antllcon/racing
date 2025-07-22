@@ -8,6 +8,8 @@ import com.mobility.race.domain.GameMap
 interface IGameplay {
     fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera)
     fun runGame()
+    fun movePlayer(elapsedTime: Float)
+    fun moveCamera(elapsedTime: Float)
+    fun setDirectionAngle(angle: Float?)
     fun stopGame()
-    fun movePlayer(touchCoordinates: Offset)
 }
