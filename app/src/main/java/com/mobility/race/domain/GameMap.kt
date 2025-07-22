@@ -17,9 +17,9 @@ class GameMap private constructor(
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 12
-        private const val DEFAULT_MAP_HEIGHT = 12
-        private const val DEFAULT_CORE_POINT = 8
+        private const val DEFAULT_MAP_WIDTH = 13
+        private const val DEFAULT_MAP_HEIGHT = 13
+        private const val DEFAULT_CORE_POINT = 6
 
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
@@ -114,31 +114,45 @@ class GameMap private constructor(
         }
 
         private fun removeDeadEndsInternal(grid: Array<IntArray>) {
-            var deadEndRemovedInPass: Boolean
-            val width = grid[0].size
-            val height = grid.size
-
+            var removedSomething: Boolean
             do {
-                deadEndRemovedInPass = false
-                for (y in 1 until height - 1) {
-                    for (x in 1 until width - 1) {
-                        if (grid[y][x] == 2) {
-                            var roadNeighbors = 0
+                removedSomething = false
+                val deadEnds = findDeadEndCells(grid)
 
-                            if (grid[y - 1][x] == 1 || grid[y - 1][x] == 2) roadNeighbors++
-                            if (grid[y + 1][x] == 1 || grid[y + 1][x] == 2) roadNeighbors++
-                            if (grid[y][x - 1] == 1 || grid[y][x - 1] == 2) roadNeighbors++
-                            if (grid[y][x + 1] == 1 || grid[y][x + 1] == 2) roadNeighbors++
-
-                            if (roadNeighbors <= 1) {
-                                grid[y][x] = 0
-                                deadEndRemovedInPass = true
-                            }
-                        }
+                for ((x, y) in deadEnds) {
+                    if (getRoadNeighbors(grid, x, y).size == 1) {
+                        grid[y][x] = 0
+                        removedSomething = true
                     }
                 }
-            } while (deadEndRemovedInPass)
+            } while (removedSomething)
         }
+
+        private fun findDeadEndCells(grid: Array<IntArray>): List<Pair<Int, Int>> {
+            val deadEnds = mutableListOf<Pair<Int, Int>>()
+            for (y in 1 until grid.size - 1) {
+                for (x in 1 until grid[0].size - 1) {
+                    if (grid[y][x] in listOf(1, 2) && getRoadNeighbors(grid, x, y).size == 1) {
+                        deadEnds.add(x to y)
+                    }
+                }
+            }
+            return deadEnds
+        }
+
+        private fun getRoadNeighbors(grid: Array<IntArray>, x: Int, y: Int): List<Pair<Int, Int>> {
+            val neighbors = mutableListOf<Pair<Int, Int>>()
+            val directions = listOf(0 to -1, 0 to 1, -1 to 0, 1 to 0)
+            for ((dx, dy) in directions) {
+                val nx = x + dx
+                val ny = y + dy
+                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(1, 2)) {
+                    neighbors.add(nx to ny)
+                }
+            }
+            return neighbors
+        }
+
 
         private fun determinationCellTypesInternal(grid: Array<IntArray>) {
             val width = grid[0].size
