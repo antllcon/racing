@@ -23,6 +23,8 @@ import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
+import com.mobility.race.presentation.GameEngine
+import com.mobility.race.presentation.GameState
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,7 +45,7 @@ data class PlayerInput(
 class MultiplayerGameViewModel(
     savedStateHandle: SavedStateHandle,
     private val httpClient: HttpClient
-) : ViewModel(), IGameplay {
+) : ViewModel() {
 
     private val _gateway: IGateway = Gateway(
         client = httpClient,
@@ -84,12 +86,10 @@ class MultiplayerGameViewModel(
     init {
         viewModelScope.launch {
             try {
-                println(" ===== я в init ")
-
                 car =
                     Car(id = "TEMP_ID", playerName = _playerName, initialPosition = Offset(5f, 5f))
-                map = GameMap.createRaceTrackMap()
-                camera = GameCamera(car, Size.Zero)
+                map = GameMap.generateDungeonMap()
+                camera = GameCamera(car.position, Size.Zero, GameMap.)
 
                 _gameEngine = GameEngine(
                     localPlayerId = car.id,
@@ -134,11 +134,11 @@ class MultiplayerGameViewModel(
         }
     }
 
-    override fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
+    private fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
         println("Пустой метод")
     }
 
-    override fun runGame() {
+    private  fun runGame() {
         println(" ==== запуск runGame")
 
         if (!isGameEngineInitialized()) {
@@ -154,7 +154,7 @@ class MultiplayerGameViewModel(
         startGameLoop()
     }
 
-    override fun movePlayer(touchCoordinates: Offset) {
+    private  fun movePlayer(touchCoordinates: Offset) {
         if (!_isViewModelReady.value || !::car.isInitialized) return
 
         val isAccelerating = touchCoordinates != Offset.Zero
@@ -200,7 +200,6 @@ class MultiplayerGameViewModel(
                         car = updatedCar
 
                         camera.setTargetCar(updatedCar)
-
                         _gameEngine.updatePlayerInstance(updatedCar)
                         _gameEngine.updateLocalPlayerId(updatedCar.id)
 
@@ -284,7 +283,7 @@ class MultiplayerGameViewModel(
         }
     }
 
-    override fun stopGame() {
+    private fun stopGame() {
         println("ViewModel: try to leave room $_roomName")
         _gameLoopJob?.cancel()
         viewModelScope.launch {
@@ -307,10 +306,7 @@ class MultiplayerGameViewModel(
     }
 
     private fun startGameLoop() {
-        // TODO: возможно оставить с проверками
         _gameLoopJob = viewModelScope.launch(Dispatchers.Default) {
-            println(" ==== игровой цикл ")
-
             var lastTime = System.currentTimeMillis()
 
             while (isActive) {

@@ -9,7 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
-import com.mobility.race.presentation.MultiplayerGameViewModelFactory
+import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO

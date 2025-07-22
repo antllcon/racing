@@ -1,4 +1,4 @@
-package com.mobility.race.presentation
+package com.mobility.race.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
