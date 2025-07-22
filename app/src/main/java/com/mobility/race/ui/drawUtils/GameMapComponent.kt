@@ -35,6 +35,7 @@ fun DrawScope.drawGameMap(gameMap: GameMap, gameCamera: GameCamera, canvasSize: 
 
             val worldPos = Offset(x.toFloat(), y.toFloat())
             val screenPos = gameCamera.worldToScreen(worldPos)
+            println(imageName)
 
             drawImageBitmap(
                 bitmapStorage[imageName]!!,
