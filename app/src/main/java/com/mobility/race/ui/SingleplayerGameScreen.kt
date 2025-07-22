@@ -15,17 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawGameMap
 import kotlin.math.PI
 import kotlin.math.min
 
@@ -66,7 +65,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                                 val angle = state.controllingStick.getTouchAngle(offset)
                                 viewModel.setDirectionAngle(angle)
                                 currentStickInputAngle = angle
-                                currentStickInputDistanceFactor = state.controllingStick.getDistanceFactor(offset)
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(offset)
                             } else {
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -78,7 +78,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                                 val angle = state.controllingStick.getTouchAngle(change.position)
                                 viewModel.setDirectionAngle(angle)
                                 currentStickInputAngle = angle
-                                currentStickInputDistanceFactor = state.controllingStick.getDistanceFactor(change.position)
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(change.position)
                             }
                         },
                         onDragEnd = {
@@ -100,33 +101,20 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                     )
                 }
         ) {
+            // TODO: убрать
             val (_, zoom) = state.gameCamera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom
 
             // Draw map
-            for (i in 0 until state.gameMap.size) {
-                for (j in 0 until state.gameMap.size) {
-                    val worldPos = Offset(j.toFloat(), i.toFloat())
-                    val screenPos = state.gameCamera.worldToScreen(worldPos)
+            drawGameMap(state.gameMap, state.gameCamera, size)
 
-                    val color = when (state.gameMap.getTerrainAt(i, j)) {
-                        GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                        GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
-                        GameMap.TerrainType.ROAD -> Color(0xFF616161)
-                    }
 
-                    drawRect(color, screenPos, Size(scaledCellSize, scaledCellSize))
-                    drawRect(
-                        Color.Black.copy(alpha = 0.3f),
-                        screenPos,
-                        Size(scaledCellSize, scaledCellSize),
-                        style = Stroke(1f)
-                    )
-                }
-            }
-
-            drawControllingStick(state.controllingStick, currentStickInputAngle, currentStickInputDistanceFactor)
+            drawControllingStick(
+                state.controllingStick,
+                currentStickInputAngle,
+                currentStickInputDistanceFactor
+            )
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(

@@ -122,13 +122,13 @@ data class Car(
 
     companion object {
         const val MIN_SPEED = 0f
-        const val MAX_SPEED = 0.80f
+        const val MAX_SPEED = 2f
         const val ACCELERATION = 0.0064f
         const val DECELERATION = 0.0096f
-        const val LENGTH = 0.071f
-        const val WIDTH = 0.105f
+        const val LENGTH = 0.142f
+        const val WIDTH = 0.21f
         const val MAP_SIZE = 10f
-        const val MAX_DIRECTION_CHANGE = 0.20f
+        const val MAX_DIRECTION_CHANGE = 0.09f
         const val VISUAL_LAG_SPEED = 0.05f
         const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
     }

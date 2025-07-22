@@ -10,7 +10,7 @@ import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import com.mobility.race.presentation.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 
 @Composable
 fun MultiplayerGameScreen(
@@ -26,15 +26,17 @@ fun MultiplayerGameScreen(
 
     LifecycleEventHandler(
         onCreate = {
+            val gameMap: GameMap = GameMap.generateDungeonMap()
             val playerCar = Car(id = "придумать как получать id", playerName = playerName)
-            val playerGameMap = GameMap.createRaceTrackMap()
 
             viewModel.init(
                 playerCar = playerCar,
-                playerGameMap = playerGameMap,
+                playerGameMap = gameMap,
                 playerCamera = GameCamera(
                     position = playerCar.position,
-                    mapSize = playerGameMap.size
+                    viewportSize = Size.Unspecified,
+                    mapWidth = gameMap.width,
+                    mapHeight = gameMap.height
                 )
             )
         },

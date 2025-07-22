@@ -2,18 +2,17 @@ package com.mobility.race.domain
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.min
 
 data class GameCamera(
     val position: Offset,
     var viewportSize: Size = Size.Unspecified,
-    val mapSize: Int = 10,
+    val mapWidth: Int,
+    val mapHeight: Int
 ) {
     companion object {
         private const val BASE_SMOOTHNESS = 0.1f
-        private const val FIXED_ZOOM = 12f
+        private const val FIXED_ZOOM = 6f
         private const val FPS_NORMALIZATION = 60f
         private const val LOOK_AHEAD_FACTOR = 0.25f
     }
@@ -30,9 +29,11 @@ data class GameCamera(
     fun getViewMatrix(): Pair<Offset, Float> = position to FIXED_ZOOM
 
     fun worldToScreen(worldPos: Offset): Offset {
-        val cellSize = calculateCellSize()
-        return (worldPos - position) * cellSize * FIXED_ZOOM +
-                Offset(viewportSize.width / 2, viewportSize.height / 2)
+        val cellSize: Float = calculateCellSize()
+        return (worldPos - position) * cellSize * FIXED_ZOOM + Offset(
+            x = viewportSize.width / 2,
+            y = viewportSize.height / 2
+        )
     }
 
     fun setNewViewportSize(newSize: Size) {
@@ -40,6 +41,6 @@ data class GameCamera(
     }
 
     private fun calculateCellSize(): Float {
-        return min(viewportSize.width, viewportSize.height) / mapSize
+        return min(a = viewportSize.width, b = viewportSize.height) / mapWidth
     }
 }

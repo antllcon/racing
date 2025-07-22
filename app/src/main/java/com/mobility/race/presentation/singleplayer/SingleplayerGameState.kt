@@ -1,6 +1,4 @@
 package com.mobility.race.presentation.singleplayer
-
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.ControllingStick
@@ -17,15 +15,21 @@ data class SingleplayerGameState(
 ) {
     companion object {
         fun default(carId: String): SingleplayerGameState {
-            val car = Car(position = Offset(5f, 5f), id = carId)
+            val gameMap: GameMap = GameMap.generateDungeonMap()
+            val car = Car(position = gameMap.finishCellPos, id = carId)
 
             return SingleplayerGameState(
                 directionAngle = null,
                 isGameRunning = false,
                 controllingStick = ControllingStick(),
                 car = car,
-                gameMap = GameMap.createRaceTrackMap(),
-                gameCamera = GameCamera(position = car.position, viewportSize = Size.Unspecified)
+                gameMap = gameMap,
+                gameCamera = GameCamera(
+                    position = car.position,
+                    viewportSize = Size.Unspecified,
+                    mapWidth = gameMap.width,
+                    mapHeight = gameMap.height
+                )
             )
         }
     }
