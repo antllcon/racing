@@ -31,6 +31,20 @@ fun bitmapStorage(): Map<String, ImageBitmap> {
         "car6_1" to ImageBitmap.imageResource(R.drawable.car6_1),
         "car6_2" to ImageBitmap.imageResource(R.drawable.car6_2),
         "car6_3" to ImageBitmap.imageResource(R.drawable.car6_3),
-        "car6_4" to ImageBitmap.imageResource(R.drawable.car6_4)
+        "car6_4" to ImageBitmap.imageResource(R.drawable.car6_4),
+        "terrain_000" to ImageBitmap.imageResource(R.drawable.terrain_000),
+        "terrain_010" to ImageBitmap.imageResource(R.drawable.terrain_010),
+        "terrain_201" to ImageBitmap.imageResource(R.drawable.terrain_201),
+        "terrain_202" to ImageBitmap.imageResource(R.drawable.terrain_202),
+        "terrain_203" to ImageBitmap.imageResource(R.drawable.terrain_203),
+        "terrain_204" to ImageBitmap.imageResource(R.drawable.terrain_204),
+        "terrain_205" to ImageBitmap.imageResource(R.drawable.terrain_205),
+        "terrain_206" to ImageBitmap.imageResource(R.drawable.terrain_206),
+        "terrain_211" to ImageBitmap.imageResource(R.drawable.terrain_211),
+        "terrain_212" to ImageBitmap.imageResource(R.drawable.terrain_212),
+        "terrain_213" to ImageBitmap.imageResource(R.drawable.terrain_213),
+        "terrain_214" to ImageBitmap.imageResource(R.drawable.terrain_214),
+        "terrain_215" to ImageBitmap.imageResource(R.drawable.terrain_215),
+        "terrain_216" to ImageBitmap.imageResource(R.drawable.terrain_216)
     )
 }

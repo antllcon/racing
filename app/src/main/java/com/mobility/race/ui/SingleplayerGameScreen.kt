@@ -106,15 +106,13 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
             val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
             val scaledCellSize = baseCellSize * zoom
 
-            // Draw map
-            drawGameMap(state.gameMap, state.gameCamera, size)
-
-
+            drawGameMap(state.gameMap, state.gameCamera, size, bitmaps)
             drawControllingStick(
                 state.controllingStick,
                 currentStickInputAngle,
                 currentStickInputDistanceFactor
             )
+
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(

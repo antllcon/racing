@@ -15,6 +15,8 @@ fun DrawScope.drawImageBitmap(imageBitmap: ImageBitmap, offset: Offset, size: Si
     val scaleY = size.height / imgHeight
 
     this.drawIntoCanvas { canvas: Canvas ->
+        canvas.save()
+
         canvas.translate(offset.x, offset.y)
         canvas.scale(scaleX, scaleY)
         canvas.drawImage(
@@ -22,4 +24,6 @@ fun DrawScope.drawImageBitmap(imageBitmap: ImageBitmap, offset: Offset, size: Si
             Offset(0f, 0f),
             Paint()
         )
+
+        canvas.restore()
     }}

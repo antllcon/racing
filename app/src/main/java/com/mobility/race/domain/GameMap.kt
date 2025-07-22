@@ -17,8 +17,8 @@ class GameMap private constructor(
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 12
-        private const val DEFAULT_MAP_HEIGHT = 12
+        private const val DEFAULT_MAP_WIDTH = 24
+        private const val DEFAULT_MAP_HEIGHT = 24
         private const val DEFAULT_CORE_POINT = 8
 
         fun generateDungeonMap(
@@ -161,7 +161,6 @@ class GameMap private constructor(
                         else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 104
                         else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 105
                         else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 106
-                        else index = 100
                     } else if (currentCellType == 2) {
                         if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 201
                         else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 202
@@ -196,6 +195,22 @@ class GameMap private constructor(
     }
 
     val size: Int get() = height
+
+    fun getTerrainName(x: Int, y: Int): String {
+        var name = "terrain_"
+
+        if (getTerrainAt(x, y) == TerrainType.GRASS) {
+            name += "000"
+        } else {
+            name += "2" + grid[y][x].toString().takeLast(2)
+        }
+
+        if (name == "terrain_200") {
+            name = "terrain_000"
+        }
+
+        return name
+    }
 
     fun getTerrainAt(x: Int, y: Int): TerrainType {
         return when (grid[y][x] / 100) {
