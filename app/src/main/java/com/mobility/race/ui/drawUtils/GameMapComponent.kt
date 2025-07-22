@@ -32,13 +32,6 @@ fun DrawScope.drawGameMap(gameMap: GameMap, gameCamera: GameCamera, canvasSize: 
             }
 
             val imageName = gameMap.getTerrainName(x, y)
-            val terrainType = gameMap.getTerrainAt(x, y)
-
-            val fillColor = when (terrainType) {
-                GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
-                GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
-                GameMap.TerrainType.ROAD -> Color(0xFF616161)
-            }
 
             val worldPos = Offset(x.toFloat(), y.toFloat())
             val screenPos = gameCamera.worldToScreen(worldPos)

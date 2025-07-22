@@ -5,7 +5,7 @@ import kotlin.math.atan2
 import kotlin.random.Random
 
 class GameMap private constructor(
-    private val grid: Array<IntArray>,
+    val grid: Array<IntArray>,
     val width: Int,
     val height: Int,
     val finishCellPos: Offset
@@ -155,20 +155,20 @@ class GameMap private constructor(
                     val right = grid[y][x + 1]
 
                     if (currentCellType == 1) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 101
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 102
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 103
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 104
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 105
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 106
+                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 110
+                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 120
+                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 130
+                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 140
+                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 150
+                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 160
                     } else if (currentCellType == 2) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 201
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 202
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 203
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 204
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 205
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 206
-                        else index = 200
+                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 210
+                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 220
+                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 230
+                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 240
+                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 250
+                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 260
+                        else index = 10
                     }
 
                     if (index != 0) {
@@ -197,22 +197,11 @@ class GameMap private constructor(
     val size: Int get() = height
 
     fun getTerrainName(x: Int, y: Int): String {
-        var name = "terrain_"
 
-        if (getTerrainAt(x, y) == TerrainType.GRASS) {
-            name += "000"
-        } else {
-            name += "2" + grid[y][x].toString().takeLast(2)
-        }
-
-        if (name == "terrain_200") {
-            name = "terrain_000"
-        }
-
-        return name
+        return "terrain_" + grid[y][x]
     }
 
-    fun getTerrainAt(x: Int, y: Int): TerrainType {
+    private fun getTerrainAt(x: Int, y: Int): TerrainType {
         return when (grid[y][x] / 100) {
             1 -> TerrainType.ROAD
             2 -> TerrainType.ROAD
