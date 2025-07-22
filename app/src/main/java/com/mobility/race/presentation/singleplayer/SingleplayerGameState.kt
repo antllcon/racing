@@ -1,5 +1,4 @@
 package com.mobility.race.presentation.singleplayer
-
 import androidx.compose.ui.geometry.Size
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.ControllingStick

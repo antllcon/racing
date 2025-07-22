@@ -19,7 +19,7 @@ class GameMap private constructor(
     companion object {
         private const val DEFAULT_MAP_WIDTH = 12
         private const val DEFAULT_MAP_HEIGHT = 12
-        private const val DEFAULT_CORE_POINT = 6
+        private const val DEFAULT_CORE_POINT = 8
 
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
@@ -28,12 +28,16 @@ class GameMap private constructor(
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
 
-            generateCoresInternal(grid, roomCount)
-            generateRoadsInternal(grid)
-            determinationCellTypesInternal(grid)
-            val finishCellPos: Offset = findStartCellInternal(grid)
+            val maxPossibleRooms = ((width - 2) / 2 + 1) * ((height - 2) / 2 + 1)
+            val actualRoomCount = roomCount.coerceAtMost(maxPossibleRooms)
 
-            return GameMap(grid, width, height, finishCellPos)
+            generateCoresInternal(grid, actualRoomCount)
+            generateRoadsInternal(grid)
+            removeDeadEndsInternal(grid)
+            determinationCellTypesInternal(grid)
+            val startCellPos: Offset = findStartCellInternal(grid)
+
+            return GameMap(grid, width, height, startCellPos)
         }
 
         private fun generateCoresInternal(grid: Array<IntArray>, roomCount: Int) {
@@ -41,14 +45,20 @@ class GameMap private constructor(
             val height: Int = grid.size
 
             var generatedRooms = 0
-            while (generatedRooms < roomCount) {
-                val x: Int = (Random.nextInt(until = (width - 2) / 2) * 2) + 1
-                val y: Int = (Random.nextInt(until = (height - 2) / 2) * 2) + 1
+            val maxAttempts = roomCount * 5
+            var attempts = 0
 
-                if (grid[y][x] == 0) {
-                    grid[y][x] = 1
-                    generatedRooms++
+            while (generatedRooms < roomCount && attempts < maxAttempts) {
+                val x: Int = (Random.nextInt(until = (width - 2) / 2 + 1) * 2) + 1
+                val y: Int = (Random.nextInt(until = (height - 2) / 2 + 1) * 2) + 1
+
+                if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
+                    if (grid[y][x] == 0) {
+                        grid[y][x] = 1
+                        generatedRooms++
+                    }
                 }
+                attempts++
             }
         }
 
@@ -73,20 +83,61 @@ class GameMap private constructor(
             rooms.add(rooms.first())
 
             for (i in 1 until rooms.size) {
-                var x1 = rooms[i - 1].x.toInt()
-                var y1 = rooms[i - 1].y.toInt()
+                val x1 = rooms[i - 1].x.toInt()
+                val y1 = rooms[i - 1].y.toInt()
                 val x2 = rooms[i].x.toInt()
                 val y2 = rooms[i].y.toInt()
 
-                while (x1 != x2) {
-                    x1 += if (x2 > x1) 1 else -1
-                    if (grid[y1][x1] == 0) grid[y1][x1] = 2
-                }
-                while (y1 != y2) {
-                    y1 += if (y2 > y1) 1 else -1
-                    if (grid[y1][x1] == 0) grid[y1][x1] = 2
-                }
+                carvePath(
+                    grid,
+                    Offset(x1.toFloat(), y1.toFloat()),
+                    Offset(x2.toFloat(), y2.toFloat())
+                )
             }
+        }
+
+        private fun carvePath(grid: Array<IntArray>, start: Offset, end: Offset) {
+            var x1 = start.x.toInt()
+            var y1 = start.y.toInt()
+            val x2 = end.x.toInt()
+            val y2 = end.y.toInt()
+
+            while (x1 != x2) {
+                x1 += if (x2 > x1) 1 else -1
+                if (grid[y1][x1] == 0) grid[y1][x1] = 2
+            }
+
+            while (y1 != y2) {
+                y1 += if (y2 > y1) 1 else -1
+                if (grid[y1][x1] == 0) grid[y1][x1] = 2
+            }
+        }
+
+        private fun removeDeadEndsInternal(grid: Array<IntArray>) {
+            var deadEndRemovedInPass: Boolean
+            val width = grid[0].size
+            val height = grid.size
+
+            do {
+                deadEndRemovedInPass = false
+                for (y in 1 until height - 1) {
+                    for (x in 1 until width - 1) {
+                        if (grid[y][x] == 2) {
+                            var roadNeighbors = 0
+
+                            if (grid[y - 1][x] == 1 || grid[y - 1][x] == 2) roadNeighbors++
+                            if (grid[y + 1][x] == 1 || grid[y + 1][x] == 2) roadNeighbors++
+                            if (grid[y][x - 1] == 1 || grid[y][x - 1] == 2) roadNeighbors++
+                            if (grid[y][x + 1] == 1 || grid[y][x + 1] == 2) roadNeighbors++
+
+                            if (roadNeighbors <= 1) {
+                                grid[y][x] = 0
+                                deadEndRemovedInPass = true
+                            }
+                        }
+                    }
+                }
+            } while (deadEndRemovedInPass)
         }
 
         private fun determinationCellTypesInternal(grid: Array<IntArray>) {
@@ -110,7 +161,7 @@ class GameMap private constructor(
                         else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 104
                         else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 105
                         else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 106
-
+                        else index = 100
                     } else if (currentCellType == 2) {
                         if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 201
                         else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 202
@@ -118,6 +169,7 @@ class GameMap private constructor(
                         else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 204
                         else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 205
                         else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 206
+                        else index = 200
                     }
 
                     if (index != 0) {
@@ -128,20 +180,19 @@ class GameMap private constructor(
         }
 
         private fun findStartCellInternal(grid: Array<IntArray>): Offset {
-            var spawnRoom = Offset(x = grid[0].size.toFloat(), y = grid.size.toFloat())
+            var startRoom = Offset(x = grid[0].size.toFloat(), y = grid.size.toFloat())
 
             for (y: Int in 1 until grid.size - 1) {
                 for (x: Int in 1 until grid[y].size - 1) {
                     if (grid[y][x] / 100 == 1) {
-                        if (x < spawnRoom.x || y < spawnRoom.y) {
-                            spawnRoom = Offset(x = x.toFloat(), y = y.toFloat())
+                        if (x < startRoom.x || y < startRoom.y) {
+                            startRoom = Offset(x = x.toFloat(), y = y.toFloat())
                         }
                     }
                 }
             }
-            return spawnRoom
+            return startRoom
         }
-
     }
 
     val size: Int get() = height
@@ -159,8 +210,8 @@ class GameMap private constructor(
     }
 
     fun getSpeedModifier(position: Offset): Float {
-        val cellX: Int = position.x.toInt().coerceIn(0, size - 1)
-        val cellY: Int = position.y.toInt().coerceIn(0, size - 1)
+        val cellX: Int = position.x.toInt().coerceIn(0, width - 1)
+        val cellY: Int = position.y.toInt().coerceIn(0, height - 1)
 
         return getTerrainAt(x = cellX, y = cellY).speedModifier
     }
