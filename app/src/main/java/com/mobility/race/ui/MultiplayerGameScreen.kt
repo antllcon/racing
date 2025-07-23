@@ -11,6 +11,7 @@ import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 
 @Composable
 fun MultiplayerGameScreen(
