@@ -12,19 +12,22 @@ class GameMap private constructor(
 ) {
     enum class TerrainType(val speedModifier: Float) {
         ROAD(speedModifier = 1.0f),
-        GRASS(speedModifier = 0.2f),
-        ABYSS(speedModifier = .0f)
+        GRASS(speedModifier = 0.5f),
+        ABYSS(speedModifier = .0f),
+        WATER(speedModifier = 0.3f)
     }
 
     companion object {
         private const val DEFAULT_MAP_WIDTH = 13
         private const val DEFAULT_MAP_HEIGHT = 13
         private const val DEFAULT_CORE_POINT = 6
+        private const val DEFAULT_WATER_PROPABILITY = 0.2f
 
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
             height: Int = DEFAULT_MAP_HEIGHT,
-            roomCount: Int = DEFAULT_CORE_POINT
+            roomCount: Int = DEFAULT_CORE_POINT,
+            waterProbability: Float = DEFAULT_WATER_PROPABILITY
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
 
@@ -34,9 +37,9 @@ class GameMap private constructor(
             generateCoresInternal(grid, actualRoomCount)
             generateRoadsInternal(grid)
             removeDeadEndsInternal(grid)
-            determinationCellTypesInternal(grid)
             val startCellPos: Offset = findStartCellInternal(grid)
-
+            createWaterCellsInternal(grid, startCellPos, waterProbability)
+            determinationCellTypesInternal(grid)
             return GameMap(grid, width, height, startCellPos)
         }
 
@@ -153,6 +156,26 @@ class GameMap private constructor(
             return neighbors
         }
 
+        private fun createWaterCellsInternal(
+            grid: Array<IntArray>,
+            startPosition: Offset,
+            waterProbability: Float
+        ) {
+            val waterRoomCode = 300
+
+            for (y in 1 until grid.size - 1) {
+                for (x in 1 until grid[y].size - 1) {
+                    if (grid[y][x] / 100 == 2 &&
+                        !(x == startPosition.x.toInt() && y == startPosition.y.toInt())
+                    ) {
+
+                        if (Random.nextFloat() < waterProbability) {
+                            grid[y][x] = waterRoomCode
+                        }
+                    }
+                }
+            }
+        }
 
         private fun determinationCellTypesInternal(grid: Array<IntArray>) {
             val width = grid[0].size
@@ -176,6 +199,7 @@ class GameMap private constructor(
                         else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 105
                         else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 106
                         else index = 100
+
                     } else if (currentCellType == 2) {
                         if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 201
                         else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 202
@@ -215,6 +239,7 @@ class GameMap private constructor(
         return when (grid[y][x] / 100) {
             1 -> TerrainType.ROAD
             2 -> TerrainType.ROAD
+            3 -> TerrainType.WATER
             else -> TerrainType.GRASS
         }
     }

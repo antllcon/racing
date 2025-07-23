@@ -23,6 +23,7 @@ fun DrawScope.drawGameMap(gameMap: GameMap, gameCamera: GameCamera, canvasSize: 
 
             val fillColor = when (terrainType) {
                 GameMap.TerrainType.ABYSS -> Color.Blue.copy(alpha = 0.7f)
+                GameMap.TerrainType.WATER -> Color.Blue.copy(alpha = 0.7f)
                 GameMap.TerrainType.GRASS -> Color(0xFF4CAF50)
                 GameMap.TerrainType.ROAD -> Color(0xFF616161)
             }
