@@ -2,14 +2,8 @@ package com.mobility.race.ui.drawUtils
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.draw
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 import kotlin.math.min
@@ -35,7 +29,7 @@ fun DrawScope.drawGameMap(gameMap: GameMap, gameCamera: GameCamera, canvasSize: 
 
             val worldPos = Offset(x.toFloat(), y.toFloat())
             val screenPos = gameCamera.worldToScreen(worldPos)
-            println(imageName)
+//            println(imageName)
 
             drawImageBitmap(
                 bitmapStorage[imageName]!!,
