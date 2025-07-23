@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SingleplayerGameViewModel :
-    BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..3).random().toString()))) {
+    BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..6).random().toString()))) {
     private var gameCycle: Job? = null
 
     init {
