@@ -31,6 +31,7 @@ class SingleplayerGameViewModel :
                 val elapsedTime = (currentTime - lastTime) / 1000f
 
                 movePlayer(elapsedTime)
+                checkCheckpoints()
                 moveCamera()
                 lastTime = currentTime
 
@@ -49,6 +50,31 @@ class SingleplayerGameViewModel :
         }
     }
 
+    private fun checkCheckpoints() {
+        val car = stateValue.car
+        val manager = stateValue.checkpointManager
+        val carId = car.id
+
+        val nextCheckpoint = manager.getNextCheckpoint(carId) ?: return
+
+        val carCellX = car.position.x.toInt()
+        val carCellY = car.position.y.toInt()
+
+        if (carCellX == nextCheckpoint.x.toInt() && carCellY == nextCheckpoint.y.toInt()) {
+            manager.onCheckpointReached(carId, nextCheckpoint)
+
+            val newLaps = manager.getLapsForCar(carId)
+            if (newLaps != stateValue.lapsCompleted) {
+                modifyState { copy(lapsCompleted = newLaps) }
+                println("Lap ${stateValue.lapsCompleted}/${stateValue.totalLaps} completed!")
+            }
+
+            if (stateValue.lapsCompleted >= stateValue.totalLaps) {
+                endRace()
+            }
+        }
+    }
+
     private fun moveCamera() {
         modifyState {
             copy(
@@ -64,6 +90,13 @@ class SingleplayerGameViewModel :
             )
         }
     }
+
+    private fun endRace() {
+        modifyState { copy(isGameRunning = false) }
+        println("Player ${stateValue.car.playerName} finished the race!")
+        // Навигация на экран результатов
+    }
+
 
     fun stopGame() {
         gameCycle?.cancel()

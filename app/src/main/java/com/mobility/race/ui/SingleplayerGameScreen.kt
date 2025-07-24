@@ -5,12 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -18,13 +21,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawControllingStick
-import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawGameMap
+import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 import kotlin.math.PI
 import kotlin.math.min
 
@@ -113,6 +121,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 currentStickInputDistanceFactor
             )
 
+            val nextCheckpoint = state.checkpointManager.getNextCheckpoint(state.car.id)
+            drawNextCheckpoint(nextCheckpoint, state.gameCamera, scaledCellSize)
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
@@ -129,5 +139,13 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 )
             }
         }
+
+        Text(
+            text = "Lap: ${state.lapsCompleted + 1} / ${state.totalLaps}",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp),
+            style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        )
     }
 }

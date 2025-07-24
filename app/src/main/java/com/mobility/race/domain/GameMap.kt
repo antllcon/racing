@@ -27,7 +27,7 @@ class GameMap private constructor(
     companion object {
         private const val DEFAULT_MAP_WIDTH = 13
         private const val DEFAULT_MAP_HEIGHT = 13
-        private const val DEFAULT_CORE_POINT = 20
+        private const val DEFAULT_CORE_POINT = 15
         private const val DEFAULT_WATER_PROPABILITY = 0.1f
         private const val EMPTY_CELL_CODE = 0
         private const val CORE_CELL_CODE = 1
@@ -38,6 +38,13 @@ class GameMap private constructor(
         private data class StartInfo(
             val position: Offset,
             val direction: StartDirection
+        )
+
+        private data class CellNode(
+            val x: Int,
+            val y: Int,
+            val cameFromX: Int?,
+            val cameFromY: Int?
         )
 
         fun generateDungeonMap(
@@ -57,7 +64,9 @@ class GameMap private constructor(
             createWaterCellsInternal(grid, waterProbability)
             determinationCellTypesInternal(grid)
 
-            val (route, startInfo) = generateRouteAndSetFinishInternal(grid)
+            val startInfo = findStartCellInternal(grid)
+
+            val route = generateRouteFromStart(grid, startInfo.position)
 
             return GameMap(
                 grid,
@@ -316,55 +325,114 @@ class GameMap private constructor(
         }
 
 
-        private fun generateRouteAndSetFinishInternal(grid: Array<IntArray>): Pair<List<Offset>, StartInfo> {
-            val checkpoints = mutableListOf<Offset>()
+        private fun generateRouteFromStart(grid: Array<IntArray>, startPos: Offset): List<Offset> {
             val height = grid.size
             val width = grid[0].size
+            val route = mutableListOf<Offset>()
 
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    val cellCode = grid[y][x]
-                    if ((cellCode in 100..199) || (cellCode in 300..399)) {
-                        checkpoints.add(Offset(x.toFloat(), y.toFloat()))
+            val visited = Array(height) { BooleanArray(width) { false } }
+
+            val addedCheckpoints = mutableSetOf<Pair<Int, Int>>()
+
+            val startX = startPos.x.toInt()
+            val startY = startPos.y.toInt()
+
+            if (grid[startY][startX] in 100..299) {
+                val posPair = Pair(startX, startY)
+                if (!addedCheckpoints.contains(posPair)) {
+                    route.add(Offset(startX.toFloat(), startY.toFloat()))
+                    addedCheckpoints.add(posPair)
+                }
+            }
+            visited[startY][startX] = true
+
+            val directions = listOf(
+                Pair(0, -1),
+                Pair(1, 0),
+                Pair(0, 1),
+                Pair(-1, 0)
+            )
+
+            dfsExplore(
+                grid = grid,
+                visited = visited,
+                addedCheckpoints = addedCheckpoints,
+                currentX = startX,
+                currentY = startY,
+                route = route,
+                directions = directions,
+                width = width,
+                height = height
+            )
+
+            if (route.isEmpty()) {
+                println("Warning: Generated route is empty after DFS.")
+                if (grid[startY][startX] in 100..299) {
+                    val posPair = Pair(startX, startY)
+                    if (!addedCheckpoints.contains(posPair)) {
+                        route.add(Offset(startX.toFloat(), startY.toFloat()))
+                        addedCheckpoints.add(posPair)
+                    }
+                }
+            } else if (route.size == 1) {
+                println("Warning: Generated route contains only one checkpoint after DFS.")
+            }
+
+            val finishPos = Offset(startX.toFloat(), startY.toFloat())
+            if (route.isEmpty() || route.lastOrNull() != finishPos) {
+                route.add(finishPos)
+            }
+
+            return route
+        }
+
+        private fun dfsExplore(
+            grid: Array<IntArray>,
+            visited: Array<BooleanArray>,
+            addedCheckpoints: MutableSet<Pair<Int, Int>>,
+            currentX: Int,
+            currentY: Int,
+            route: MutableList<Offset>,
+            directions: List<Pair<Int, Int>>,
+            width: Int,
+            height: Int
+        ) {
+            for ((dx, dy) in directions) {
+                val nextX = currentX + dx
+                val nextY = currentY + dy
+
+                if (nextX in 0 until width && nextY in 0 until height) {
+                    val nextCellCode = grid[nextY][nextX]
+
+                    if (nextCellCode in 100..499) {
+                        if (nextCellCode in 100..299) {
+                            val posPair = Pair(nextX, nextY)
+                            if (!addedCheckpoints.contains(posPair)) {
+                                route.add(Offset(nextX.toFloat(), nextY.toFloat()))
+                                addedCheckpoints.add(posPair)
+                                // println("Added checkpoint at ($nextX, $nextY) with code $nextCellCode")
+                            } else {
+                                // println("Skipped duplicate checkpoint at ($nextX, $nextY)")
+                            }
+                        }
+
+                        if (!visited[nextY][nextX]) {
+                            visited[nextY][nextX] = true
+                            dfsExplore(
+                                grid,
+                                visited,
+                                addedCheckpoints,
+                                nextX,
+                                nextY,
+                                route,
+                                directions,
+                                width,
+                                height
+                            )
+                        }
                     }
                 }
             }
-
-            if (checkpoints.size < 2) {
-                println("Warning: Not enough checkpoints (< 2) to create a race route.")
-                val fallbackPos = Offset(width / 2f, height / 2f)
-                return Pair(emptyList(), StartInfo(fallbackPos, StartDirection.VERTICAL))
-            }
-
-            val centerX = width / 2f
-            val centerY = height / 2f
-
-            checkpoints.sortWith(compareBy {
-                atan2((it.y - centerY).toDouble(), (it.x - centerX).toDouble()).toFloat()
-            })
-
-            val finishPoint = checkpoints.last()
-            val finishX = finishPoint.x.toInt()
-            val finishY = finishPoint.y.toInt()
-
-            val originalCellCode = grid[finishY][finishX]
-
-            val (finishCode, startDirection) = when (originalCellCode) {
-                in listOf(101, 301) -> {
-                    Pair(112, StartDirection.HORIZONTAL)
-                }
-                in listOf(102, 302) -> {
-                    Pair(113, StartDirection.VERTICAL)
-                }
-                else -> {
-                    println("Warning: Unexpected cell code $originalCellCode for finish point. Using default")
-                    Pair(112, StartDirection.HORIZONTAL)
-                }
-            }
-
-            grid[finishY][finishX] = finishCode
-            val startInfo = StartInfo(finishPoint, startDirection)
-            return Pair(checkpoints, startInfo)
         }
     }
 
