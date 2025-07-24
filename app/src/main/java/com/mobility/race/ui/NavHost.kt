@@ -9,6 +9,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
+import com.mobility.race.data.Gateway
+import com.mobility.race.data.IGateway
+import com.mobility.race.data.Server
+import com.mobility.race.data.handleGatewayError
+import com.mobility.race.data.handleServerMessage
 import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.di.RoomViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
@@ -61,6 +66,13 @@ fun AppNavHost(
         }
     }
 
+    val gateway: IGateway = Gateway(
+        client = httpClient,
+        serverConfig = Server.default(),
+        onServerMessage = ::handleServerMessage,
+        onError = ::handleGatewayError
+    )
+
     NavHost(
         navController = navController,
         startDestination = Menu
@@ -98,8 +110,8 @@ fun AppNavHost(
         composable<Room> { entry ->
             val args = entry.toRoute<Room>()
 
-            val factory = remember(httpClient) {
-                RoomViewModelFactory(httpClient)
+            val factory = remember(gateway) {
+                RoomViewModelFactory(gateway)
             }
             val viewModel: RoomViewModel = viewModel(factory = factory)
 
@@ -116,8 +128,8 @@ fun AppNavHost(
             val args = entry.toRoute<MultiplayerGame>()
 
             println(" ===== Я в navHost - multiplayer")
-            val factory = remember(httpClient) {
-                MultiplayerGameViewModelFactory(httpClient)
+            val factory = remember(gateway) {
+                MultiplayerGameViewModelFactory(gateway)
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)

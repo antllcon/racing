@@ -39,7 +39,15 @@ fun RoomScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(text = playerName)
+            Text(text = "Players:")
+
+            if (isCreatingRoom) {
+                Button(
+                    onClick = {}
+                ) {
+                    Text("Play")
+                }
+            }
         }
     }
 }

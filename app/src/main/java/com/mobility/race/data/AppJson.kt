@@ -1,7 +1,9 @@
 package com.mobility.race.data
 
+import androidx.lifecycle.viewModelScope
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -46,4 +48,28 @@ val AppJson = Json {
 suspend fun sendToSession(session: WebSocketSession, message: ClientMessage) {
     val jsonStr = AppJson.encodeToString(message)
     session.send(Frame.Text(jsonStr))
+}
+
+fun handleGatewayError(errorMessage: String) {
+    println("ViewModel: Gateway error: $errorMessage")
+}
+
+fun handleServerMessage(message: ServerMessage) {
+    when(message) {
+        is ErrorResponse -> TODO()
+        is GameCountdownUpdateResponse -> TODO()
+        is GameStateUpdateResponse -> TODO()
+        is GameStopResponse -> TODO()
+        is InfoResponse -> TODO()
+        is JoinedRoomResponse -> TODO()
+        is LeftRoomResponse -> TODO()
+        is PlayerActionResponse -> TODO()
+        is PlayerConnectedResponse -> {
+//            message.playerNames
+        }
+        is PlayerDisconnectedResponse -> TODO()
+        is RoomCreatedResponse -> TODO()
+        is RoomUpdatedResponse -> TODO()
+        is StartedGameResponse -> TODO()
+    }
 }
