@@ -14,14 +14,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.mobility.race.data.Gateway
+import com.mobility.race.data.IGateway
+import com.mobility.race.data.Server
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import io.ktor.client.HttpClient
 
 @Composable
-fun CreateRoomScreen(
+fun RoomScreen(
+    playerName: String,
+    roomName: String,
+    isCreatingRoom: Boolean,
+    viewModel: MultiplayerGameViewModel,
     navigateToMultiplayer: (String, String) -> Unit
 ) {
-    var playerName: String by remember { mutableStateOf("") }
-    var roomName: String by remember { mutableStateOf("") }
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
@@ -31,28 +37,7 @@ fun CreateRoomScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            TextField(
-                value = playerName,
-                onValueChange = { playerName = it },
-                label = { Text("Your name") }
-            )
 
-            TextField(
-                value = roomName,
-                onValueChange = { roomName = it },
-                label = { Text("Room name") }
-            )
-
-            Button(
-                onClick = {
-                    if (playerName.isNotBlank() && roomName.isNotBlank()) {
-                        navigateToMultiplayer(playerName, roomName)
-                    }
-                },
-                enabled = playerName.isNotBlank() && roomName.isNotBlank()
-            ) {
-                Text("Create room")
-            }
         }
     }
 }

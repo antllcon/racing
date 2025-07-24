@@ -28,8 +28,7 @@ import com.mobility.race.R
 @Composable
 fun MenuScreen(
     navigateToSingleplayer: () -> Unit,
-    navigateToCreateRoom: () -> Unit,
-    navigateToJoinRoom: () -> Unit
+    navigateToMultiplayerMenuScreen: () -> Unit
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -68,13 +67,9 @@ fun MenuScreen(
                 Text(text = "Singleplayer Game")
             }
 
-            Button(onClick = navigateToCreateRoom)
+            Button(onClick = navigateToMultiplayerMenuScreen)
             {
-                Text(text = "CreateRoom Game")
-            }
-
-            Button(onClick = navigateToJoinRoom) {
-                Text(text = "Join room")
+                Text(text = "Multiplayer Game")
             }
         }
     }

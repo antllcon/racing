@@ -17,7 +17,6 @@ import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 fun MultiplayerGameScreen(
     playerName: String,
     roomName: String,
-    isCreatingRoom: Boolean,
     viewModel: MultiplayerGameViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -51,7 +50,6 @@ fun MultiplayerGameScreen(
     Column(modifier = modifier) {
         Text("Multiplayer room name: $roomName")
         Text("Game status: $gameStatus")
-        Text("User status: ${if (isCreatingRoom) "admin" else "player"}")
         errorMessage?.let {
             Text("Error: $it")
         }
