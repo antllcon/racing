@@ -87,9 +87,9 @@ class MultiplayerGameViewModel(
         viewModelScope.launch {
             try {
                 car =
-                    Car(id = "TEMP_ID", playerName = _playerName, initialPosition = Offset(5f, 5f))
+                    Car(id = "TEMP_ID", playerName = _playerName, position = Offset(5f, 5f))
                 map = GameMap.generateDungeonMap()
-                camera = GameCamera(car.position, Size.Zero, GameMap.)
+                camera = GameCamera(position = car.position, mapWidth = map.width, mapHeight = map.height)
 
                 _gameEngine = GameEngine(
                     localPlayerId = car.id,
@@ -123,7 +123,7 @@ class MultiplayerGameViewModel(
 
     fun onCanvasSizeChanged(size: Size) {
         if (camera.viewportSize != size) {
-            camera.setViewportSize(size)
+            camera.viewportSize = size
             println("==== поставили размеры для камеры $size")
         }
 
@@ -199,7 +199,7 @@ class MultiplayerGameViewModel(
 
                         car = updatedCar
 
-                        camera.setTargetCar(updatedCar)
+                        camera = camera.update(car.position)
                         _gameEngine.updatePlayerInstance(updatedCar)
                         _gameEngine.updateLocalPlayerId(updatedCar.id)
 
@@ -226,7 +226,7 @@ class MultiplayerGameViewModel(
                                 playerName = message.playerName,
                                 isPlayer = false,
                                 isMultiplayer = true,
-                                initialPosition = Offset(0f, 0f)
+                                position = Offset(0f, 0f)
                             )
                             _gameState.value =
                                 _gameState.value.copy(players = _gameState.value.players + newCar)

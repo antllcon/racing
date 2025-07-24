@@ -36,6 +36,12 @@ data class GameCamera(
         )
     }
 
+    fun screenToWorld(screenPos: Offset): Offset {
+        val cellSize = calculateCellSize()
+        return (screenPos - Offset(viewportSize.width / 2, viewportSize.height / 2)) /
+                (cellSize * FIXED_ZOOM) + position
+    }
+
     fun setNewViewportSize(newSize: Size) {
         viewportSize = newSize
     }
