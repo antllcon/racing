@@ -15,10 +15,8 @@ class MultiplayerGameViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         if (modelClass.isAssignableFrom(MultiplayerGameViewModel::class.java)) {
-            val savedStateHandle = extras.createSavedStateHandle()
 
             return MultiplayerGameViewModel(
-                savedStateHandle = savedStateHandle,
                 gateway = gateway
             ) as T
         }

@@ -6,30 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.mobility.race.data.Gateway
-import com.mobility.race.data.IGateway
-import com.mobility.race.data.Server
-import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.presentation.multiplayer.RoomViewModel
-import io.ktor.client.HttpClient
 
 @Composable
 fun RoomScreen(
-    playerName: String,
-    roomName: String,
-    isCreatingRoom: Boolean,
-    viewModel: RoomViewModel,
-    navigateToMultiplayer: (String, String) -> Unit
+    viewModel: RoomViewModel
 ) {
+    val state = viewModel.state.value
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
@@ -39,11 +26,19 @@ fun RoomScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
+            Text(text = state.roomId)
             Text(text = "Players:")
 
-            if (isCreatingRoom) {
+            for (player in state.playerNames)
+            {
+                Text(player)
+            }
+
+            if (state.isCreatingRoom) {
                 Button(
-                    onClick = {}
+                    onClick = {
+                        viewModel.startGame()
+                    }
                 ) {
                     Text("Play")
                 }

@@ -1,51 +1,91 @@
 package com.mobility.race.presentation.multiplayer
 
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
-import com.mobility.race.data.GameCountdownUpdateResponse
-import com.mobility.race.data.GameStateUpdateResponse
-import com.mobility.race.data.GameStopResponse
-import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
-import com.mobility.race.data.InfoResponse
 import com.mobility.race.data.JoinedRoomResponse
-import com.mobility.race.data.LeftRoomResponse
-import com.mobility.race.data.PlayerActionResponse
 import com.mobility.race.data.PlayerConnectedResponse
-import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.RoomCreatedResponse
-import com.mobility.race.data.RoomUpdatedResponse
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.data.StartedGameResponse
-import kotlinx.coroutines.delay
+import com.mobility.race.presentation.BaseViewModel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class RoomViewModel(
-    savedStateHandle: SavedStateHandle,
+    private val playerName: String,
+    private val roomName: String,
+    private val isCreatingRoom: Boolean,
+    private val navigateToMultiplayerGame: () -> Unit,
     private val gateway: IGateway
-) : ViewModel() {
-    private val playerName: String = checkNotNull(savedStateHandle["playerName"])
-    private val roomName: String = checkNotNull(savedStateHandle["roomName"])
-    private val isCreatingRoom: Boolean = checkNotNull(savedStateHandle["isCreatingRoom"])
+) : BaseViewModel<RoomState>(RoomState.default(playerName, roomName, isCreatingRoom)) {
 
     init {
+        gateway.messageFlow
+            .onEach(::handleMessage)
+            .launchIn(viewModelScope)
+
         init()
+    }
+
+    fun startGame() {
+        modifyState {
+            copy(
+                isGameStarted = true
+            )
+        }
+
+        viewModelScope.launch {
+            gateway.startGame(stateValue.roomName)
+        }
+
     }
 
     private fun init() {
         viewModelScope.launch {
             gateway.connect()
-            delay(1000)
             gateway.initPlayer(playerName)
-            delay(1000)
 
             if (isCreatingRoom) {
                 gateway.createRoom(roomName)
             } else {
                 gateway.joinRoom(roomName)
             }
+        }
+    }
+
+
+    private fun handleMessage(message: ServerMessage) {
+        when (message) {
+            is ErrorResponse -> {
+                throw Exception("Think about it!")
+            }
+            is RoomCreatedResponse -> {
+                modifyState {
+                    copy(
+                        roomId = message.roomId
+                    )
+                }
+            }
+            is JoinedRoomResponse -> {
+                modifyState {
+                    copy(
+                        roomId = message.roomId
+                    )
+                }
+            }
+            is PlayerConnectedResponse -> {
+                modifyState {
+                    copy(
+                        playerNames = message.playerNames
+                    )
+                }
+            }
+            is StartedGameResponse -> {
+                navigateToMultiplayerGame()
+            }
+            else -> Unit
         }
     }
 }
