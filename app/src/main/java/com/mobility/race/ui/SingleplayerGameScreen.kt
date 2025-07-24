@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -26,6 +25,7 @@ import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawGameMap
+import com.mobility.race.ui.drawUtils.drawMinimap
 import kotlin.math.PI
 import kotlin.math.min
 
@@ -33,8 +33,6 @@ import kotlin.math.min
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
-    var minimapSize by remember { mutableStateOf(Size(300f, 300f)) }
-    val minimapPosition = remember { Offset(30f, 30f) }
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
     var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
@@ -111,46 +109,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
             val scaledCellSize = baseCellSize * zoom
 
             drawGameMap(state.gameMap, state.gameCamera, size, bitmaps)
-            drawRoundRect(
-                color = Color.Black.copy(alpha = 0.7f),
-                topLeft = minimapPosition,
-                size = minimapSize,
-                cornerRadius = CornerRadius(8f)
-            )
-            val cellSize = min(
-                minimapSize.width / state.gameMap.width,
-                minimapSize.height / state.gameMap.height
-            )
-            for (y in 0 until state.gameMap.height) {
-                for (x in 0 until state.gameMap.width) {
-                    val terrain = state.gameMap.getTerrainType(x, y)
-                    val color = when (terrain.uppercase()) {
-                        "GRASS" -> Color(0xFF4CAF50)
-                        "ABYSS" -> Color(0xFF2196F3)
-                        "ROAD" -> Color(0xFF795548)
-                        else -> {
-                            Color.Gray
-                        }
-                    }
+            drawMinimap(state)
 
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(
-                            minimapPosition.x + x * cellSize,
-                            minimapPosition.y + y * cellSize
-                        ),
-                        size = Size(cellSize, cellSize)
-                    )
-                }
-            }
-            drawCircle(
-                color = Color.Blue,
-                center = Offset(
-                    minimapPosition.x + state.car.position.x * cellSize,
-                    minimapPosition.y + state.car.position.y * cellSize
-                ),
-                radius = cellSize * 0.7f
-            )
 
             drawControllingStick(
                 state.controllingStick,

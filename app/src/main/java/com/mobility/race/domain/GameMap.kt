@@ -325,8 +325,9 @@ class GameMap private constructor(
     fun getTerrainType(x: Int, y: Int): String {
         return when (grid[y][x] / 100) {
             1 -> "ROAD"
-            2 -> "ROAD"
-            3 -> "ABYSS"
+            2 -> "ABYSS"
+            3 -> "ROAD"
+            4 -> "ABYSS"
             else -> "GRASS"
         }
     }
