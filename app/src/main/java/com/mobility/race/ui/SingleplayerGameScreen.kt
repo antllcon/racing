@@ -18,14 +18,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawControllingStick
-import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
+import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 import kotlin.math.PI
 import kotlin.math.min
 
@@ -33,6 +38,7 @@ import kotlin.math.min
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
+
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
     var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
@@ -56,7 +62,6 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                             size.height.toFloat()
                         )
                     )
-
                 }
                 .pointerInput(Unit) {
                     detectDragGestures(
@@ -101,8 +106,7 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                         }
                     )
                 }
-        )
-        {
+        ) {
             // TODO: убрать
             val (_, zoom) = state.gameCamera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
@@ -118,6 +122,8 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 currentStickInputDistanceFactor
             )
 
+            val nextCheckpoint = state.checkpointManager.getNextCheckpoint(state.car.id)
+            drawNextCheckpoint(nextCheckpoint, state.gameCamera, scaledCellSize)
 
             val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
@@ -134,5 +140,13 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 )
             }
         }
+
+        Text(
+            text = "Lap: ${state.lapsCompleted + 1} / ${state.totalLaps}",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp),
+            style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        )
     }
 }
