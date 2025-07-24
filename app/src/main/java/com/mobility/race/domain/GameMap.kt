@@ -8,8 +8,14 @@ class GameMap private constructor(
     private val grid: Array<IntArray>,
     val width: Int,
     val height: Int,
-    val startCellPos: Offset
+    val startCellPos: Offset,
+    val startDirection: StartDirection
 ) {
+    enum class StartDirection {
+        HORIZONTAL,
+        VERTICAL
+    }
+
     enum class TerrainType(val speedModifier: Float) {
         ROAD(speedModifier = 1.0f),
         GRASS(speedModifier = 0.6f),
@@ -28,6 +34,11 @@ class GameMap private constructor(
         private const val WATER_CORE_CODE = 200
         private const val WATER_ROAD_CODE = 400
 
+        private data class StartInfo(
+            val position: Offset,
+            val direction: StartDirection
+        )
+
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
             height: Int = DEFAULT_MAP_HEIGHT,
@@ -35,17 +46,24 @@ class GameMap private constructor(
             waterProbability: Float = DEFAULT_WATER_PROPABILITY
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
-
             val maxPossibleRooms = ((width - 2) / 2 + 1) * ((height - 2) / 2 + 1)
             val actualRoomCount = roomCount.coerceAtMost(maxPossibleRooms)
 
             generateCoresInternal(grid, actualRoomCount)
             generateRoadsInternal(grid)
             removeDeadEndsInternal(grid)
-            val startCellPos: Offset = findStartCellInternal(grid)
-            createWaterCellsInternal(grid, startCellPos, waterProbability)
-            determinationCellTypesInternal(grid, startCellPos)
-            return GameMap(grid, width, height, startCellPos)
+
+            createWaterCellsInternal(grid, waterProbability)
+            determinationCellTypesInternal(grid)
+            val startInfo: StartInfo = findStartCellInternal(grid)
+
+            return GameMap(
+                grid,
+                width,
+                height,
+                startInfo.position,
+                startInfo.direction
+            )
         }
 
         private fun generateCoresInternal(grid: Array<IntArray>, roomCount: Int) {
@@ -140,7 +158,12 @@ class GameMap private constructor(
             val deadEnds = mutableListOf<Pair<Int, Int>>()
             for (y in 1 until grid.size - 1) {
                 for (x in 1 until grid[0].size - 1) {
-                    if (grid[y][x] in listOf(CORE_CELL_CODE, ROAD_CELL_CODE) && getRoadNeighbors(grid, x, y).size == 1) {
+                    if (grid[y][x] in listOf(CORE_CELL_CODE, ROAD_CELL_CODE) && getRoadNeighbors(
+                            grid,
+                            x,
+                            y
+                        ).size == 1
+                    ) {
                         deadEnds.add(x to y)
                     }
                 }
@@ -154,7 +177,11 @@ class GameMap private constructor(
             for ((dx, dy) in directions) {
                 val nx = x + dx
                 val ny = y + dy
-                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(CORE_CELL_CODE, ROAD_CELL_CODE)) {
+                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(
+                        CORE_CELL_CODE,
+                        ROAD_CELL_CODE
+                    )
+                ) {
                     neighbors.add(nx to ny)
                 }
             }
@@ -163,24 +190,21 @@ class GameMap private constructor(
 
         private fun createWaterCellsInternal(
             grid: Array<IntArray>,
-            startPosition: Offset,
             waterProbability: Float
         ) {
             for (y in 1 until grid.size - 1) {
                 for (x in 1 until grid[y].size - 1) {
-                    if (!(x == startPosition.x.toInt() && y == startPosition.y.toInt())) {
-                        if (Random.nextFloat() < waterProbability) {
-                            when (grid[y][x]) {
-                                CORE_CELL_CODE -> grid[y][x] = WATER_CORE_CODE
-                                ROAD_CELL_CODE -> grid[y][x] = WATER_ROAD_CODE
-                            }
+                    if (Random.nextFloat() < waterProbability) {
+                        when (grid[y][x]) {
+                            CORE_CELL_CODE -> grid[y][x] = WATER_CORE_CODE
+                            ROAD_CELL_CODE -> grid[y][x] = WATER_ROAD_CODE
                         }
                     }
                 }
             }
         }
 
-        private fun determinationCellTypesInternal(grid: Array<IntArray>, startCellPos: Offset) {
+        private fun determinationCellTypesInternal(grid: Array<IntArray>) {
             val height = grid.size
             val width = grid[0].size
 
@@ -228,17 +252,10 @@ class GameMap private constructor(
                             if (shapeCode > 0 && baseCode > 0) {
                                 newGrid[y][x] = baseCode + shapeCode
                             } else {
-                                newGrid[y][x] = if(baseCode == 200 || baseCode == 400) 10 else 0
-                            }
-
-                            if (x == startCellPos.x.toInt() && y == startCellPos.y.toInt()) {
-                                if (shapeCode == 1) {
-                                    newGrid[y][x] = 112
-                                } else if (shapeCode == 2) {
-                                    newGrid[y][x] = 113
-                                }
+                                newGrid[y][x] = if (baseCode == 200 || baseCode == 400) 10 else 0
                             }
                         }
+
                         else -> {
                             newGrid[y][x] = cellValue
                         }
@@ -251,35 +268,48 @@ class GameMap private constructor(
             }
         }
 
-        private fun findStartCellInternal(grid: Array<IntArray>): Offset {
+        private fun findStartCellInternal(grid: Array<IntArray>): StartInfo {
             val width: Int = grid[0].size
             val height: Int = grid.size
+            val candidateCells = mutableListOf<Pair<Offset, StartDirection>>()
 
-            val coreCells = mutableListOf<Offset>()
             for (y in 1 until height - 1) {
                 for (x in 1 until width - 1) {
-                    if (grid[y][x] == CORE_CELL_CODE) {
-                        coreCells.add(Offset(x.toFloat(), y.toFloat()))
+                    val cellValue = grid[y][x]
+                    when (cellValue) {
+                        101, 301 -> {
+                            Pair(
+                                Offset(x.toFloat(), y.toFloat()),
+                                StartDirection.HORIZONTAL
+                            )
+                        }
+
+                        102, 302 -> {
+                            candidateCells.add(
+                                Pair(
+                                    Offset(x.toFloat(), y.toFloat()),
+                                    StartDirection.VERTICAL
+                                )
+                            )
+                        }
                     }
                 }
             }
-            if (coreCells.isNotEmpty()) {
-                return coreCells[Random.nextInt(coreCells.size)]
-            }
 
-            val roadCells = mutableListOf<Offset>()
-            for (y in 1 until height - 1) {
-                for (x in 1 until width - 1) {
-                    if (grid[y][x] == ROAD_CELL_CODE) {
-                        roadCells.add(Offset(x.toFloat(), y.toFloat()))
-                    }
+            if (candidateCells.isNotEmpty()) {
+                val (chosenPosition, chosenDirection) = candidateCells.random()
+                if (chosenDirection == StartDirection.HORIZONTAL)
+                {
+                    grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 112
+                } else
+                {
+                    grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 113
                 }
-            }
-            if (roadCells.isNotEmpty()) {
-                return roadCells[Random.nextInt(roadCells.size)]
+                return StartInfo(chosenPosition, chosenDirection)
             }
 
-            return Offset(width / 2f, height / 2f)
+            println("Warning: Suitable start cell (horizontal/vertical road) not found. Using center position.")
+            return StartInfo(Offset(width / 2f, height / 2f), StartDirection.HORIZONTAL)
         }
     }
 

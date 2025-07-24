@@ -31,11 +31,15 @@ data class Car(
         const val MAX_DIRECTION_CHANGE = 0.09f
         const val VISUAL_LAG_SPEED = 0.05f
         const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
+        const val DIRECTION_RIGHT = 0f
+        const val DIRECTION_DOWN = (PI / 2).toFloat()
+        const val DIRECTION_LEFT = PI.toFloat()
+        const val DIRECTION_UP = (3 * PI / 2).toFloat()
     }
 
     fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
         return copy(
-            direction = handleAnglesDiff(directionAngle),
+            direction = directionAngle ?: this.direction,
             position = updatePosition(elapsedTime),
             speed = updateSpeed(directionAngle),
             speedModifier = setSpeedModifier(speedModifier),
