@@ -9,7 +9,8 @@ class GameMap private constructor(
     val width: Int,
     val height: Int,
     val startCellPos: Offset,
-    val startDirection: StartDirection
+    val startDirection: StartDirection,
+    val route: List<Offset>
 ) {
     enum class StartDirection {
         HORIZONTAL,
@@ -55,14 +56,16 @@ class GameMap private constructor(
 
             createWaterCellsInternal(grid, waterProbability)
             determinationCellTypesInternal(grid)
-            val startInfo: StartInfo = findStartCellInternal(grid)
+
+            val (route, startInfo) = generateRouteAndSetFinishInternal(grid)
 
             return GameMap(
                 grid,
                 width,
                 height,
                 startInfo.position,
-                startInfo.direction
+                startInfo.direction,
+                route
             )
         }
 
@@ -278,9 +281,11 @@ class GameMap private constructor(
                     val cellValue = grid[y][x]
                     when (cellValue) {
                         101, 301 -> {
-                            Pair(
-                                Offset(x.toFloat(), y.toFloat()),
-                                StartDirection.HORIZONTAL
+                            candidateCells.add(
+                                Pair(
+                                    Offset(x.toFloat(), y.toFloat()),
+                                    StartDirection.HORIZONTAL
+                                )
                             )
                         }
 
@@ -298,11 +303,9 @@ class GameMap private constructor(
 
             if (candidateCells.isNotEmpty()) {
                 val (chosenPosition, chosenDirection) = candidateCells.random()
-                if (chosenDirection == StartDirection.HORIZONTAL)
-                {
+                if (chosenDirection == StartDirection.HORIZONTAL) {
                     grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 112
-                } else
-                {
+                } else {
                     grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 113
                 }
                 return StartInfo(chosenPosition, chosenDirection)
@@ -310,6 +313,58 @@ class GameMap private constructor(
 
             println("Warning: Suitable start cell (horizontal/vertical road) not found. Using center position.")
             return StartInfo(Offset(width / 2f, height / 2f), StartDirection.HORIZONTAL)
+        }
+
+
+        private fun generateRouteAndSetFinishInternal(grid: Array<IntArray>): Pair<List<Offset>, StartInfo> {
+            val checkpoints = mutableListOf<Offset>()
+            val height = grid.size
+            val width = grid[0].size
+
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val cellCode = grid[y][x]
+                    if ((cellCode in 100..199) || (cellCode in 300..399)) {
+                        checkpoints.add(Offset(x.toFloat(), y.toFloat()))
+                    }
+                }
+            }
+
+            if (checkpoints.size < 2) {
+                println("Warning: Not enough checkpoints (< 2) to create a race route.")
+                val fallbackPos = Offset(width / 2f, height / 2f)
+                return Pair(emptyList(), StartInfo(fallbackPos, StartDirection.VERTICAL))
+            }
+
+            val centerX = width / 2f
+            val centerY = height / 2f
+
+            checkpoints.sortWith(compareBy {
+                atan2((it.y - centerY).toDouble(), (it.x - centerX).toDouble()).toFloat()
+            })
+
+            val finishPoint = checkpoints.last()
+            val finishX = finishPoint.x.toInt()
+            val finishY = finishPoint.y.toInt()
+
+            val originalCellCode = grid[finishY][finishX]
+
+            val (finishCode, startDirection) = when (originalCellCode) {
+                in listOf(101, 301) -> {
+                    Pair(112, StartDirection.HORIZONTAL)
+                }
+                in listOf(102, 302) -> {
+                    Pair(113, StartDirection.VERTICAL)
+                }
+                else -> {
+                    println("Warning: Unexpected cell code $originalCellCode for finish point. Using default")
+                    Pair(112, StartDirection.HORIZONTAL)
+                }
+            }
+
+            grid[finishY][finishX] = finishCode
+            val startInfo = StartInfo(finishPoint, startDirection)
+            return Pair(checkpoints, startInfo)
         }
     }
 
