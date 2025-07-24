@@ -6,7 +6,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
+import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
+import com.mobility.race.data.GameStopResponse
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.InfoResponse
@@ -20,10 +22,10 @@ import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.RoomUpdatedResponse
 import com.mobility.race.data.Server
 import com.mobility.race.data.ServerMessage
+import com.mobility.race.data.StartedGameResponse
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import com.mobility.race.presentation.GameEngine
 import com.mobility.race.presentation.GameState
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +69,6 @@ class MultiplayerGameViewModel(
     private val _isViewModelReady = MutableStateFlow(false)
     val isViewModelReady: StateFlow<Boolean> = _isViewModelReady.asStateFlow()
 
-    private lateinit var _gameEngine: GameEngine
     private var _gameLoopJob: Job? = null
 
     private val _playerInput = MutableStateFlow(PlayerInput())
@@ -91,11 +92,11 @@ class MultiplayerGameViewModel(
                 map = GameMap.generateDungeonMap()
                 camera = GameCamera(position = car.position, mapWidth = map.width, mapHeight = map.height)
 
-                _gameEngine = GameEngine(
-                    localPlayerId = car.id,
-                    map = map,
-                    camera = camera,
-                )
+//                _gameEngine = GameEngine(
+//                    localPlayerId = car.id,
+//                    map = map,
+//                    camera = camera,
+//                )
                 _gameState.value = GameState(
                     players = listOf(car),
                     localPlayerId = car.id
@@ -140,16 +141,16 @@ class MultiplayerGameViewModel(
 
     private  fun runGame() {
         println(" ==== запуск runGame")
-
-        if (!isGameEngineInitialized()) {
-            logGameEngineNotInitialized()
-            return
-        }
-
-        if (isGameLoopRunning()) {
-            logGameLoopAlreadyRunning()
-            return
-        }
+//
+//        if (!isGameEngineInitialized()) {
+//            logGameEngineNotInitialized()
+//            return
+//        }
+//
+//        if (isGameLoopRunning()) {
+//            logGameLoopAlreadyRunning()
+//            return
+//        }
 
         startGameLoop()
     }
@@ -191,47 +192,47 @@ class MultiplayerGameViewModel(
         viewModelScope.launch {
             when (message) {
                 is PlayerConnectedResponse -> {
-                    println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
 
-                    if (message.playerName == _playerName && car.id == "TEMP_ID") {
 
-                        val updatedCar = car.copy(id = message.playerId)
-
-                        car = updatedCar
-
-                        camera = camera.update(car.position)
-                        _gameEngine.updatePlayerInstance(updatedCar)
-                        _gameEngine.updateLocalPlayerId(updatedCar.id)
-
-//                        _gameState.value = _gameEngine.getCurrentState()
-
-                        val updatedPlayers = _gameState.value.players.map { player ->
-                            if (player.id == "TEMP_ID") {
-                                updatedCar
-                            } else {
-                                player
-                            }
-                        }
-
-                        _gameState.value = _gameState.value.copy(
-                            players = updatedPlayers,
-                            localPlayerId = updatedCar.id
-                        )
-                        _gameEngine.updateLocalPlayerId(updatedCar.id)
-                        println("ViewModel: Local player ID updated to: ${updatedCar.id}")
-                    } else {
-                        if (_gameState.value.players.none { it.id == message.playerId }) {
-                            val newCar = Car(
-                                id = message.playerId,
-                                playerName = message.playerName,
-                                isPlayer = false,
-                                isMultiplayer = true,
-                                position = Offset(0f, 0f)
-                            )
-                            _gameState.value =
-                                _gameState.value.copy(players = _gameState.value.players + newCar)
-                        }
-                    }
+//                    if (message.playerName == _playerName && car.id == "TEMP_ID") {
+//
+//                        val updatedCar = car.copy(id = message.playerId)
+//
+//                        car = updatedCar
+//
+//                        camera = camera.update(car.position)
+////                        _gameEngine.updatePlayerInstance(updatedCar)
+////                        _gameEngine.updateLocalPlayerId(updatedCar.id)
+//
+////                        _gameState.value = _gameEngine.getCurrentState()
+//
+//                        val updatedPlayers = _gameState.value.players.map { player ->
+//                            if (player.id == "TEMP_ID") {
+//                                updatedCar
+//                            } else {
+//                                player
+//                            }
+//                        }
+//
+//                        _gameState.value = _gameState.value.copy(
+//                            players = updatedPlayers,
+//                            localPlayerId = updatedCar.id
+//                        )
+////                        _gameEngine.updateLocalPlayerId(updatedCar.id)
+//                        println("ViewModel: Local player ID updated to: ${updatedCar.id}")
+//                    } else {
+//                        if (_gameState.value.players.none { it.id == message.playerId }) {
+//                            val newCar = Car(
+//                                id = message.playerId,
+//                                playerName = message.playerName,
+//                                isPlayer = false,
+//                                isMultiplayer = true,
+//                                position = Offset(0f, 0f)
+//                            )
+//                            _gameState.value =
+//                                _gameState.value.copy(players = _gameState.value.players + newCar)
+//                        }
+//                    }
                 }
 
                 is PlayerDisconnectedResponse -> {
@@ -241,15 +242,15 @@ class MultiplayerGameViewModel(
                 }
 
                 is GameStateUpdateResponse -> {
-                    _gameEngine.applyServerState(message.players)
+//                    _gameEngine.applyServerState(message.players)
 
                     //  TODO: убрать
-                    val receivedPlayerState =
-                        message.players.find { it.id == _gameEngine.getCurrentState().localPlayerId }
-                    println("Client: Raw PlayerStateDto received: posX=${receivedPlayerState?.posX}, posY=${receivedPlayerState?.posY}")
+//                    val receivedPlayerState =
+//                        message.players.find { it.id == _gameEngine.getCurrentState().localPlayerId }
+//                    println("Client: Raw PlayerStateDto received: posX=${receivedPlayerState?.posX}, posY=${receivedPlayerState?.posY}")
 
-                    val updatedStateFromEngine = _gameEngine.getCurrentState()
-                    _gameState.value = updatedStateFromEngine
+//                    val updatedStateFromEngine = _gameEngine.getCurrentState()
+//                    _gameState.value = updatedStateFromEngine
                 }
 
                 is InfoResponse -> {
@@ -279,6 +280,10 @@ class MultiplayerGameViewModel(
                 is PlayerActionResponse -> {
                     println("ViewModel: Player action response: ${message.name}")
                 }
+
+                is GameCountdownUpdateResponse -> TODO()
+                is GameStopResponse -> TODO()
+                is StartedGameResponse -> TODO()
             }
         }
     }
@@ -291,8 +296,8 @@ class MultiplayerGameViewModel(
         }
     }
 
-    private fun isGameEngineInitialized(): Boolean =
-        this::_gameEngine.isInitialized
+//    private fun isGameEngineInitialized(): Boolean =
+//        this::_gameEngine.isInitialized
 
     private fun isGameLoopRunning(): Boolean =
         _gameLoopJob?.isActive == true
@@ -328,8 +333,8 @@ class MultiplayerGameViewModel(
 
     private fun updateGameState(deltaTime: Float) {
         val playerInput = _playerInput.value
-        val newState = _gameEngine.update(deltaTime, playerInput)
-        _gameState.value = newState
+//        val newState = _gameEngine.update(deltaTime, playerInput)
+//        _gameState.value = newState
     }
 
     fun handleGatewayError(errorMessage: String) {
