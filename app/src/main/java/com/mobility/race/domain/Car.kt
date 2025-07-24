@@ -24,7 +24,7 @@ data class Car(
         const val MIN_SPEED = 0f
         const val MAX_SPEED = 2f
         const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.05f
+        const val DECELERATION = 0.2f
         const val LENGTH = 0.203f
         const val WIDTH = 0.30f
         const val MAP_SIZE = 13f

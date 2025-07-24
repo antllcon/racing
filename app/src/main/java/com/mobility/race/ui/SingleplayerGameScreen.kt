@@ -110,13 +110,19 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                     )
                 }
         ) {
-            drawBackgroundTexture(state.gameMap, state.gameCamera, bitmaps["terrain_500"]!!)
-            // TODO: убрать
-            val (_, zoom) = state.gameCamera.getViewMatrix()
-            val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
-            val scaledCellSize = baseCellSize * zoom
+            drawBackgroundTexture(
+                state.gameMap,
+                state.gameCamera,
+                bitmaps["terrain_500"]!!
+            )
 
-            drawGameMap(state.gameMap, state.gameCamera, size, bitmaps)
+            drawGameMap(
+                state.gameMap,
+                state.gameCamera,
+                size,
+                bitmaps
+            )
+
             drawMinimap(state)
 
 
@@ -126,21 +132,21 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 currentStickInputDistanceFactor
             )
 
-            val nextCheckpoint = state.checkpointManager.getNextCheckpoint(state.car.id)
-            drawNextCheckpoint(nextCheckpoint, state.gameCamera, scaledCellSize)
+            drawNextCheckpoint(
+                state.checkpointManager.getNextCheckpoint(state.car.id),
+                state.gameCamera,
+                state.gameCamera.getScaledCellSize(state.gameMap.size)
+            )
 
-            val playerScreenPos = state.gameCamera.worldToScreen(state.car.position)
             rotate(
                 degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
-                pivot = playerScreenPos
+                pivot = state.gameCamera.worldToScreen(state.car.position)
             ) {
-                val carWidthPx = Car.WIDTH * scaledCellSize
-                val carLengthPx = Car.LENGTH * scaledCellSize
-
                 drawImageBitmap(
                     bitmaps["car" + state.car.id + "_" + state.car.currentSprite]!!,
-                    Offset(playerScreenPos.x - carLengthPx / 2, playerScreenPos.y - carWidthPx / 2),
-                    Size(carLengthPx, carWidthPx)
+                    Offset(state.gameCamera.worldToScreen(state.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,
+                        state.gameCamera.worldToScreen(state.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2),
+                    Size(Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size), Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size))
                 )
             }
         }
