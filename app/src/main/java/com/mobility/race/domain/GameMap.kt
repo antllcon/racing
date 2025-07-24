@@ -214,6 +214,14 @@ class GameMap private constructor(
     fun getTerrainName(x: Int, y: Int): String {
         return "terrain_" + grid[y][x]
     }
+    fun getTerrainType(x: Int, y: Int): String {
+        return when (grid[y][x] / 100) {
+            1 -> "ROAD"
+            2 -> "ROAD"
+            3 -> "ABYSS"
+            else -> "GRASS"
+        }
+    }
 
     private fun getTerrainAt(x: Int, y: Int): TerrainType {
         return when (grid[y][x] / 100) {
