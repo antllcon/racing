@@ -155,7 +155,7 @@ class MultiplayerGameViewModel(
         startGameLoop()
     }
 
-    private  fun movePlayer(touchCoordinates: Offset) {
+    fun movePlayer(touchCoordinates: Offset) {
         if (!_isViewModelReady.value || !::car.isInitialized) return
 
         val isAccelerating = touchCoordinates != Offset.Zero
@@ -181,11 +181,11 @@ class MultiplayerGameViewModel(
 
         _playerInput.value = PlayerInput(isAccelerating, turnDirection)
 
-        viewModelScope.launch {
-            _gateway.playerAction(
-                PlayerInputRequest(isAccelerating, turnDirection)
-            )
-        }
+//        viewModelScope.launch {
+//            _gateway.playerAction(
+//                PlayerInputRequest(isAccelerating, turnDirection)
+//            )
+//        }
     }
 
     fun handleServerMessage(message: ServerMessage) {
@@ -288,7 +288,7 @@ class MultiplayerGameViewModel(
         }
     }
 
-    private fun stopGame() {
+    fun stopGame() {
         println("ViewModel: try to leave room $_roomName")
         _gameLoopJob?.cancel()
         viewModelScope.launch {

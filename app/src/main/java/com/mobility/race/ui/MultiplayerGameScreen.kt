@@ -12,9 +12,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import com.mobility.race.domain.drawCar
 import com.mobility.race.presentation.GameState
-import com.mobility.race.presentation.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import kotlin.math.min
 
 @Composable
@@ -102,19 +102,19 @@ private fun DrawScope.drawGameContent(
     val (_, zoom) = viewModel.camera.getViewMatrix()
     val baseCellSize = min(size.width, size.height) / viewModel.map.size.toFloat()
 
-    viewModel.map.drawMap(
-        camera = viewModel.camera,
-        baseCellSize = baseCellSize,
-        zoom = zoom,
-        drawScope = this
-    )
-
-    gameState.players.forEach { car ->
-        car.drawCar(
-            camera = viewModel.camera,
-            drawScope = this,
-            isLocalPlayer = car.id == localPlayerId,
-            scaledCellSize = baseCellSize * zoom
-        )
-    }
+//    viewModel.map.drawMap(
+//        camera = viewModel.camera,
+//        baseCellSize = baseCellSize,
+//        zoom = zoom,
+//        drawScope = this
+//    )
+//
+//    gameState.players.forEach { car ->
+//        car.drawCar(
+//            camera = viewModel.camera,
+//            drawScope = this,
+//            isLocalPlayer = car.id == localPlayerId,
+//            scaledCellSize = baseCellSize * zoom
+//        )
+//    }
 }

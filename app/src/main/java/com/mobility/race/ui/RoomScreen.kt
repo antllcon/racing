@@ -14,10 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.Server
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.RoomViewModel
 import io.ktor.client.HttpClient
 
 @Composable
@@ -25,7 +27,7 @@ fun RoomScreen(
     playerName: String,
     roomName: String,
     isCreatingRoom: Boolean,
-    viewModel: MultiplayerGameViewModel,
+    viewModel: RoomViewModel,
     navigateToMultiplayer: (String, String) -> Unit
 ) {
     Box(
@@ -37,7 +39,7 @@ fun RoomScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-
+            Text(text = playerName)
         }
     }
 }

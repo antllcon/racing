@@ -10,7 +10,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
 import com.mobility.race.di.MultiplayerGameViewModelFactory
+import com.mobility.race.di.RoomViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.RoomViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -41,12 +43,9 @@ data class Room(
 object MultiplayerMenuScreen
 
 @Serializable
-
 data class MultiplayerGame(
     val playerName: String,
-    val roomName: String,
-    @Contextual
-    val viewModel: MultiplayerGameViewModel
+    val roomName: String
 )
 
 @Composable
@@ -99,6 +98,23 @@ fun AppNavHost(
         composable<Room> { entry ->
             val args = entry.toRoute<Room>()
 
+            val factory = remember(httpClient) {
+                RoomViewModelFactory(httpClient)
+            }
+            val viewModel: RoomViewModel = viewModel(factory = factory)
+
+            RoomScreen(playerName = args.playerName,
+                roomName = args.roomName,
+                isCreatingRoom = args.isCreatingRoom,
+                viewModel = viewModel,
+                navigateToMultiplayer = { playerName, roomName ->
+                    navController.navigate(route = MultiplayerGame(playerName, roomName))
+                })
+        }
+
+        composable<MultiplayerGame> { entry ->
+            val args = entry.toRoute<MultiplayerGame>()
+
             println(" ===== Я в navHost - multiplayer")
             val factory = remember(httpClient) {
                 MultiplayerGameViewModelFactory(httpClient)
@@ -106,22 +122,10 @@ fun AppNavHost(
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
 
-            RoomScreen(playerName = args.playerName,
-                roomName = args.roomName,
-                isCreatingRoom = args.isCreatingRoom,
-                viewModel = viewModel,
-                navigateToMultiplayer = { playerName, roomName ->
-                    navController.navigate(route = MultiplayerGame(playerName, roomName, viewModel))
-                })
-        }
-
-        composable<MultiplayerGame> { entry ->
-            val args = entry.toRoute<MultiplayerGame>()
-
             MultiplayerGameScreen(
                 playerName = args.playerName,
                 roomName = args.roomName,
-                viewModel = args.viewModel
+                viewModel = viewModel
             )
         }
     }
