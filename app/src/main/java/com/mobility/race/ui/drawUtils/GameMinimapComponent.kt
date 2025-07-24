@@ -76,5 +76,4 @@ fun DrawScope.drawMinimap(
         cornerRadius = CornerRadius(cornerRadius),
         style = Stroke(width = strokeWidth)
     )
-
 }

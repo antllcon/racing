@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
+import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
@@ -49,7 +50,6 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.LightGray)
     ) {
         Canvas(
             modifier = Modifier
@@ -110,6 +110,7 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                     )
                 }
         ) {
+            drawBackgroundTexture(state.gameMap, state.gameCamera, bitmaps["terrain_500"]!!)
             // TODO: убрать
             val (_, zoom) = state.gameCamera.getViewMatrix()
             val baseCellSize = min(size.width, size.height) / state.gameMap.size.toFloat()
