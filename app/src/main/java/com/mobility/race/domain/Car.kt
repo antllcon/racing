@@ -24,10 +24,10 @@ data class Car(
         const val MIN_SPEED = 0f
         const val MAX_SPEED = 2f
         const val ACCELERATION = 0.02f
-        const val DECELERATION = 0.05f
+        const val DECELERATION = 0.2f
         const val LENGTH = 0.203f
         const val WIDTH = 0.30f
-        const val MAP_SIZE = 10f
+        const val MAP_SIZE = 13f
         const val MAX_DIRECTION_CHANGE = 0.09f
         const val VISUAL_LAG_SPEED = 0.05f
         const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
@@ -94,13 +94,20 @@ data class Car(
         val maxMove = MAP_SIZE * 0.5f
         val actualMove = moveDistance.coerceIn(-maxMove, maxMove)
 
+        val halfCarLength = LENGTH / 2
+
         val newPosition = Offset(
             x = (position.x + actualMove * cos(visualDirection)),
             y = (position.y + actualMove * sin(visualDirection))
         )
 
+        val clampedPosition = Offset(
+            x = newPosition.x.coerceIn(halfCarLength, MAP_SIZE - halfCarLength),
+            y = newPosition.y.coerceIn(halfCarLength, MAP_SIZE - halfCarLength)
+        )
+
         distanceBeforeSpriteChange -= moveDistance
-        return newPosition
+        return clampedPosition
     }
 
     private fun decelerate() {

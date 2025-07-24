@@ -26,6 +26,14 @@ data class GameCamera(
         )
     }
 
+    fun getScaledCellSize(mapSize: Int): Float {
+        val (_, zoom) = getViewMatrix()
+        val baseCellSize = min(viewportSize.width, viewportSize.height) / mapSize.toFloat()
+        val scaledCellSize = baseCellSize * zoom
+
+        return scaledCellSize
+    }
+
     fun getViewMatrix(): Pair<Offset, Float> = position to FIXED_ZOOM
 
     fun worldToScreen(worldPos: Offset): Offset {
