@@ -21,7 +21,6 @@ import kotlin.math.min
 fun MultiplayerGameScreen(
     playerName: String,
     roomName: String,
-    isCreatingRoom: Boolean,
     viewModel: MultiplayerGameViewModel,
     modifier: Modifier = Modifier
 ) {
