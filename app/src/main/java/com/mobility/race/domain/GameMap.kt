@@ -8,36 +8,62 @@ class GameMap private constructor(
     private val grid: Array<IntArray>,
     val width: Int,
     val height: Int,
-    val finishCellPos: Offset
+    val startCellPos: Offset,
+    val startDirection: StartDirection
 ) {
+    enum class StartDirection {
+        HORIZONTAL,
+        VERTICAL
+    }
+
     enum class TerrainType(val speedModifier: Float) {
         ROAD(speedModifier = 1.0f),
-        GRASS(speedModifier = 0.2f),
+        GRASS(speedModifier = 0.6f),
+        WATER(speedModifier = 0.4f),
         ABYSS(speedModifier = .0f)
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 24
-        private const val DEFAULT_MAP_HEIGHT = 24
-        private const val DEFAULT_CORE_POINT = 6
+        private const val DEFAULT_MAP_WIDTH = 13
+        private const val DEFAULT_MAP_HEIGHT = 13
+        private const val DEFAULT_CORE_POINT = 20
+        private const val DEFAULT_WATER_PROPABILITY = 0.1f
+        private const val EMPTY_CELL_CODE = 0
+        private const val CORE_CELL_CODE = 1
+        private const val ROAD_CELL_CODE = 2
+        private const val WATER_CORE_CODE = 200
+        private const val WATER_ROAD_CODE = 400
+
+        private data class StartInfo(
+            val position: Offset,
+            val direction: StartDirection
+        )
 
         fun generateDungeonMap(
             width: Int = DEFAULT_MAP_WIDTH,
             height: Int = DEFAULT_MAP_HEIGHT,
-            roomCount: Int = DEFAULT_CORE_POINT
+            roomCount: Int = DEFAULT_CORE_POINT,
+            waterProbability: Float = DEFAULT_WATER_PROPABILITY
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
-
             val maxPossibleRooms = ((width - 2) / 2 + 1) * ((height - 2) / 2 + 1)
             val actualRoomCount = roomCount.coerceAtMost(maxPossibleRooms)
 
             generateCoresInternal(grid, actualRoomCount)
             generateRoadsInternal(grid)
             removeDeadEndsInternal(grid)
-            determinationCellTypesInternal(grid)
-            val startCellPos: Offset = findStartCellInternal(grid)
 
-            return GameMap(grid, width, height, startCellPos)
+            createWaterCellsInternal(grid, waterProbability)
+            determinationCellTypesInternal(grid)
+            val startInfo: StartInfo = findStartCellInternal(grid)
+
+            return GameMap(
+                grid,
+                width,
+                height,
+                startInfo.position,
+                startInfo.direction
+            )
         }
 
         private fun generateCoresInternal(grid: Array<IntArray>, roomCount: Int) {
@@ -104,12 +130,12 @@ class GameMap private constructor(
 
             while (x1 != x2) {
                 x1 += if (x2 > x1) 1 else -1
-                if (grid[y1][x1] == 0) grid[y1][x1] = 2
+                if (grid[y1][x1] == EMPTY_CELL_CODE) grid[y1][x1] = ROAD_CELL_CODE
             }
 
             while (y1 != y2) {
                 y1 += if (y2 > y1) 1 else -1
-                if (grid[y1][x1] == 0) grid[y1][x1] = 2
+                if (grid[y1][x1] == EMPTY_CELL_CODE) grid[y1][x1] = ROAD_CELL_CODE
             }
         }
 
@@ -121,7 +147,7 @@ class GameMap private constructor(
 
                 for ((x, y) in deadEnds) {
                     if (getRoadNeighbors(grid, x, y).size == 1) {
-                        grid[y][x] = 0
+                        grid[y][x] = EMPTY_CELL_CODE
                         removedSomething = true
                     }
                 }
@@ -132,7 +158,12 @@ class GameMap private constructor(
             val deadEnds = mutableListOf<Pair<Int, Int>>()
             for (y in 1 until grid.size - 1) {
                 for (x in 1 until grid[0].size - 1) {
-                    if (grid[y][x] in listOf(1, 2) && getRoadNeighbors(grid, x, y).size == 1) {
+                    if (grid[y][x] in listOf(CORE_CELL_CODE, ROAD_CELL_CODE) && getRoadNeighbors(
+                            grid,
+                            x,
+                            y
+                        ).size == 1
+                    ) {
                         deadEnds.add(x to y)
                     }
                 }
@@ -146,80 +177,167 @@ class GameMap private constructor(
             for ((dx, dy) in directions) {
                 val nx = x + dx
                 val ny = y + dy
-                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(1, 2)) {
+                if (ny in grid.indices && nx in grid[ny].indices && grid[ny][nx] in listOf(
+                        CORE_CELL_CODE,
+                        ROAD_CELL_CODE
+                    )
+                ) {
                     neighbors.add(nx to ny)
                 }
             }
             return neighbors
         }
 
-
-        private fun determinationCellTypesInternal(grid: Array<IntArray>) {
-            val width = grid[0].size
-            val height = grid.size
-
-            for (y in 1 until height - 1) {
-                for (x in 1 until width - 1) {
-                    var index = 0
-                    val currentCellType = grid[y][x]
-
-                    val top = grid[y - 1][x]
-                    val bottom = grid[y + 1][x]
-                    val left = grid[y][x - 1]
-                    val right = grid[y][x + 1]
-
-                    if (currentCellType == 1) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 110
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 120
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 130
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 140
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 150
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 160
-                        else index = 10
-                    } else if (currentCellType == 2) {
-                        if (top == 0 && bottom == 0 && left != 0 && right != 0) index = 210
-                        else if (top != 0 && bottom != 0 && left == 0 && right == 0) index = 220
-                        else if (top != 0 && bottom == 0 && left == 0 && right != 0) index = 230
-                        else if (top != 0 && bottom == 0 && left != 0 && right == 0) index = 240
-                        else if (top == 0 && bottom != 0 && left == 0 && right != 0) index = 250
-                        else if (top == 0 && bottom != 0 && left != 0 && right == 0) index = 260
-                        else index = 10
-                    }
-
-                    if (index != 0) {
-                        grid[y][x] = index
+        private fun createWaterCellsInternal(
+            grid: Array<IntArray>,
+            waterProbability: Float
+        ) {
+            for (y in 1 until grid.size - 1) {
+                for (x in 1 until grid[y].size - 1) {
+                    if (Random.nextFloat() < waterProbability) {
+                        when (grid[y][x]) {
+                            CORE_CELL_CODE -> grid[y][x] = WATER_CORE_CODE
+                            ROAD_CELL_CODE -> grid[y][x] = WATER_ROAD_CODE
+                        }
                     }
                 }
             }
         }
 
-        private fun findStartCellInternal(grid: Array<IntArray>): Offset {
-            var startRoom = Offset(x = grid[0].size.toFloat(), y = grid.size.toFloat())
+        private fun determinationCellTypesInternal(grid: Array<IntArray>) {
+            val height = grid.size
+            val width = grid[0].size
 
-            for (y: Int in 1 until grid.size - 1) {
-                for (x: Int in 1 until grid[y].size - 1) {
-                    if (grid[y][x] / 100 == 1) {
-                        if (x < startRoom.x || y < startRoom.y) {
-                            startRoom = Offset(x = x.toFloat(), y = y.toFloat())
+            val newGrid = Array(height) { IntArray(width) }
+
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val cellValue = grid[y][x]
+
+                    when (cellValue) {
+                        EMPTY_CELL_CODE -> {
+                            newGrid[y][x] = 0
+                        }
+
+                        CORE_CELL_CODE, ROAD_CELL_CODE, WATER_CORE_CODE, WATER_ROAD_CODE -> {
+                            val hasTop = y > 0 && grid[y - 1][x] != EMPTY_CELL_CODE
+                            val hasBottom = y < height - 1 && grid[y + 1][x] != EMPTY_CELL_CODE
+                            val hasLeft = x > 0 && grid[y][x - 1] != EMPTY_CELL_CODE
+                            val hasRight = x < width - 1 && grid[y][x + 1] != EMPTY_CELL_CODE
+
+                            var shapeCode = 0
+
+                            when {
+                                hasTop && hasBottom && hasLeft && hasRight -> shapeCode = 11
+                                hasTop && hasBottom && hasLeft -> shapeCode = 10
+                                hasTop && hasLeft && hasRight -> shapeCode = 9
+                                hasBottom && hasLeft && hasRight -> shapeCode = 8
+                                hasTop && hasBottom && hasRight -> shapeCode = 7
+                                hasBottom && hasLeft -> shapeCode = 6
+                                hasBottom && hasRight -> shapeCode = 5
+                                hasTop && hasLeft -> shapeCode = 4
+                                hasTop && hasRight -> shapeCode = 3
+                                hasTop && hasBottom -> shapeCode = 2
+                                hasLeft && hasRight -> shapeCode = 1
+                            }
+
+                            val baseCode = when (cellValue) {
+                                CORE_CELL_CODE -> 100
+                                WATER_CORE_CODE -> 200
+                                ROAD_CELL_CODE -> 300
+                                WATER_ROAD_CODE -> 400
+                                else -> 0
+                            }
+
+                            if (shapeCode > 0 && baseCode > 0) {
+                                newGrid[y][x] = baseCode + shapeCode
+                            } else {
+                                newGrid[y][x] = if (baseCode == 200 || baseCode == 400) 10 else 0
+                            }
+                        }
+
+                        else -> {
+                            newGrid[y][x] = cellValue
                         }
                     }
                 }
             }
-            return startRoom
+
+            for (y in 0 until height) {
+                System.arraycopy(newGrid[y], 0, grid[y], 0, width)
+            }
+        }
+
+        private fun findStartCellInternal(grid: Array<IntArray>): StartInfo {
+            val width: Int = grid[0].size
+            val height: Int = grid.size
+            val candidateCells = mutableListOf<Pair<Offset, StartDirection>>()
+
+            for (y in 1 until height - 1) {
+                for (x in 1 until width - 1) {
+                    val cellValue = grid[y][x]
+                    when (cellValue) {
+                        101, 301 -> {
+                            Pair(
+                                Offset(x.toFloat(), y.toFloat()),
+                                StartDirection.HORIZONTAL
+                            )
+                        }
+
+                        102, 302 -> {
+                            candidateCells.add(
+                                Pair(
+                                    Offset(x.toFloat(), y.toFloat()),
+                                    StartDirection.VERTICAL
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (candidateCells.isNotEmpty()) {
+                val (chosenPosition, chosenDirection) = candidateCells.random()
+                if (chosenDirection == StartDirection.HORIZONTAL)
+                {
+                    grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 112
+                } else
+                {
+                    grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 113
+                }
+                return StartInfo(chosenPosition, chosenDirection)
+            }
+
+            println("Warning: Suitable start cell (horizontal/vertical road) not found. Using center position.")
+            return StartInfo(Offset(width / 2f, height / 2f), StartDirection.HORIZONTAL)
         }
     }
 
     val size: Int get() = height
 
     fun getTerrainName(x: Int, y: Int): String {
-        return "terrain_" + grid[y][x]
+        if (y !in grid.indices || x !in grid[y].indices) {
+            println("Warning: Attempted to get terrain name for out-of-bounds cell ($x, $y). Returning terrain_0.")
+            return "terrain_${EMPTY_CELL_CODE}"
+        }
+        return "terrain_" + grid[y][x].toString().padStart(3, '0')
     }
 
     private fun getTerrainAt(x: Int, y: Int): TerrainType {
-        return when (grid[y][x] / 100) {
-            1 -> TerrainType.ROAD
-            2 -> TerrainType.ROAD
-            else -> TerrainType.GRASS
+        if (y !in grid.indices || x !in grid[y].indices) {
+            println("Warning: Attempted to get terrain at out-of-bounds cell ($x, $y). Returning ABYSS.")
+            return TerrainType.ABYSS
+        }
+
+        val cellValue = grid[y][x]
+        return when (cellValue) {
+            0 -> TerrainType.GRASS
+            10 -> TerrainType.WATER
+            in 100..199 -> TerrainType.ROAD
+            in 200..299 -> TerrainType.WATER
+            in 300..399 -> TerrainType.ROAD
+            in 400..499 -> TerrainType.WATER
+            else -> TerrainType.ABYSS
         }
     }
 
