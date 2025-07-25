@@ -7,13 +7,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.singleplayer.SingleplayerGameState
 import kotlin.math.min
 
 fun DrawScope.drawMinimap(
     map: GameMap,
-    car: Car
+    car: Car,
+    checkpointManager: CheckpointManager
 ) {
     val minimapSize = Size(300f, 300f)
     val minimapPosition = Offset(50f, 50f)
@@ -41,7 +43,7 @@ fun DrawScope.drawMinimap(
         innerMinimapSize.height / map.height
     )
 
-    val nextCheckpoint = state.checkpointManager.getNextCheckpoint(state.car.id)
+    val nextCheckpoint = checkpointManager.getNextCheckpoint(car.id)
 
     for (y in 0 until map.height) {
         for (x in 0 until map.width) {
