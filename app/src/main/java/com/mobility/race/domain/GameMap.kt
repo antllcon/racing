@@ -4,7 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import kotlin.math.atan2
 import kotlin.random.Random
 
-class GameMap private constructor(
+class GameMap(
     private val grid: Array<IntArray>,
     val width: Int,
     val height: Int,

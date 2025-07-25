@@ -14,13 +14,16 @@ val AppJson = Json {
     prettyPrint = false
     classDiscriminator = "kind"
 
+    // Регистрация интерфейсов и их подклассов для полиморфной сериализации/десериализации
     serializersModule = SerializersModule {
         polymorphic(ClientMessage::class) {
             subclass(InitPlayerRequest::class)
             subclass(CreateRoomRequest::class)
             subclass(JoinRoomRequest::class)
             subclass(LeaveRoomRequest::class)
+            subclass(StartGameRequest::class)
             subclass(PlayerActionRequest::class)
+            subclass(PlayerInputRequest::class)
         }
         polymorphic(ServerMessage::class) {
             subclass(PlayerConnectedResponse::class)
@@ -30,8 +33,12 @@ val AppJson = Json {
             subclass(RoomCreatedResponse::class)
             subclass(JoinedRoomResponse::class)
             subclass(LeftRoomResponse::class)
+            subclass(StartedGameResponse::class)
             subclass(RoomUpdatedResponse::class)
             subclass(PlayerActionResponse::class)
+            subclass(GameCountdownUpdateResponse::class)
+            subclass(GameStateUpdateResponse::class)
+            subclass(GameStopResponse::class)
         }
     }
 }

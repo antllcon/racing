@@ -1,170 +1,148 @@
 package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mobility.race.data.Server
-import com.mobility.race.data.ErrorResponse
-import com.mobility.race.data.Gateway
+import com.mobility.race.data.GameCountdownUpdateResponse
+import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.IGateway
-import com.mobility.race.data.InfoResponse
-import com.mobility.race.data.JoinedRoomResponse
-import com.mobility.race.data.LeftRoomResponse
-import com.mobility.race.data.PlayerActionResponse
-import com.mobility.race.data.PlayerConnectedResponse
-import com.mobility.race.data.PlayerDisconnectedResponse
-import com.mobility.race.data.RoomCreatedResponse
-import com.mobility.race.data.RoomUpdatedResponse
+import com.mobility.race.data.PlayerActionRequest
+import com.mobility.race.data.PlayerInputRequest
+import com.mobility.race.data.PlayerStateDto
 import com.mobility.race.data.ServerMessage
-import com.mobility.race.domain.Car
+import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import io.ktor.client.HttpClient
+import com.mobility.race.presentation.BaseViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 class MultiplayerGameViewModel(
-    savedStateHandle: SavedStateHandle,
-    private val httpClient: HttpClient
-) : ViewModel() {
-
-    private val _gateway: IGateway = Gateway(
-        client = httpClient,
-        serverConfig = Server.default(),
-        onServerMessage = this::handleServerMessage,
-        onError = this::handleGatewayError
-    )
-
-    private val _playerName: String = checkNotNull(savedStateHandle["playerName"])
-    private val _roomName: String = checkNotNull(savedStateHandle["roomName"])
-    private val _isCreatingRoom: Boolean = checkNotNull(savedStateHandle["isCreatingRoom"])
-
-    private val _players = MutableStateFlow<List<Car>>(value = emptyList())
-    val players: StateFlow<List<Car>> = _players.asStateFlow()
-
-    private val _gameStatus = MutableStateFlow(value = "Not Started")
-    val gameStatus: StateFlow<String> = _gameStatus.asStateFlow()
-
-    private val _errorMessage = MutableStateFlow<String?>(value = null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    playerId: String,
+    playerNames: Array<String>,
+    carSpriteId: String,
+    private val gateway: IGateway
+): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
+    nickname = playerId,
+    playerNames = playerNames,
+    carSpriteId = carSpriteId,
+    starterPack = gateway.openGatewayStorage()
+)) {
+    private var gameCycle: Job? = null
+    private var elapsedTime: Float = 0f
 
     init {
-        viewModelScope.launch {
-            try {
-                _gateway.connect()
-                delay(1000)
-                _gateway.initPlayer(_playerName)
-                delay(1000)
+        gateway.messageFlow
+            .onEach(::handleMessage)
+            .launchIn(viewModelScope)
 
-                if (_isCreatingRoom) {
-                    _gateway.createRoom(_roomName)
-                } else {
-                    _gateway.joinRoom(_roomName)
-                }
-                _gateway.createRoom(_roomName)
-                delay(1000)
+        startGame()
+    }
 
-            } catch (e: Exception) {
-                println("ViewModel: Error during initial setup: ${e.message}")
-                _errorMessage.value = "Initial setup failed: ${e.message}"
+    fun setDirectionAngle(newAngle: Float?) {
+        modifyState {
+            copy(
+                directionAngle = newAngle
+            )
+        }
+    }
+
+    private fun startGame() {
+        var lastTime = System.currentTimeMillis()
+
+        gameCycle = viewModelScope.launch {
+            while (stateValue.isGameRunning) {
+                val currentTime = System.currentTimeMillis()
+                elapsedTime = (currentTime - lastTime) / 1000f
+
+                movePlayers(elapsedTime)
+                moveCamera()
+                lastTime = currentTime
+
+                delay(16)
             }
         }
     }
 
-    fun init(playerCar: Car, playerGameMap: GameMap, playerCamera: GameCamera) {
-        println("ViewModel: init")
-    }
+    private fun movePlayers(elapsedTime: Float) {
+        var newPlayersCopy: Array<Player> = emptyArray()
 
-    fun runGame() {
-        println("ViewModel: run game")
-    }
+        for (player in stateValue.players) {
+            val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
+            val newCar = if (player.name != stateValue.mainPlayer.name) {
+                player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
+            } else {
+                player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+            }
 
-    fun stopGame() {
-        println("ViewModel: try to leave room $_roomName")
-        viewModelScope.launch {
-            _gateway.leaveRoom()
+            newPlayersCopy = newPlayersCopy.plus(player.copy(
+                car = newCar
+            ))
+        }
+
+        modifyState {
+            copy(
+                players = newPlayersCopy
+            )
         }
     }
 
-    fun movePlayer(touchCoordinates: Offset) {
-        println("ViewModel: Player move action at $touchCoordinates")
-        viewModelScope.launch {
-            _gateway.playerAction("Move to X:${touchCoordinates.x}, Y:${touchCoordinates.y}")
+    private fun moveCamera() {
+        modifyState {
+            copy(
+                gameCamera = gameCamera.update(mainPlayer.car.position)
+            )
         }
     }
 
-    fun handleServerMessage(message: ServerMessage) {
-        viewModelScope.launch {
-            when (message) {
-                is PlayerConnectedResponse -> {
-                    println("ViewModel: Player ${message.playerName} connected with ID: ${message.playerId}")
-                    _players.value = _players.value + Car(
-                        playerName = message.playerName,
-                        isPlayer = false,
-                        isMultiplayer = true,
-                        id = message.playerId
+
+    private suspend fun handleMessage(message: ServerMessage) {
+        when (message) {
+            is GameCountdownUpdateResponse -> {
+                modifyState {
+                    copy(
+                        countdown = message.remainingTime
+                    )
+                }
+            }
+            is GameStateUpdateResponse -> {
+                var updatedPlayers: Array<Player> = emptyArray()
+
+                for (player in message.players) {
+                    val playerCar = stateValue.players.find { it.car.playerName == player.name }
+
+                    updatedPlayers = updatedPlayers.plus(
+                        Player(
+                            player.name,
+                            playerCar!!.car.copy(
+                                position = Offset(player.posX, player.posY),
+                                visualDirection = player.visualDirection,
+                                speed = player.speed
+                            ),
+                            player.isAccelerating,
+                            player.isFinished
+                        )
                     )
                 }
 
-                is PlayerDisconnectedResponse -> {
-                    println("ViewModel: Player ${message.playerId} disconnected")
-                    _players.value = _players.value.filter { it.id != message.playerId }
+                modifyState {
+                    copy(
+                        players = updatedPlayers
+                    )
                 }
 
-                is InfoResponse -> {
-                    println("ViewModel: Info: ${message.message}")
-                    _gameStatus.value = message.message
-                }
-
-                is ErrorResponse -> {
-                    println("ViewModel: server send error: ${message.code}")
-                    _errorMessage.value = "${message.code}: ${message.message}"
-                }
-
-                is RoomCreatedResponse -> {
-                    println("ViewModel: Room ${message.roomId} created")
-                    _gameStatus.value = "Room ${message.roomId} created"
-                }
-
-                is JoinedRoomResponse -> {
-                    println("ViewModel: Successfully joined room: ${message.roomId}")
-                    _gameStatus.value = "Joined room: ${message.roomId}"
-                }
-
-                is LeftRoomResponse -> {
-                    println("ViewModel: Left room: ${message.roomId}")
-                    _gameStatus.value = "Left room: ${message.roomId}"
-                    _players.value = emptyList()
-                }
-
-                is RoomUpdatedResponse -> {
-                    println("ViewModel: Room ${message.roomId} updated")
-                }
-
-                is PlayerActionResponse -> {
-                    println("ViewModel: Player action response: ${message.name}")
-                }
+                gateway.playerAction(
+                    PlayerInputRequest(
+                        stateValue.mainPlayer.isAccelerating,
+                        stateValue.mainPlayer.car.direction,
+                        elapsedTime,
+                        0
+                    )
+                )
             }
-        }
-    }
-
-    fun handleGatewayError(errorMessage: String) {
-        viewModelScope.launch {
-            println("ViewModel: Gateway error: $errorMessage")
-            _errorMessage.value = "Connection error: $errorMessage"
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        println("ViewModel: disconnect Gateway and close HttpClient")
-        viewModelScope.launch {
-            _gateway.disconnect()
-            httpClient.close()
+            else -> Unit
         }
     }
 }

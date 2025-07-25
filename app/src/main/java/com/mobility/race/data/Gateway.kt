@@ -1,5 +1,6 @@
 package com.mobility.race.data
 
+import com.mobility.race.domain.GameMap
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.URLProtocol
@@ -9,15 +10,32 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.serialization.Serializable
+
 
 class Gateway(
     private val client: HttpClient,
     private val serverConfig: Server,
-    private val onServerMessage: (ServerMessage) -> Unit,
-    private val onError: (String) -> Unit
 ) : IGateway {
     private var session: WebSocketSession? = null
     private var job: Job? = null
+    private lateinit var gatewayStorage: StarterPack
+
+    override val messageFlow: Flow<ServerMessage>
+        get() = mMessageFlow.asSharedFlow()
+
+    private val mMessageFlow = MutableSharedFlow<ServerMessage>()
+
+    override fun fillGatewayStorage(starterPack: StarterPack) {
+        gatewayStorage = starterPack
+    }
+
+    override fun openGatewayStorage(): StarterPack {
+        return gatewayStorage
+    }
 
     override suspend fun connect() {
         val protocolString = if (serverConfig.port == 443) "wss" else "ws"
@@ -32,8 +50,7 @@ class Gateway(
             }
             job = startGettingMessages(session!!)
 
-        } catch (e: Exception) {
-            onError("Failed to connect to server: ${e.message}")
+        } catch (_: Exception) {
             println("Gateway: fail to connect server")
         }
     }
@@ -45,8 +62,7 @@ class Gateway(
             job?.cancelAndJoin()
             session?.close()
 
-        } catch (e: Exception) {
-            onError("Error during disconnect: ${e.message}")
+        } catch (_: Exception) {
             println("Gateway: Error during disconnect")
 
         } finally {
@@ -63,12 +79,10 @@ class Gateway(
             try {
                 sendToSession(session!!, message)
 
-            } catch (e: Exception) {
-                onError("Failed to send message: ${e.message}")
+            } catch (_: Exception) {
                 println("Gateway: fail to send message")
             }
         } else {
-            onError("Gateway is not connected or session is inactive. Cannot send message: $message")
             println("Gateway: Not connected or session inactive, cannot send message")
         }
     }
@@ -93,9 +107,13 @@ class Gateway(
         sendMessage(LeaveRoomRequest)
     }
 
-    override suspend fun playerAction(name: String) {
-        println("Gateway: player action with name: $name")
-        sendMessage(JoinRoomRequest(name = name))
+    override suspend fun startGame(name: String) {
+        sendMessage(StartGameRequest(name))
+    }
+
+    override suspend fun playerAction(name: PlayerInputRequest) {
+        println("Gateway: player action with input: $name")
+        sendMessage(name)
     }
 
     private fun startGettingMessages(session: WebSocketSession): Job {
@@ -108,7 +126,6 @@ class Gateway(
                 if (e is ClosedReceiveChannelException) {
                     println("Gateway: WebSocket channel correctly closed")
                 } else {
-                    onError("Error from WebSocket: ${e.message}")
                     println("Gateway: Error from WebSocket")
                 }
             } finally {
@@ -117,15 +134,15 @@ class Gateway(
         }
     }
 
-    private fun processIncomingFrame(frame: Frame) {
+    private suspend fun processIncomingFrame(frame: Frame) {
         if (frame is Frame.Text) {
+            println(frame.readText())
             val text = frame.readText()
             try {
                 val serverMessage: ServerMessage =
                     AppJson.decodeFromString<ServerMessage>(string = text)
-                onServerMessage(serverMessage)
-            } catch (e: Exception) {
-                onError("Error Deserializing server message: ${e.message}")
+                mMessageFlow.emit(serverMessage)
+            } catch (_: Exception) {
                 println("Gateway: Error deserializing server message")
             }
         }

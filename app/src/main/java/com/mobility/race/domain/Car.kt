@@ -48,6 +48,12 @@ data class Car(
         )
     }
 
+    fun setNewPosition(newPosition: Offset): Car {
+        return copy(
+            position = newPosition
+        )
+    }
+
     private fun updateCurrentSprite(): Int {
         if (distanceBeforeSpriteChange <= 0f) {
             distanceBeforeSpriteChange = DEFAULT_SPRITE_CHANGE_DISTANCE

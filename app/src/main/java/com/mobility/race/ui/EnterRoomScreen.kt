@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun EnterRoomScreen(
-    navigateToMultiplayer: (String, String) -> Unit
+    playerName: String,
+    navigateToRoom: (String, String) -> Unit
 ) {
-    var playerName: String by remember { mutableStateOf("") }
     var roomName: String by remember { mutableStateOf("") }
 
     Box(
@@ -31,11 +31,7 @@ fun EnterRoomScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
-            TextField(
-                value = playerName,
-                onValueChange = { playerName = it },
-                label = { Text("Your name") }
-            )
+            Text(text = "Enter code")
 
             TextField(
                 value = roomName,
@@ -46,7 +42,7 @@ fun EnterRoomScreen(
             Button(
                 onClick = {
                     if (playerName.isNotBlank() && roomName.isNotBlank()) {
-//                        navigateToMultiplayer(playerName, roomName)
+                        navigateToRoom(playerName, roomName)
                     }
                 },
                 enabled = playerName.isNotBlank() && roomName.isNotBlank()

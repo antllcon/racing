@@ -9,14 +9,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
-import com.mobility.race.presentation.MultiplayerGameViewModelFactory
+import com.mobility.race.data.Gateway
+import com.mobility.race.data.IGateway
+import com.mobility.race.data.MapStringType
+import com.mobility.race.data.Server
+import com.mobility.race.di.MultiplayerGameViewModelFactory
+import com.mobility.race.di.RoomViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.presentation.multiplayer.RoomViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
+import kotlin.reflect.typeOf
 
 @Serializable
 object Menu
@@ -25,23 +32,25 @@ object Menu
 object SingleplayerGame
 
 @Serializable
-object EnterRoom
-
-@Serializable
-object CreateRoom
-
-@Serializable
-data class RaceFinished(
-    val finishTime: Long = 0L,
-    val lapsCompleted: Int = 0,
-    val totalLaps: Int = 0
+data class EnterRoom(
+    val name: String
 )
 
 @Serializable
-data class MultiplayerGame(
+data class Room(
     val playerName: String,
     val roomName: String,
     val isCreatingRoom: Boolean
+)
+
+@Serializable
+object MultiplayerMenuScreen
+
+@Serializable
+data class MultiplayerGame(
+    val nickname: String,
+    val playerNames: Array<String>,
+    val playerSpriteId: String
 )
 
 @Composable
@@ -57,6 +66,11 @@ fun AppNavHost(
         }
     }
 
+    val gateway: IGateway = Gateway(
+        client = httpClient,
+        serverConfig = Server.default()
+    )
+
     NavHost(
         navController = navController,
         startDestination = Menu
@@ -64,75 +78,69 @@ fun AppNavHost(
         composable<Menu> {
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
-                navigateToCreateRoom = { navController.navigate(route = CreateRoom) },
-                navigateToJoinRoom = { navController.navigate(route = EnterRoom) }
+                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) }
+            )
+        }
+
+        composable<MultiplayerMenuScreen> {
+            MultiplayerMenuScreen(
+                navigateToJoinRoom = { playerName ->
+                    navController.navigate(route = EnterRoom(playerName))
+                },
+                navigateToCreateRoom = { playerName, roomName ->
+                    navController.navigate(route = Room(playerName, roomName, true))
+                }
             )
         }
 
         composable<SingleplayerGame> {
-            SingleplayerGameScreen(
-                navigateToFinished = { time, laps, total ->
-                    navController.navigate(RaceFinished(time, laps, total)) {
-                        popUpTo(SingleplayerGame) { inclusive = true }
-                    }
-                },
-                onExit = {
-                    navController.navigate(route = Menu) {
-                        popUpTo(Menu) { inclusive = true }
-                    }
-                },
-                onRestart = {
-                }
+            SingleplayerGameScreen()
+        }
+
+        composable<EnterRoom> { entry ->
+            val args = entry.toRoute<EnterRoom>()
+
+            EnterRoomScreen(playerName = args.name, navigateToRoom = { playerName, roomName ->
+                navController.navigate(route = Room(playerName, roomName, false))
+            })
+        }
+
+        composable<Room> { entry ->
+            val args = entry.toRoute<Room>()
+
+            val factory = remember(gateway) {
+                RoomViewModelFactory(
+                    args.playerName,
+                    args.roomName,
+                    args.isCreatingRoom,
+                    navController,
+                    gateway
+                )
+            }
+            val viewModel: RoomViewModel = viewModel(factory = factory)
+
+            RoomScreen(viewModel = viewModel)
+        }
+
+        composable<MultiplayerGame>(
+            typeMap = mapOf(
+                typeOf<Map<String, String>>() to MapStringType
             )
-        }
-
-        composable<CreateRoom> {
-            CreateRoomScreen(navigateToMultiplayer = { playerName, roomName ->
-                navController.navigate(route = MultiplayerGame(playerName, roomName, true))
-            })
-        }
-
-        composable<EnterRoom> {
-            EnterRoomScreen(navigateToMultiplayer = { playerName, roomName ->
-                navController.navigate(route = MultiplayerGame(playerName, roomName, false))
-            })
-        }
-
-        composable<MultiplayerGame> { entry ->
+        ) { entry ->
             val args = entry.toRoute<MultiplayerGame>()
 
-            val factory = remember(httpClient) {
-                MultiplayerGameViewModelFactory(httpClient)
+            val factory = remember(gateway) {
+                MultiplayerGameViewModelFactory(
+                    args.nickname,
+                    args.playerNames,
+                    args.playerSpriteId,
+                    gateway
+                )
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
 
-            MultiplayerGameScreen(
-                playerName = args.playerName,
-                roomName = args.roomName,
-                isCreatingRoom = args.isCreatingRoom,
-                viewModel = viewModel
-            )
-        }
-
-        composable<RaceFinished> { entry ->
-            val args = entry.toRoute<RaceFinished>()
-
-            RaceFinishedScreen(
-                finishTime = args.finishTime,
-                lapsCompleted = args.lapsCompleted,
-                totalLaps = args.totalLaps,
-                onRestart = {
-                    navController.navigate(SingleplayerGame) {
-                        popUpTo(SingleplayerGame) { inclusive = true }
-                    }
-                },
-                onExit = {
-                    navController.navigate(route = Menu) {
-                        popUpTo(Menu) { inclusive = true }
-                    }
-                }
-            )
+            MultiplayerGameScreen(viewModel)
         }
     }
 }
