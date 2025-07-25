@@ -84,7 +84,7 @@ fun MultiplayerGameScreen(
                                     if (state.controllingStick.isInside(offset)) {
                                         isStickActive = true
                                         val angle = state.controllingStick.getTouchAngle(offset)
-                                       // viewModel.setDirectionAngle(angle)
+                                        viewModel.setDirectionAngle(angle)
                                         currentStickInputAngle = angle
                                         currentStickInputDistanceFactor =
                                             state.controllingStick.getDistanceFactor(offset)
@@ -97,7 +97,7 @@ fun MultiplayerGameScreen(
                                 onDrag = { change, _ ->
                                     if (isStickActive) {
                                         val angle = state.controllingStick.getTouchAngle(change.position)
-                                        //viewModel.setDirectionAngle(angle)
+                                        viewModel.setDirectionAngle(angle)
                                         currentStickInputAngle = angle
                                         currentStickInputDistanceFactor =
                                             state.controllingStick.getDistanceFactor(change.position)
@@ -105,7 +105,7 @@ fun MultiplayerGameScreen(
                                 },
                                 onDragEnd = {
                                     if (isStickActive) {
-                                        //viewModel.setDirectionAngle(null)
+                                        viewModel.setDirectionAngle(null)
                                         isStickActive = false
                                         currentStickInputAngle = null
                                         currentStickInputDistanceFactor = 0f
@@ -113,7 +113,7 @@ fun MultiplayerGameScreen(
                                 },
                                 onDragCancel = {
                                     if (isStickActive) {
-                                        //viewModel.setDirectionAngle(null)
+                                        viewModel.setDirectionAngle(null)
                                         isStickActive = false
                                         currentStickInputAngle = null
                                         currentStickInputDistanceFactor = 0f

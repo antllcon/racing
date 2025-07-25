@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.IGateway
+import com.mobility.race.data.PlayerActionRequest
+import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerStateDto
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.CheckpointManager
@@ -21,14 +23,15 @@ class MultiplayerGameViewModel(
     playerId: String,
     playerNames: Array<String>,
     carSpriteId: String,
-    gateway: IGateway
+    private val gateway: IGateway
 ): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
     nickname = playerId,
     playerNames = playerNames,
     carSpriteId = carSpriteId,
     starterPack = gateway.openGatewayStorage()
 )) {
-    var gameCycle: Job? = null
+    private var gameCycle: Job? = null
+    private var elapsedTime: Float = 0f
 
     init {
         gateway.messageFlow
@@ -52,11 +55,10 @@ class MultiplayerGameViewModel(
         gameCycle = viewModelScope.launch {
             while (stateValue.isGameRunning) {
                 val currentTime = System.currentTimeMillis()
-                val elapsedTime = (currentTime - lastTime) / 1000f
+                elapsedTime = (currentTime - lastTime) / 1000f
 
                 movePlayers(elapsedTime)
-//                checkCheckpoints()
-//                moveCamera()
+                moveCamera()
                 lastTime = currentTime
 
                 delay(16)
@@ -69,7 +71,11 @@ class MultiplayerGameViewModel(
 
         for (player in stateValue.players) {
             val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
-            val newCar = player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
+            val newCar = if (player.name != stateValue.mainPlayer.name) {
+                player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
+            } else {
+                player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+            }
 
             newPlayersCopy = newPlayersCopy.plus(player.copy(
                 car = newCar
@@ -83,8 +89,16 @@ class MultiplayerGameViewModel(
         }
     }
 
+    private fun moveCamera() {
+        modifyState {
+            copy(
+                gameCamera = gameCamera.update(mainPlayer.car.position)
+            )
+        }
+    }
 
-    private fun handleMessage(message: ServerMessage) {
+
+    private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             is GameCountdownUpdateResponse -> {
                 modifyState {
@@ -118,6 +132,15 @@ class MultiplayerGameViewModel(
                         players = updatedPlayers
                     )
                 }
+
+                gateway.playerAction(
+                    PlayerInputRequest(
+                        stateValue.mainPlayer.isAccelerating,
+                        stateValue.mainPlayer.car.direction,
+                        elapsedTime,
+                        0
+                    )
+                )
             }
             else -> Unit
         }
