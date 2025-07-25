@@ -1,6 +1,5 @@
 package com.mobility.race.presentation.multiplayer
 
-import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.mobility.race.data.ErrorResponse

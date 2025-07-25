@@ -1,13 +1,11 @@
 package com.mobility.race.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,25 +15,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.imageResource
-import com.mobility.race.R
-import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
+import com.mobility.race.ui.drawUtils.drawCar
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
-import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
-import kotlin.math.PI
 
 @Composable
 fun MultiplayerGameScreen(
@@ -71,7 +61,7 @@ fun MultiplayerGameScreen(
                             size.width.toFloat(),
                             size.height.toFloat()
                         )
-                        state.gameCamera!!.setNewViewportSize(
+                        state.gameCamera.setNewViewportSize(
                             Size(
                                 size.width.toFloat(),
                                 size.height.toFloat()
@@ -123,14 +113,14 @@ fun MultiplayerGameScreen(
                 }
         ) {
             drawBackgroundTexture(
-                state.gameMap!!,
-                state.gameCamera!!,
+                state.gameMap,
+                state.gameCamera,
                 bitmaps["terrain_500"]!!
             )
 
             drawGameMap(
-                state.gameMap!!,
-                state.gameCamera!!,
+                state.gameMap,
+                state.gameCamera,
                 state.gameCamera.viewportSize,
                 bitmaps
             )
@@ -144,23 +134,12 @@ fun MultiplayerGameScreen(
             drawMinimap(state.gameMap, state.mainPlayer.car)
 
             drawNextCheckpoint(
-                state.checkpointManager!!.getNextCheckpoint(state.mainPlayer.car.id),
+                state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
                 state.gameCamera,
                 state.gameCamera.getScaledCellSize(state.gameMap.size)
             )
 
-            rotate(
-                degrees = state.mainPlayer.car.visualDirection * (180f / PI.toFloat()) + 90,
-                pivot = state.gameCamera.worldToScreen(state.mainPlayer.car.position)
-            ) {
-                println("car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite)
-                drawImageBitmap(
-                    bitmaps["car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite]!!,
-                    Offset(state.gameCamera.worldToScreen(state.mainPlayer.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,
-                        state.gameCamera.worldToScreen(state.mainPlayer.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2),
-                    Size(Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size), Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size))
-                )
-            }
+            drawCar(state, bitmaps)
         }
     }
 }

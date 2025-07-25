@@ -5,13 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.IGateway
-import com.mobility.race.data.PlayerActionRequest
 import com.mobility.race.data.PlayerInputRequest
-import com.mobility.race.data.PlayerStateDto
 import com.mobility.race.data.ServerMessage
-import com.mobility.race.domain.CheckpointManager
-import com.mobility.race.domain.GameCamera
-import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
