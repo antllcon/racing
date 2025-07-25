@@ -10,8 +10,8 @@ import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import io.ktor.client.HttpClient
 
 class MultiplayerGameViewModelFactory(
-    private val playerId: String,
-    private val playerNames: Map<String, String>,
+    private val nickname: String,
+    private val playerNames: Array<String>,
     private val carSpriteId: String,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
@@ -20,7 +20,7 @@ class MultiplayerGameViewModelFactory(
         if (modelClass.isAssignableFrom(MultiplayerGameViewModel::class.java)) {
 
             return MultiplayerGameViewModel(
-                playerId,
+                nickname,
                 playerNames,
                 carSpriteId,
                 gateway

@@ -5,10 +5,9 @@ data class RoomState(
     val playerName: String,
     val roomName: String,
     val isCreatingRoom: Boolean,
-    val playerNames: Map<String, String>,
+    val playerNames: Array<String>,
     val isGameStarted: Boolean,
-    val roomId: String,
-    val playerId: String
+    val roomId: String
 ) {
     companion object {
         fun default(playerName: String, roomName: String, isCreatingRoom: Boolean): RoomState {
@@ -16,10 +15,9 @@ data class RoomState(
                 playerName = playerName,
                 roomName = roomName,
                 isCreatingRoom = isCreatingRoom,
-                playerNames = emptyMap(),
+                playerNames = arrayOf(playerName),
                 isGameStarted = false,
                 roomId = "",
-                playerId = ""
             )
         }
 

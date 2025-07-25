@@ -95,7 +95,7 @@ sealed interface ServerMessage {
 
 @Serializable
 @SerialName("PLAYER_CONNECTED")
-data class PlayerConnectedResponse(val playerId: String, val playerNames: Map<String, String>) : ServerMessage {
+data class PlayerConnectedResponse(val nickname: String, val playerNames: Array<String>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.PLAYER_CONNECTED
 }
 

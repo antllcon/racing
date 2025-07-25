@@ -29,9 +29,9 @@ fun RoomScreen(
             Text(text = state.roomId)
             Text(text = "Players:")
 
-            for ((_, player) in state.playerNames)
+            for (name in state.playerNames)
             {
-                Text(player)
+                Text(name)
             }
 
             if (state.isCreatingRoom && state.playerNames.size != 1) {

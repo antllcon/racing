@@ -24,7 +24,7 @@ data class MultiplayerGameState(
     companion object {
         fun default(
             playerId: String,
-            playerNames: Map<String, String>,
+            playerIds: Array<String>,
             carSpriteId: String,
             starterPack: StarterPack
         ): MultiplayerGameState {
@@ -41,11 +41,9 @@ data class MultiplayerGameState(
                     Car.DIRECTION_RIGHT
                 }
 
-            val mainPlayerName = playerNames[playerId] ?: "Unknown_Player"
 
             val mainPlayer = Player(
                 playerId, Car(
-                    playerName = mainPlayerName,
                     id = carSpriteId,
                     position = starterPack.startPosition.transformToOffset(),
                     visualDirection = startDirection
@@ -54,13 +52,12 @@ data class MultiplayerGameState(
 
             var players: Array<Player> = emptyArray()
 
-            for ((id, name) in playerNames) {
+            for (id in playerIds) {
                 players = players.plus(
                     Player(
                         id = id,
                         Car(
-                            playerName = name,
-                            id = getSpriteId(id, playerNames).toString(),
+                            id = getSpriteId(id, playerIds).toString(),
                             position = starterPack.startPosition.transformToOffset(),
                             visualDirection = startDirection
                         )
@@ -92,9 +89,9 @@ data class MultiplayerGameState(
         }
 
 
-        private fun getSpriteId(playerIdToFind: String, playerIdsMap: Map<String, String>): Int {
+        private fun getSpriteId(playerIdToFind: String, playerIds: Array<String>): Int {
             var index = 1
-            for (playerId in playerIdsMap.keys) {
+            for (playerId in playerIds) {
                 if (playerId == playerIdToFind) {
                     return index
                 }

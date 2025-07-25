@@ -81,7 +81,7 @@ class RoomViewModel(
             is PlayerConnectedResponse -> {
                 modifyState {
                     copy(
-                        playerId = message.playerId,
+                        playerName = message.nickname,
                         playerNames = message.playerNames
                     )
                 }
@@ -91,15 +91,15 @@ class RoomViewModel(
 
                 var carSpriteId = 1
 
-                for ((_, name) in stateValue.playerNames) {
-                    if (name == stateValue.playerNames[stateValue.playerId]) {
+                for (name in stateValue.playerNames) {
+                    if (name == stateValue.playerName) {
                         break
                     }
 
                     carSpriteId++
                 }
 
-                navController.navigate(route = MultiplayerGame(stateValue.playerId, stateValue.playerNames, carSpriteId.toString()))
+                navController.navigate(route = MultiplayerGame(stateValue.playerName, stateValue.playerNames, carSpriteId.toString()))
             }
             else -> Unit
         }

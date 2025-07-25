@@ -16,12 +16,12 @@ import kotlinx.coroutines.flow.onEach
 
 class MultiplayerGameViewModel(
     playerId: String,
-    playerNames: Map<String, String>,
+    playerNames: Array<String>,
     carSpriteId: String,
     gateway: IGateway
 ): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
     playerId = playerId,
-    playerNames = playerNames,
+    playerIds = playerNames,
     carSpriteId = carSpriteId,
     starterPack = gateway.openGatewayStorage()
 )) {
