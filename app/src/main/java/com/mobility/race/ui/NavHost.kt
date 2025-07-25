@@ -11,6 +11,7 @@ import androidx.navigation.toRoute
 import com.mobility.race.data.AppJson
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
+import com.mobility.race.data.MapStringType
 import com.mobility.race.data.Server
 import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.di.RoomViewModelFactory
@@ -22,6 +23,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
+import kotlin.reflect.typeOf
 
 @Serializable
 object Menu
@@ -76,7 +78,7 @@ fun AppNavHost(
         composable<Menu> {
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
-                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen)}
+                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) }
             )
         }
 
@@ -84,8 +86,8 @@ fun AppNavHost(
             MultiplayerMenuScreen(
                 navigateToJoinRoom = { playerName ->
                     navController.navigate(route = EnterRoom(playerName))
-                    },
-                navigateToCreateRoom = {  playerName, roomName ->
+                },
+                navigateToCreateRoom = { playerName, roomName ->
                     navController.navigate(route = Room(playerName, roomName, true))
                 }
             )
@@ -107,18 +109,33 @@ fun AppNavHost(
             val args = entry.toRoute<Room>()
 
             val factory = remember(gateway) {
-                RoomViewModelFactory(args.playerName, args.roomName, args.isCreatingRoom, navController, gateway)
+                RoomViewModelFactory(
+                    args.playerName,
+                    args.roomName,
+                    args.isCreatingRoom,
+                    navController,
+                    gateway
+                )
             }
             val viewModel: RoomViewModel = viewModel(factory = factory)
 
             RoomScreen(viewModel = viewModel)
         }
 
-        composable<MultiplayerGame> { entry ->
+        composable<MultiplayerGame>(
+            typeMap = mapOf(
+                typeOf<Map<String, String>>() to MapStringType
+            )
+        ) { entry ->
             val args = entry.toRoute<MultiplayerGame>()
 
             val factory = remember(gateway) {
-                MultiplayerGameViewModelFactory(args.playerId, args.playerNames, args.playerSpriteId, gateway)
+                MultiplayerGameViewModelFactory(
+                    args.playerId,
+                    args.playerNames,
+                    args.playerSpriteId,
+                    gateway
+                )
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)

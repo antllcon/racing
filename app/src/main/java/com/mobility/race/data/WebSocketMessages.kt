@@ -47,15 +47,15 @@ data class CreateRoomRequest(val name: String) : ClientMessage {
 }
 
 @Serializable
-@SerialName("START_GAME")
-data class StartGameRequest(val name: String) : ClientMessage {
-    override val type: ClientMessageType get() = ClientMessageType.START_GAME
-}
-
-@Serializable
 @SerialName("JOIN_ROOM")
 data class JoinRoomRequest(val name: String) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.JOIN_ROOM
+}
+
+@Serializable
+@SerialName("START_GAME")
+data class StartGameRequest(val name: String) : ClientMessage {
+    override val type: ClientMessageType get() = ClientMessageType.START_GAME
 }
 
 // This message needs no data from the client, so it can be an 'object'.

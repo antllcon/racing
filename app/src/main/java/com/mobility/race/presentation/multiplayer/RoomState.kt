@@ -16,7 +16,7 @@ data class RoomState(
                 playerName = playerName,
                 roomName = roomName,
                 isCreatingRoom = isCreatingRoom,
-                playerNames = mapOf(playerName to ""),
+                playerNames = emptyMap(),
                 isGameStarted = false,
                 roomId = "",
                 playerId = ""

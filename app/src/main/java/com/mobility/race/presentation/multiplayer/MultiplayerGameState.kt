@@ -22,38 +22,50 @@ data class MultiplayerGameState(
     val directionAngle: Float?
 ) {
     companion object {
-        fun default(playerId: String, playerNames: Map<String, String>, carSpriteId: String, starterPack: StarterPack): MultiplayerGameState {
+        fun default(
+            playerId: String,
+            playerNames: Map<String, String>,
+            carSpriteId: String,
+            starterPack: StarterPack
+        ): MultiplayerGameState {
             var newRouteList: List<Offset> = emptyList()
 
             starterPack.route.forEach {
                 newRouteList = newRouteList.plus(it.transformToOffset())
             }
 
-            val startDirection = if (starterPack.startDirection == GameMap.StartDirection.VERTICAL) {
-                Car.DIRECTION_UP
-            } else {
-                Car.DIRECTION_RIGHT
-            }
+            val startDirection =
+                if (starterPack.startDirection == GameMap.StartDirection.VERTICAL) {
+                    Car.DIRECTION_UP
+                } else {
+                    Car.DIRECTION_RIGHT
+                }
 
-            val mainPlayer = Player(playerId, Car(
-                playerName = playerNames[playerId]!!,
-                id = carSpriteId,
-                position = starterPack.startPosition.transformToOffset(),
-                visualDirection = startDirection)
+            val mainPlayerName = playerNames[playerId] ?: "Unknown_Player"
+
+            val mainPlayer = Player(
+                playerId, Car(
+                    playerName = mainPlayerName,
+                    id = carSpriteId,
+                    position = starterPack.startPosition.transformToOffset(),
+                    visualDirection = startDirection
+                )
             )
 
             var players: Array<Player> = emptyArray()
 
             for ((id, name) in playerNames) {
-                players = players.plus(Player(
-                    id,
-                    Car(
-                        playerName = name,
-                        id = getSpriteId(name, playerNames).toString(),
-                        position = starterPack.startPosition.transformToOffset(),
-                        visualDirection = startDirection
+                players = players.plus(
+                    Player(
+                        id = id,
+                        Car(
+                            playerName = name,
+                            id = getSpriteId(id, playerNames).toString(),
+                            position = starterPack.startPosition.transformToOffset(),
+                            visualDirection = startDirection
+                        )
                     )
-                ))
+                )
             }
 
             return MultiplayerGameState(
@@ -79,18 +91,16 @@ data class MultiplayerGameState(
             )
         }
 
-        private fun getSpriteId(name: String, otherNames: Map<String, String>): Int {
-            var currentSprite = 1
 
-            for ((_, mapName) in otherNames) {
-                if (name == mapName) {
-                    break
+        private fun getSpriteId(playerIdToFind: String, playerIdsMap: Map<String, String>): Int {
+            var index = 1
+            for (playerId in playerIdsMap.keys) {
+                if (playerId == playerIdToFind) {
+                    return index
                 }
-
-                currentSprite++
+                index++
             }
-
-            return currentSprite
+            return 1
         }
     }
 }
