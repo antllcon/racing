@@ -15,15 +15,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class StarterPack(
-    val mapGrid: Array<IntArray>,
-    val mapWidth: Int,
-    val mapHeight: Int,
-    val startPosition: Vector2D,
-    val startDirection: GameMap.StartDirection,
-    val route: List<Vector2D>
-)
 
 class Gateway(
     private val client: HttpClient,

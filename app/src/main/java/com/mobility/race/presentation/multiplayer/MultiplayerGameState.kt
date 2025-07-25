@@ -23,8 +23,8 @@ data class MultiplayerGameState(
 ) {
     companion object {
         fun default(
-            playerId: String,
-            playerIds: Array<String>,
+            nickname: String,
+            playerNames: Array<String>,
             carSpriteId: String,
             starterPack: StarterPack
         ): MultiplayerGameState {
@@ -43,7 +43,7 @@ data class MultiplayerGameState(
 
 
             val mainPlayer = Player(
-                playerId, Car(
+                nickname, Car(
                     id = carSpriteId,
                     position = starterPack.startPosition.transformToOffset(),
                     visualDirection = startDirection
@@ -52,12 +52,12 @@ data class MultiplayerGameState(
 
             var players: Array<Player> = emptyArray()
 
-            for (id in playerIds) {
+            for (name in playerNames) {
                 players = players.plus(
                     Player(
-                        id = id,
+                        name = name,
                         Car(
-                            id = getSpriteId(id, playerIds).toString(),
+                            id = getSpriteId(name, playerNames).toString(),
                             position = starterPack.startPosition.transformToOffset(),
                             visualDirection = startDirection
                         )
@@ -97,13 +97,13 @@ data class MultiplayerGameState(
                 }
                 index++
             }
-            return 1
+            return index
         }
     }
 }
 
 data class Player(
-    val id: String,
+    val name: String,
     val car: Car,
     val isAccelerating: Boolean = false,
     val isFinished: Boolean = false

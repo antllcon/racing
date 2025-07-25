@@ -81,7 +81,6 @@ class RoomViewModel(
             is PlayerConnectedResponse -> {
                 modifyState {
                     copy(
-                        playerName = message.nickname,
                         playerNames = message.playerNames
                     )
                 }

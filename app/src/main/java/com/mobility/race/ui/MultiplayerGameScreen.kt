@@ -153,6 +153,7 @@ fun MultiplayerGameScreen(
                 degrees = state.mainPlayer.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = state.gameCamera.worldToScreen(state.mainPlayer.car.position)
             ) {
+                println("car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite)
                 drawImageBitmap(
                     bitmaps["car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite]!!,
                     Offset(state.gameCamera.worldToScreen(state.mainPlayer.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,

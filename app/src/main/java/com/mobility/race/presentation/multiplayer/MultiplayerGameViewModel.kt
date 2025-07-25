@@ -20,8 +20,8 @@ class MultiplayerGameViewModel(
     carSpriteId: String,
     gateway: IGateway
 ): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
-    playerId = playerId,
-    playerIds = playerNames,
+    nickname = playerId,
+    playerNames = playerNames,
     carSpriteId = carSpriteId,
     starterPack = gateway.openGatewayStorage()
 )) {
