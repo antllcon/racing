@@ -29,7 +29,7 @@ fun RoomScreen(
             Text(text = state.roomId)
             Text(text = "Players:")
 
-            for (player in state.playerNames)
+            for ((_, player) in state.playerNames)
             {
                 Text(player)
             }

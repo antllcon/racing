@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.IGateway
+import com.mobility.race.data.PlayerStateDto
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.GameCamera
@@ -15,45 +16,20 @@ import kotlinx.coroutines.flow.onEach
 
 class MultiplayerGameViewModel(
     playerId: String,
-    playerName: String,
+    playerNames: Map<String, String>,
     carSpriteId: String,
     gateway: IGateway
 ): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
     playerId = playerId,
-    nickname = playerName,
-    carSpriteId = carSpriteId
+    playerNames = playerNames,
+    carSpriteId = carSpriteId,
+    starterPack = gateway.openGatewayStorage()
 )) {
 
     init {
         gateway.messageFlow
             .onEach(::handleMessage)
             .launchIn(viewModelScope)
-
-        val unpackedStorage = gateway.openGatewayStorage()
-        var newRouteList: List<Offset> = emptyList()
-
-        unpackedStorage.route.forEach {
-            newRouteList = newRouteList.plus(it.transformToOffset())
-        }
-
-        modifyState {
-            copy(
-                gameMap = GameMap(
-                    unpackedStorage.mapGrid,
-                    unpackedStorage.mapWidth,
-                    unpackedStorage.mapHeight,
-                    unpackedStorage.startPosition.transformToOffset(),
-                    unpackedStorage.startDirection,
-                    newRouteList
-                ),
-                gameCamera = GameCamera(
-                    position = mainPlayer.car.position,
-                    mapWidth = unpackedStorage.mapWidth,
-                    mapHeight = unpackedStorage.mapHeight
-                ),
-                checkpointManager = CheckpointManager(newRouteList)
-            )
-        }
     }
 
     fun setDirectionAngle(newAngle: Float?) {
@@ -62,6 +38,10 @@ class MultiplayerGameViewModel(
                 directionAngle = newAngle
             )
         }
+    }
+
+    private fun updateGame(players: List<PlayerStateDto>) {
+
     }
 
     private fun handleMessage(message: ServerMessage) {

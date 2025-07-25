@@ -47,7 +47,7 @@ object MultiplayerMenuScreen
 @Serializable
 data class MultiplayerGame(
     val playerId: String,
-    val playerName: String,
+    val playerNames: Map<String, String>,
     val playerSpriteId: String
 )
 
@@ -118,7 +118,7 @@ fun AppNavHost(
             val args = entry.toRoute<MultiplayerGame>()
 
             val factory = remember(gateway) {
-                MultiplayerGameViewModelFactory(args.playerId, args.playerName, args.playerSpriteId, gateway)
+                MultiplayerGameViewModelFactory(args.playerId, args.playerNames, args.playerSpriteId, gateway)
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)

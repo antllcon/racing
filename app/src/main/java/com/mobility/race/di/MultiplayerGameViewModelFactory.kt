@@ -11,7 +11,7 @@ import io.ktor.client.HttpClient
 
 class MultiplayerGameViewModelFactory(
     private val playerId: String,
-    private val playerName: String,
+    private val playerNames: Map<String, String>,
     private val carSpriteId: String,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
@@ -21,7 +21,7 @@ class MultiplayerGameViewModelFactory(
 
             return MultiplayerGameViewModel(
                 playerId,
-                playerName,
+                playerNames,
                 carSpriteId,
                 gateway
             ) as T

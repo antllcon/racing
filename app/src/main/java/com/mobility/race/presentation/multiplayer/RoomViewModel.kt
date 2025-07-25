@@ -79,26 +79,27 @@ class RoomViewModel(
                 }
             }
             is PlayerConnectedResponse -> {
-                val players =
-
                 modifyState {
                     copy(
-                        players = players.plus(Playerz)
+                        playerId = message.playerId,
+                        playerNames = message.playerNames
                     )
                 }
             }
             is StartedGameResponse -> {
                 gateway.fillGatewayStorage(message.starterPack)
 
-                var carSpriteId = ""
+                var carSpriteId = 1
 
-                for (i in 0 until stateValue.players.size) {
-                    if (stateValue.players[i].car.playerName == stateValue.playerName) {
-                        carSpriteId = i.toString()
+                for ((_, name) in stateValue.playerNames) {
+                    if (name == stateValue.playerNames[stateValue.playerId]) {
+                        break
                     }
+
+                    carSpriteId++
                 }
 
-                navController.navigate(route = MultiplayerGame(stateValue.playerId, stateValue.roomName, carSpriteId))
+                navController.navigate(route = MultiplayerGame(stateValue.playerId, stateValue.playerNames, carSpriteId.toString()))
             }
             else -> Unit
         }
