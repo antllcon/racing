@@ -136,6 +136,7 @@ class Gateway(
 
     private suspend fun processIncomingFrame(frame: Frame) {
         if (frame is Frame.Text) {
+            println(frame.readText())
             val text = frame.readText()
             try {
                 val serverMessage: ServerMessage =
