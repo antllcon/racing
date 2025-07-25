@@ -58,7 +58,6 @@ data class MultiplayerGameState(
                         name = name,
                         Car(
                             id = getSpriteId(name, playerNames).toString(),
-                            position = starterPack.startPosition.transformToOffset(),
                             visualDirection = startDirection
                         )
                     )
