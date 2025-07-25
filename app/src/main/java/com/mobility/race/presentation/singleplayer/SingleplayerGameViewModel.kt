@@ -8,19 +8,28 @@ import kotlinx.coroutines.launch
 
 class SingleplayerGameViewModel :
     BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..6).random().toString()))) {
+
     private var gameCycle: Job? = null
+    private var carId: String = ((1..6).random().toString())
 
     init {
-        init()
+        startNewGame()
     }
 
-    fun init() {
+    fun startNewGame() {
+        carId = ((1..6).random().toString())
+
+        gameCycle?.cancel()
+
         modifyState {
-            SingleplayerGameState.default(stateValue.car.id).copy(
+            SingleplayerGameState.default(carId).copy(
                 isGameRunning = true,
-                startTime = System.currentTimeMillis()
+                startTime = System.currentTimeMillis(),
+                finishTime = 0L,
+                lapsCompleted = 0
             )
         }
+
         runGame()
     }
 
@@ -68,7 +77,6 @@ class SingleplayerGameViewModel :
             val newLaps = manager.getLapsForCar(carId)
             if (newLaps != stateValue.lapsCompleted) {
                 modifyState { copy(lapsCompleted = newLaps) }
-                println("Lap ${stateValue.lapsCompleted}/${stateValue.totalLaps} completed!")
             }
 
             if (stateValue.lapsCompleted >= stateValue.totalLaps) {
@@ -100,12 +108,15 @@ class SingleplayerGameViewModel :
                 finishTime = System.currentTimeMillis() - startTime
             )
         }
-        println("Player ${stateValue.car.playerName} finished the race!")
-        // Навигация на экран результатов
+        gameCycle?.cancel()
     }
 
+    fun restartGame() {
+        startNewGame()
+    }
 
-    fun stopGame() {
+    override fun onCleared() {
+        super.onCleared()
         gameCycle?.cancel()
     }
 }

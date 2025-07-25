@@ -1,7 +1,6 @@
 package com.mobility.race.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,13 +36,13 @@ import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 import kotlin.math.PI
-import kotlin.math.min
-import com.mobility.race.ui.RaceFinishedScreen
+
 @Composable
 fun SingleplayerGameScreen(
     viewModel: SingleplayerGameViewModel = viewModel(),
     navigateToFinished: (finishTime: Long, lapsCompleted: Int, totalLaps: Int) -> Unit,
-    onExit: () -> Unit = {}
+    onExit: () -> Unit = {},
+    onRestart: () -> Unit = {}
 ) {
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
@@ -51,6 +50,10 @@ fun SingleplayerGameScreen(
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
     var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(key1 = onRestart) {
+        viewModel.restartGame()
+    }
 
     Box(
         modifier = Modifier
@@ -169,11 +172,9 @@ fun SingleplayerGameScreen(
             )
         }
 
-        if (!state.isGameRunning) {
-            LaunchedEffect(state.finishTime, state.lapsCompleted, state.totalLaps) {
-                if (state.finishTime > 0) {
-                    navigateToFinished(state.finishTime, state.lapsCompleted, state.totalLaps)
-                }
+        if (!state.isGameRunning && state.finishTime > 0) {
+            LaunchedEffect(state.finishTime) {
+                navigateToFinished(state.finishTime, state.lapsCompleted, state.totalLaps)
             }
         }
     }

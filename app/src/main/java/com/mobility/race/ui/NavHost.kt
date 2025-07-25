@@ -31,7 +31,11 @@ object EnterRoom
 object CreateRoom
 
 @Serializable
-object RaceFinished
+data class RaceFinished(
+    val finishTime: Long = 0L,
+    val lapsCompleted: Int = 0,
+    val totalLaps: Int = 0
+)
 
 @Serializable
 data class MultiplayerGame(
@@ -68,9 +72,16 @@ fun AppNavHost(
         composable<SingleplayerGame> {
             SingleplayerGameScreen(
                 navigateToFinished = { time, laps, total ->
-                    navController.navigate(RaceFinished) {
-                        popUpTo(Menu) { inclusive = false }
+                    navController.navigate(RaceFinished(time, laps, total)) {
+                        popUpTo(SingleplayerGame) { inclusive = true }
                     }
+                },
+                onExit = {
+                    navController.navigate(route = Menu) {
+                        popUpTo(Menu) { inclusive = true }
+                    }
+                },
+                onRestart = {
                 }
             )
         }
@@ -103,13 +114,18 @@ fun AppNavHost(
                 viewModel = viewModel
             )
         }
-        composable<RaceFinished> {
+
+        composable<RaceFinished> { entry ->
+            val args = entry.toRoute<RaceFinished>()
+
             RaceFinishedScreen(
-                finishTime = 0L,
-                lapsCompleted = 0,
-                totalLaps = 0,
+                finishTime = args.finishTime,
+                lapsCompleted = args.lapsCompleted,
+                totalLaps = args.totalLaps,
                 onRestart = {
-                    navController.popBackStack()
+                    navController.navigate(SingleplayerGame) {
+                        popUpTo(SingleplayerGame) { inclusive = true }
+                    }
                 },
                 onExit = {
                     navController.navigate(route = Menu) {
