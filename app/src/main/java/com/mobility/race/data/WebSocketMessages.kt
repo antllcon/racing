@@ -75,7 +75,7 @@ data class PlayerActionRequest(val name: String) : ClientMessage {
 
 @Serializable
 data class PlayerStateDto(
-    val id: String,
+    val name: String,
     val posX: Float,
     val posY: Float,
     val visualDirection: Float,

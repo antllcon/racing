@@ -19,6 +19,7 @@ data class MultiplayerGameState(
     val gameCamera: GameCamera,
     val controllingStick: ControllingStick,
     val checkpointManager: CheckpointManager,
+    val isGameRunning: Boolean,
     val directionAngle: Float?
 ) {
     companion object {
@@ -45,7 +46,6 @@ data class MultiplayerGameState(
             val mainPlayer = Player(
                 nickname, Car(
                     id = carSpriteId,
-                    position = starterPack.startPosition.transformToOffset(),
                     visualDirection = startDirection
                 )
             )
@@ -83,6 +83,7 @@ data class MultiplayerGameState(
                 ),
                 controllingStick = ControllingStick(),
                 checkpointManager = CheckpointManager(newRouteList),
+                isGameRunning = true,
                 directionAngle = null
             )
         }
