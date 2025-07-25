@@ -10,6 +10,9 @@ import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import io.ktor.client.HttpClient
 
 class MultiplayerGameViewModelFactory(
+    private val playerId: String,
+    private val playerName: String,
+    private val carSpriteId: String,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -17,7 +20,10 @@ class MultiplayerGameViewModelFactory(
         if (modelClass.isAssignableFrom(MultiplayerGameViewModel::class.java)) {
 
             return MultiplayerGameViewModel(
-                gateway = gateway
+                playerId,
+                playerName,
+                carSpriteId,
+                gateway
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -2,6 +2,7 @@ package com.mobility.race.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,20 +10,43 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.imageResource
 import com.mobility.race.R
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.bitmapStorage
+import com.mobility.race.ui.drawUtils.drawBackgroundTexture
+import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
+import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawMinimap
+import com.mobility.race.ui.drawUtils.drawNextCheckpoint
+import kotlin.math.PI
 
 @Composable
 fun MultiplayerGameScreen(
     viewModel: MultiplayerGameViewModel
 ) {
     val state = viewModel.state.value
+    val bitmaps = bitmapStorage()
+
+    var isStickActive by remember { mutableStateOf(false) }
+    var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
+    var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -42,10 +66,100 @@ fun MultiplayerGameScreen(
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
+                .onSizeChanged { size ->
+                        state.controllingStick.setScreenSize(
+                            size.width.toFloat(),
+                            size.height.toFloat()
+                        )
+                        state.gameCamera!!.setNewViewportSize(
+                            Size(
+                                size.width.toFloat(),
+                                size.height.toFloat()
+                            )
+                        )
+                    }
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { offset ->
+                                    if (state.controllingStick.isInside(offset)) {
+                                        isStickActive = true
+                                        val angle = state.controllingStick.getTouchAngle(offset)
+                                       // viewModel.setDirectionAngle(angle)
+                                        currentStickInputAngle = angle
+                                        currentStickInputDistanceFactor =
+                                            state.controllingStick.getDistanceFactor(offset)
+                                    } else {
+                                        isStickActive = false
+                                        currentStickInputAngle = null
+                                        currentStickInputDistanceFactor = 0f
+                                    }
+                                },
+                                onDrag = { change, _ ->
+                                    if (isStickActive) {
+                                        val angle = state.controllingStick.getTouchAngle(change.position)
+                                        //viewModel.setDirectionAngle(angle)
+                                        currentStickInputAngle = angle
+                                        currentStickInputDistanceFactor =
+                                            state.controllingStick.getDistanceFactor(change.position)
+                                    }
+                                },
+                                onDragEnd = {
+                                    if (isStickActive) {
+                                        //viewModel.setDirectionAngle(null)
+                                        isStickActive = false
+                                        currentStickInputAngle = null
+                                        currentStickInputDistanceFactor = 0f
+                                    }
+                                },
+                                onDragCancel = {
+                                    if (isStickActive) {
+                                        //viewModel.setDirectionAngle(null)
+                                        isStickActive = false
+                                        currentStickInputAngle = null
+                                        currentStickInputDistanceFactor = 0f
+                                    }
+                                }
+                            )
+                }
         ) {
-            drawRect(
-                color = Color.Red
+            drawBackgroundTexture(
+                state.gameMap!!,
+                state.gameCamera!!,
+                bitmaps["terrain_500"]!!
             )
+
+            drawGameMap(
+                state.gameMap!!,
+                state.gameCamera!!,
+                state.gameCamera.viewportSize,
+                bitmaps
+            )
+
+            drawControllingStick(
+                state.controllingStick,
+                currentStickInputAngle,
+                currentStickInputDistanceFactor
+            )
+
+            drawMinimap(state.gameMap, state.mainPlayer.car)
+
+            drawNextCheckpoint(
+                state.checkpointManager!!.getNextCheckpoint(state.mainPlayer.car.id),
+                state.gameCamera,
+                state.gameCamera.getScaledCellSize(state.gameMap.size)
+            )
+
+            rotate(
+                degrees = state.mainPlayer.car.visualDirection * (180f / PI.toFloat()) + 90,
+                pivot = state.gameCamera.worldToScreen(state.mainPlayer.car.position)
+            ) {
+                drawImageBitmap(
+                    bitmaps["car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite]!!,
+                    Offset(state.gameCamera.worldToScreen(state.mainPlayer.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,
+                        state.gameCamera.worldToScreen(state.mainPlayer.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2),
+                    Size(Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size), Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size))
+                )
+            }
         }
     }
 }

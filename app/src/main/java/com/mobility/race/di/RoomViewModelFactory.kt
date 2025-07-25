@@ -3,6 +3,7 @@ package com.mobility.race.di
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.navigation.NavController
 import com.mobility.race.data.IGateway
 import com.mobility.race.presentation.multiplayer.RoomViewModel
 
@@ -10,7 +11,7 @@ class RoomViewModelFactory(
     private val playerName: String,
     private val roomName: String,
     private val isCreatingRoom: Boolean,
-    private val navigateToMultiplayerGame: () -> Unit,
+    private val navController: NavController,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -21,7 +22,7 @@ class RoomViewModelFactory(
                 playerName,
                 roomName,
                 isCreatingRoom,
-                navigateToMultiplayerGame,
+                navController,
                 gateway
             ) as T
         }

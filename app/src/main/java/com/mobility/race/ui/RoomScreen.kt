@@ -34,7 +34,7 @@ fun RoomScreen(
                 Text(player)
             }
 
-            if (state.isCreatingRoom) {
+            if (state.isCreatingRoom && state.playerNames.size != 1) {
                 Button(
                     onClick = {
                         viewModel.startGame()

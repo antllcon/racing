@@ -46,8 +46,9 @@ object MultiplayerMenuScreen
 
 @Serializable
 data class MultiplayerGame(
+    val playerId: String,
     val playerName: String,
-    val roomName: String
+    val playerSpriteId: String
 )
 
 @Composable
@@ -104,13 +105,9 @@ fun AppNavHost(
 
         composable<Room> { entry ->
             val args = entry.toRoute<Room>()
-            val navigateToMultiplayer: () -> Unit = {
-                navController.navigate(route = MultiplayerGame(args.playerName, args.roomName))
-            }
-
 
             val factory = remember(gateway) {
-                RoomViewModelFactory(args.playerName, args.roomName, args.isCreatingRoom, navigateToMultiplayer, gateway)
+                RoomViewModelFactory(args.playerName, args.roomName, args.isCreatingRoom, navController, gateway)
             }
             val viewModel: RoomViewModel = viewModel(factory = factory)
 
@@ -120,20 +117,13 @@ fun AppNavHost(
         composable<MultiplayerGame> { entry ->
             val args = entry.toRoute<MultiplayerGame>()
 
-            println(" ===== Я в navHost - multiplayer")
             val factory = remember(gateway) {
-                MultiplayerGameViewModelFactory(gateway)
+                MultiplayerGameViewModelFactory(args.playerId, args.playerName, args.playerSpriteId, gateway)
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
 
             MultiplayerGameScreen(viewModel)
-
-//            MultiplayerGameScreen(
-//                playerName = args.playerName,
-//                roomName = args.roomName,
-//                viewModel = viewModel
-//            )
         }
     }
 }

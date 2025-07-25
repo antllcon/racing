@@ -159,28 +159,8 @@ data class LeftRoomResponse(val roomId: String) : ServerMessage {
 
 @Serializable
 @SerialName("STARTED_GAME")
-data class StartedGameResponse(val roomId: String, val gameMap: Array<IntArray>) : ServerMessage {
+data class StartedGameResponse(val roomId: String, val starterPack: StarterPack) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.STARTED_GAME
-
-    //everything below this is the code that Android Studio added by itself,
-    //so I don't have a clue what the hell is this
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as StartedGameResponse
-
-        if (roomId != other.roomId) return false
-        if (!gameMap.contentDeepEquals(other.gameMap)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = roomId.hashCode()
-        result = 31 * result + gameMap.contentDeepHashCode()
-        return result
-    }
 }
 
 @Serializable

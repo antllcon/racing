@@ -123,7 +123,7 @@ fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
                 bitmaps
             )
 
-            drawMinimap(state)
+            drawMinimap(state.gameMap, state.car)
 
 
             drawControllingStick(

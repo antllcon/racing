@@ -1,5 +1,6 @@
 package com.mobility.race.data
 
+import com.mobility.race.domain.GameMap
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.URLProtocol
@@ -12,6 +13,17 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class StarterPack(
+    val mapGrid: Array<IntArray>,
+    val mapWidth: Int,
+    val mapHeight: Int,
+    val startPosition: Vector2D,
+    val startDirection: GameMap.StartDirection,
+    val route: List<Vector2D>
+)
 
 class Gateway(
     private val client: HttpClient,
@@ -19,11 +31,20 @@ class Gateway(
 ) : IGateway {
     private var session: WebSocketSession? = null
     private var job: Job? = null
+    private lateinit var gatewayStorage: StarterPack
 
     override val messageFlow: Flow<ServerMessage>
         get() = mMessageFlow.asSharedFlow()
 
     private val mMessageFlow = MutableSharedFlow<ServerMessage>()
+
+    override fun fillGatewayStorage(starterPack: StarterPack) {
+        gatewayStorage = starterPack
+    }
+
+    override fun openGatewayStorage(): StarterPack {
+        return gatewayStorage
+    }
 
     override suspend fun connect() {
         val protocolString = if (serverConfig.port == 443) "wss" else "ws"
