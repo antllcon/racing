@@ -46,7 +46,7 @@ fun EnterRoomScreen(
             Button(
                 onClick = {
                     if (playerName.isNotBlank() && roomName.isNotBlank()) {
-                        navigateToMultiplayer(playerName, roomName)
+//                        navigateToMultiplayer(playerName, roomName)
                     }
                 },
                 enabled = playerName.isNotBlank() && roomName.isNotBlank()
