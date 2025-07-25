@@ -14,11 +14,13 @@ class SingleplayerGameViewModel :
         init()
     }
 
-    private fun init() {
+    fun init() {
         modifyState {
-            copy(isGameRunning = true)
+            SingleplayerGameState.default(stateValue.car.id).copy(
+                isGameRunning = true,
+                startTime = System.currentTimeMillis()
+            )
         }
-
         runGame()
     }
 
@@ -92,7 +94,12 @@ class SingleplayerGameViewModel :
     }
 
     private fun endRace() {
-        modifyState { copy(isGameRunning = false) }
+        modifyState {
+            copy(
+                isGameRunning = false,
+                finishTime = System.currentTimeMillis() - startTime
+            )
+        }
         println("Player ${stateValue.car.playerName} finished the race!")
         // Навигация на экран результатов
     }
