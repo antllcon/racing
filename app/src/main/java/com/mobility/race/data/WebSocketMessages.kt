@@ -1,8 +1,10 @@
 package com.mobility.race.data
 
+import com.mobility.race.domain.GameMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// Enums remain the same
 enum class ClientMessageType {
     INIT_PLAYER,
     CREATE_ROOM,
@@ -47,22 +49,22 @@ data class CreateRoomRequest(val name: String) : ClientMessage {
 }
 
 @Serializable
-@SerialName("JOIN_ROOM")
-data class JoinRoomRequest(val name: String) : ClientMessage {
-    override val type: ClientMessageType get() = ClientMessageType.JOIN_ROOM
-}
-
-@Serializable
 @SerialName("START_GAME")
 data class StartGameRequest(val name: String) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.START_GAME
+}
+
+@Serializable
+@SerialName("JOIN_ROOM")
+data class JoinRoomRequest(val name: String) : ClientMessage {
+    override val type: ClientMessageType get() = ClientMessageType.JOIN_ROOM
 }
 
 // This message needs no data from the client, so it can be an 'object'.
 @Serializable
 @SerialName("LEAVE_ROOM")
 object LeaveRoomRequest : ClientMessage {
-    override val type: ClientMessageType get() =ClientMessageType.LEAVE_ROOM
+    override val type: ClientMessageType get() = ClientMessageType.LEAVE_ROOM
 }
 
 @Serializable
@@ -85,7 +87,7 @@ data class PlayerStateDto(
 @Serializable
 @SerialName("PLAYER_INPUT")
 data class PlayerInputRequest(val isAccelerating: Boolean, val turnDirection: Float, val deltaTime: Float, val ringsCrossed: Int) : ClientMessage {
-    override val type:ClientMessageType get() = ClientMessageType.PLAYER_INPUT
+    override val type: ClientMessageType get() = ClientMessageType.PLAYER_INPUT
 }
 
 @Serializable
@@ -93,10 +95,30 @@ sealed interface ServerMessage {
     val type: ServerMessageType
 }
 
+// TODO: поменять название на roomPlayersResponse
 @Serializable
 @SerialName("PLAYER_CONNECTED")
-data class PlayerConnectedResponse(val nickname: String, val playerNames: Array<String>) : ServerMessage {
+data class PlayerConnectedResponse(val playerId: String, val playerNames: Array<String>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.PLAYER_CONNECTED
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PlayerConnectedResponse
+
+        if (playerId != other.playerId) return false
+        if (!playerNames.contentEquals(other.playerNames)) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = playerId.hashCode()
+        result = 31 * result + playerNames.contentHashCode()
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
 @Serializable
@@ -133,6 +155,43 @@ data class JoinedRoomResponse(val roomId: String) : ServerMessage {
 @SerialName("LEFT_ROOM")
 data class LeftRoomResponse(val roomId: String) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.LEFT_ROOM
+}
+
+
+@Serializable
+data class StarterPack(
+    val mapGrid: Array<IntArray>,
+    val mapWidth: Int,
+    val mapHeight: Int,
+    val startPosition: Vector2D,
+    val startDirection: GameMap.StartDirection,
+    val route: List<Vector2D>,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as StarterPack
+
+        if (mapWidth != other.mapWidth) return false
+        if (mapHeight != other.mapHeight) return false
+        if (!mapGrid.contentDeepEquals(other.mapGrid)) return false
+        if (startPosition != other.startPosition) return false
+        if (startDirection != other.startDirection) return false
+        if (route != other.route) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = mapWidth.hashCode()
+        result = 31 * result + mapHeight.hashCode()
+        result = 31 * result + mapGrid.contentDeepHashCode()
+        result = 31 * result + startPosition.hashCode()
+        result = 31 * result + startDirection.hashCode()
+        result = 31 * result + route.hashCode()
+        return result
+    }
 }
 
 @Serializable
