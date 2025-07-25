@@ -46,7 +46,8 @@ data class MultiplayerGameState(
             val mainPlayer = Player(
                 nickname, Car(
                     id = carSpriteId,
-                    visualDirection = startDirection
+                    position = starterPack.initialPlayerStates[playerNames.indexOf(nickname)].transformToOffset(),
+                    visualDirection = startDirection,
                 )
             )
 
@@ -58,6 +59,7 @@ data class MultiplayerGameState(
                         name = name,
                         Car(
                             id = getSpriteId(name, playerNames).toString(),
+                            position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
                             visualDirection = startDirection
                         )
                     )
@@ -72,7 +74,7 @@ data class MultiplayerGameState(
                     grid = starterPack.mapGrid,
                     width = starterPack.mapWidth,
                     height = starterPack.mapHeight,
-                    startCellPos = starterPack.startPosition.transformToOffset(),
+                    startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
                     startDirection = starterPack.startDirection,
                     route = newRouteList
                 ),
