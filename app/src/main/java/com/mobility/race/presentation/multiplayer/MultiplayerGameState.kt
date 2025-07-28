@@ -7,9 +7,6 @@ import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.ControllingStick
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 
 data class MultiplayerGameState(
     val countdown: Float,
@@ -24,7 +21,7 @@ data class MultiplayerGameState(
 ) {
     companion object {
         fun default(
-            nickname: String,
+            name: String,
             playerNames: Array<String>,
             carSpriteId: String,
             starterPack: StarterPack
@@ -44,24 +41,27 @@ data class MultiplayerGameState(
 
 
             val mainPlayer = Player(
-                nickname, Car(
+                name,
+                Car(
                     id = carSpriteId,
-                    position = starterPack.initialPlayerStates[playerNames.indexOf(nickname)].transformToOffset(),
+                    position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
                     visualDirection = startDirection,
-                )
+                ),
+                isFinished = false
             )
 
             var players: Array<Player> = emptyArray()
 
-            for (name in playerNames) {
+            for (name: String in playerNames) {
                 players = players.plus(
-                    Player(
+                    element = Player(
                         name = name,
-                        Car(
+                        car = Car(
                             id = getSpriteId(name, playerNames).toString(),
                             position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
                             visualDirection = startDirection
-                        )
+                        ),
+                        isFinished = false
                     )
                 )
             }
@@ -91,10 +91,10 @@ data class MultiplayerGameState(
         }
 
 
-        private fun getSpriteId(playerIdToFind: String, playerIds: Array<String>): Int {
+        private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1
             for (playerId in playerIds) {
-                if (playerId == playerIdToFind) {
+                if (playerId == playerId) {
                     return index
                 }
                 index++
@@ -102,11 +102,44 @@ data class MultiplayerGameState(
             return index
         }
     }
+
+    // TODO: убрать комментарий ниже
+    // IDEA generated this shit (lmao) for equaling and hashing arrays usnig Player type
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MultiplayerGameState
+
+        if (countdown != other.countdown) return false
+        if (isGameRunning != other.isGameRunning) return false
+        if (directionAngle != other.directionAngle) return false
+        if (mainPlayer != other.mainPlayer) return false
+        if (!players.contentEquals(other.players)) return false
+        if (gameMap != other.gameMap) return false
+        if (gameCamera != other.gameCamera) return false
+        if (controllingStick != other.controllingStick) return false
+        if (checkpointManager != other.checkpointManager) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = countdown.hashCode()
+        result = 31 * result + isGameRunning.hashCode()
+        result = 31 * result + (directionAngle?.hashCode() ?: 0)
+        result = 31 * result + mainPlayer.hashCode()
+        result = 31 * result + players.contentHashCode()
+        result = 31 * result + gameMap.hashCode()
+        result = 31 * result + gameCamera.hashCode()
+        result = 31 * result + controllingStick.hashCode()
+        result = 31 * result + checkpointManager.hashCode()
+        return result
+    }
 }
 
 data class Player(
     val name: String,
     val car: Car,
-    val isAccelerating: Boolean = false,
     val isFinished: Boolean = false
 )

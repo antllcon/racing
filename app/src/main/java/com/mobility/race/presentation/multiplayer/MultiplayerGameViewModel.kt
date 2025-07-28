@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
+import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.IGateway
@@ -19,12 +20,14 @@ class MultiplayerGameViewModel(
     playerNames: Array<String>,
     carSpriteId: String,
     private val gateway: IGateway
-): BaseViewModel<MultiplayerGameState>(MultiplayerGameState.default(
-    nickname = playerId,
-    playerNames = playerNames,
-    carSpriteId = carSpriteId,
-    starterPack = gateway.openGatewayStorage()
-)) {
+) : BaseViewModel<MultiplayerGameState>(
+    MultiplayerGameState.default(
+        name = playerId,
+        playerNames = playerNames,
+        carSpriteId = carSpriteId,
+        starterPack = gateway.openGatewayStorage()
+    )
+) {
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
 
@@ -54,13 +57,15 @@ class MultiplayerGameViewModel(
 
                 movePlayers(elapsedTime)
                 moveCamera()
-                lastTime = currentTime
+                sendPlayerInput()
 
+                lastTime = currentTime
                 delay(16)
             }
         }
     }
 
+    // TODO: причесать
     private fun movePlayers(elapsedTime: Float) {
         var newPlayersCopy: Array<Player> = emptyArray()
         var updatedMainPlayer: Player? = null
@@ -70,7 +75,8 @@ class MultiplayerGameViewModel(
             val newCar = if (player.name != stateValue.mainPlayer.name) {
                 player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
             } else {
-                val updatedCarForMainPlayer = player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+                val updatedCarForMainPlayer =
+                    player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
                 updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
                 updatedCarForMainPlayer
             }
@@ -94,9 +100,23 @@ class MultiplayerGameViewModel(
         }
     }
 
+    private suspend fun sendPlayerInput() {
+        val playerInput = PlayerInputRequest(
+            visualDirection = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
+            elapsedTime = elapsedTime,
+            ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
+        )
+        gateway.playerAction(playerInput)
+    }
 
-    private suspend fun handleMessage(message: ServerMessage) {
+    private fun handleMessage(message: ServerMessage) {
         when (message) {
+            // TODO: проверить можно ли подключаться во время запущенной игры
+            // TODO: перекидывать в наблюдателей (если есть место в комнате)
+            is ErrorResponse -> {
+                throw Exception("Think about it!")
+            }
+
             is GameCountdownUpdateResponse -> {
                 modifyState {
                     copy(
@@ -104,12 +124,14 @@ class MultiplayerGameViewModel(
                     )
                 }
             }
+
             is GameStateUpdateResponse -> {
                 var updatedPlayers: Array<Player> = emptyArray()
                 var updatedMainPlayerFromResponse: Player? = null
 
                 for (player in message.players) {
-                    val existingPlayer = stateValue.players.find { it.car.playerName == player.name }
+                    val existingPlayer =
+                        stateValue.players.find { it.car.playerName == player.name }
                     existingPlayer?.let {
                         val newCar = it.car.copy(
                             position = Offset(player.posX, player.posY),
@@ -119,7 +141,6 @@ class MultiplayerGameViewModel(
                         val updatedPlayer = Player(
                             player.name,
                             newCar,
-                            player.isAccelerating,
                             player.isFinished
                         )
                         updatedPlayers = updatedPlayers.plus(updatedPlayer)
@@ -136,16 +157,8 @@ class MultiplayerGameViewModel(
                         mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
                     )
                 }
-
-                gateway.playerAction(
-                    PlayerInputRequest(
-                        stateValue.mainPlayer.isAccelerating,
-                        stateValue.mainPlayer.car.direction,
-                        elapsedTime,
-                        0
-                    )
-                )
             }
+
             else -> Unit
         }
     }
