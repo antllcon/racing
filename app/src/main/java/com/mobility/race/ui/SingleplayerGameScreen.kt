@@ -21,12 +21,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
+import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
@@ -39,11 +41,14 @@ import kotlin.math.PI
 
 @Composable
 fun SingleplayerGameScreen(
-    viewModel: SingleplayerGameViewModel = viewModel(),
+    viewModel: SingleplayerGameViewModel = viewModel(factory = SingleplayerGameViewModelFactory(
+        LocalContext.current
+    )
+    ),
     navigateToFinished: (finishTime: Long, lapsCompleted: Int, totalLaps: Int) -> Unit,
     onExit: () -> Unit = {},
     onRestart: () -> Unit = {}
-) {
+){
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
 

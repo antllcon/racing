@@ -1,12 +1,15 @@
 package com.mobility.race.presentation.singleplayer
 
+import SoundManager
+import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SingleplayerGameViewModel :
+class SingleplayerGameViewModel(private val context: Context) :
     BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..6).random().toString()))) {
 
     private var gameCycle: Job? = null
@@ -20,11 +23,7 @@ class SingleplayerGameViewModel :
     fun startNewGame() {
         carId = ((1..6).random().toString())
 
-        // Инициализация SoundManager
-        soundManager = SoundManager(context) // Вам нужно передать Context
-
-        // Воспроизведение звуков при старте игры
-        soundManager.playStartSound()
+        soundManager = SoundManager(context)
         soundManager.playBackgroundMusic()
 
         gameCycle?.cancel()
@@ -66,6 +65,10 @@ class SingleplayerGameViewModel :
             copy(
                 car = car.update(elapsedTime, stateValue.directionAngle, speedModifier),
             )
+        }
+
+        if (stateValue.car.isStarting) {
+            soundManager.playStartSound()
         }
     }
 
@@ -117,6 +120,7 @@ class SingleplayerGameViewModel :
             )
         }
         gameCycle?.cancel()
+        soundManager.pauseBackgroundMusic()
     }
 
     fun restartGame() {
@@ -126,5 +130,6 @@ class SingleplayerGameViewModel :
     override fun onCleared() {
         super.onCleared()
         gameCycle?.cancel()
+        soundManager.release()
     }
 }
