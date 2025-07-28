@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import android.util.Log
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -30,6 +31,7 @@ class MultiplayerGameViewModel(
 ) {
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
+    private val TAG = "MultiplayerGameViewModel"
 
     init {
         gateway.messageFlow
@@ -45,6 +47,8 @@ class MultiplayerGameViewModel(
                 directionAngle = newAngle
             )
         }
+        // Логируем ввод с джойстика
+        Log.d(TAG, "Joystick direction angle set to: $newAngle")
     }
 
     private fun startGame() {
@@ -73,16 +77,19 @@ class MultiplayerGameViewModel(
         for (player in stateValue.players) {
             val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
             val newCar = if (player.name != stateValue.mainPlayer.name) {
+                Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
                 player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
             } else {
                 val updatedCarForMainPlayer =
                     player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+                Log.v(TAG, "Client: Moving main player ${player.car.id}. New Pos: ${updatedCarForMainPlayer.position}, Direction: ${stateValue.directionAngle}")
                 updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
                 updatedCarForMainPlayer
             }
 
             newPlayersCopy = newPlayersCopy.plus(player.copy(car = newCar))
         }
+
 
         modifyState {
             copy(
@@ -131,7 +138,7 @@ class MultiplayerGameViewModel(
 
                 message.players.forEach { playerDto ->
                     val existingPlayerIndex: Int =
-                        newPlayersList.indexOfFirst { it.name == playerDto.id }
+                        newPlayersList.indexOfFirst { it.car.id == playerDto.id }
 
                     if (existingPlayerIndex != -1) {
                         val existingPlayer = newPlayersList[existingPlayerIndex]
@@ -149,9 +156,18 @@ class MultiplayerGameViewModel(
                             set(existingPlayerIndex, updatedPlayer)
                         }.toList()
 
+                        // Логируем, как мы обновляем другого игрока с сервера
+                        if (existingPlayer.name != stateValue.mainPlayer.name) {
+                            Log.i(TAG, "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
+                        }
+
                         if (existingPlayer.name == stateValue.mainPlayer.name) {
                             updatedMainPlayerFromResponse = updatedPlayer
+                            // Логируем, если наш игрок тоже обновляется с сервера (для Server Reconciliation)
+                            Log.d(TAG, "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
                         }
+                    } else {
+                        Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
                     }
                 }
 
