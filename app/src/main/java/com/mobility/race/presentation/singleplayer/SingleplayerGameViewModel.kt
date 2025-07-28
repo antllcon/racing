@@ -11,6 +11,7 @@ class SingleplayerGameViewModel :
 
     private var gameCycle: Job? = null
     private var carId: String = ((1..6).random().toString())
+    private lateinit var soundManager: SoundManager
 
     init {
         startNewGame()
@@ -18,6 +19,13 @@ class SingleplayerGameViewModel :
 
     fun startNewGame() {
         carId = ((1..6).random().toString())
+
+        // Инициализация SoundManager
+        soundManager = SoundManager(context) // Вам нужно передать Context
+
+        // Воспроизведение звуков при старте игры
+        soundManager.playStartSound()
+        soundManager.playBackgroundMusic()
 
         gameCycle?.cancel()
 
