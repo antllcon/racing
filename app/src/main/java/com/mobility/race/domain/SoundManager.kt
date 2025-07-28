@@ -3,8 +3,8 @@ package com.mobility.race.domain
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
+import androidx.compose.ui.graphics.colorspace.Illuminant.C
+import androidx.compose.ui.graphics.colorspace.WhitePoint
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.mobility.race.R
