@@ -1,0 +1,62 @@
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.SoundPool
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import com.mobility.race.R
+
+class SoundManager(private val context: Context) {
+    private val soundPool: SoundPool
+    private var startSoundId: Int = 0
+    private val exoPlayer: ExoPlayer
+
+    init {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_GAME)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(1)
+            .setAudioAttributes(audioAttributes)
+            .build()
+
+        startSoundId = soundPool.load(context, R.raw.start, 1)
+
+        exoPlayer = ExoPlayer.Builder(context)
+            .setAudioAttributes(
+                androidx.media3.common.AudioAttributes.Builder()
+                    .setUsage(C.USAGE_GAME)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_SONIFICATION)
+                    .build(),
+                true
+            )
+            .build()
+    }
+
+    fun playStartSound() {
+        soundPool.play(startSoundId, 1f, 1f, 0, 0, 1f)
+    }
+
+    fun playBackgroundMusic() {
+        val mediaItem = MediaItem.fromUri("android.resource://${context.packageName}/${R.raw.fonk}")
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
+    }
+
+    fun pauseBackgroundMusic() {
+        exoPlayer.pause()
+    }
+    fun setMusicVolume(volume: Float) {
+        exoPlayer.volume = volume
+    }
+
+    fun release() {
+        soundPool.release()
+        exoPlayer.release()
+    }
+}
