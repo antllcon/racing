@@ -39,7 +39,7 @@ class Gateway(
 
     override suspend fun connect() {
         val protocolString = if (serverConfig.port == 443) "wss" else "ws"
-        println("Gateway: try connect to $protocolString://${serverConfig.host}:${serverConfig.port}${serverConfig.path}")
+//        println("Gateway: try connect to $protocolString://${serverConfig.host}:${serverConfig.port}${serverConfig.path}")
 
         try {
             session = client.webSocketSession(host = serverConfig.host, path = serverConfig.path) {
@@ -51,59 +51,59 @@ class Gateway(
             job = startGettingMessages(session!!)
 
         } catch (_: Exception) {
-            println("Gateway: fail to connect server")
+//            println("Gateway: fail to connect server")
         }
     }
 
     override suspend fun disconnect() {
-        println("Gateway: try disconnect")
+//        println("Gateway: try disconnect")
 
         try {
             job?.cancelAndJoin()
             session?.close()
 
         } catch (_: Exception) {
-            println("Gateway: Error during disconnect")
+//            println("Gateway: Error during disconnect")
 
         } finally {
             session = null
             job = null
-            println("Gateway: disconnect from server")
+//            println("Gateway: disconnect from server")
         }
     }
 
     private suspend fun sendMessage(message: ClientMessage) {
-        println("Gateway: try to send message: $message")
+//        println("Gateway: try to send message: $message")
 
         if (session?.isActive == true) {
             try {
                 sendToSession(session!!, message)
 
             } catch (_: Exception) {
-                println("Gateway: fail to send message")
+//                println("Gateway: fail to send message")
             }
         } else {
-            println("Gateway: Not connected or session inactive, cannot send message")
+//            println("Gateway: Not connected or session inactive, cannot send message")
         }
     }
 
     override suspend fun initPlayer(name: String) {
-        println("Gateway: init player with name: $name")
+//        println("Gateway: init player with name: $name")
         sendMessage(InitPlayerRequest(name = name))
     }
 
     override suspend fun createRoom(name: String) {
-        println("Gateway: create room with name: $name")
+//        println("Gateway: create room with name: $name")
         sendMessage(CreateRoomRequest(name = name))
     }
 
     override suspend fun joinRoom(name: String) {
-        println("Gateway: join room with name: $name")
+//        println("Gateway: join room with name: $name")
         sendMessage(JoinRoomRequest(name = name))
     }
 
     override suspend fun leaveRoom() {
-        println("Gateway: Sending LeaveRoomRequest.")
+//        println("Gateway: Sending LeaveRoomRequest.")
         sendMessage(LeaveRoomRequest)
     }
 
@@ -112,7 +112,7 @@ class Gateway(
     }
 
     override suspend fun playerAction(name: PlayerInputRequest) {
-        println("Gateway: player action with input: $name")
+//        println("Gateway: player action with input: $name")
         sendMessage(name)
     }
 
@@ -124,26 +124,26 @@ class Gateway(
                 }
             } catch (e: Exception) {
                 if (e is ClosedReceiveChannelException) {
-                    println("Gateway: WebSocket channel correctly closed")
+//                    println("Gateway: WebSocket channel correctly closed")
                 } else {
-                    println("Gateway: Error from WebSocket")
+//                    println("Gateway: Error from WebSocket")
                 }
             } finally {
-                println("Gateway: Job finished")
+//                println("Gateway: Job finished")
             }
         }
     }
 
     private suspend fun processIncomingFrame(frame: Frame) {
         if (frame is Frame.Text) {
-            println(frame.readText())
+//            println(frame.readText())
             val text = frame.readText()
             try {
                 val serverMessage: ServerMessage =
                     AppJson.decodeFromString<ServerMessage>(string = text)
                 mMessageFlow.emit(serverMessage)
             } catch (_: Exception) {
-                println("Gateway: Error deserializing server message")
+//                println("Gateway: Error deserializing server message")
             }
         }
     }

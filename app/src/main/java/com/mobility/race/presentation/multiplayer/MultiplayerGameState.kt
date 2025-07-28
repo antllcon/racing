@@ -41,8 +41,8 @@ data class MultiplayerGameState(
 
 
             val mainPlayer = Player(
-                name,
                 Car(
+                    playerName = name,
                     id = carSpriteId,
                     position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
                     visualDirection = startDirection,
@@ -55,8 +55,8 @@ data class MultiplayerGameState(
             for (name: String in playerNames) {
                 players = players.plus(
                     element = Player(
-                        name = name,
                         car = Car(
+                            playerName = name,
                             id = getSpriteId(name, playerNames).toString(),
                             position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
                             visualDirection = startDirection
@@ -93,8 +93,8 @@ data class MultiplayerGameState(
 
         private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1
-            for (playerId in playerIds) {
-                if (playerId == playerId) {
+            for (id in playerIds) {
+                if (playerId == id) {
                     return index
                 }
                 index++
@@ -139,7 +139,6 @@ data class MultiplayerGameState(
 }
 
 data class Player(
-    val name: String,
     val car: Car,
     val isFinished: Boolean = false
 )

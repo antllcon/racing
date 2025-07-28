@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
-import com.mobility.race.ui.drawUtils.drawCar
+import com.mobility.race.ui.drawUtils.drawCars
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
@@ -139,7 +139,7 @@ fun MultiplayerGameScreen(
                 state.gameCamera.getScaledCellSize(state.gameMap.size)
             )
 
-            drawCar(state, bitmaps)
+            drawCars(state, bitmaps)
         }
     }
 }

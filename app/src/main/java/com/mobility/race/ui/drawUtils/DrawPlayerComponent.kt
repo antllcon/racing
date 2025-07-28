@@ -11,9 +11,8 @@ import kotlin.math.PI
 
 // TODO: можно сделать абстрактный класс GameState и получать state players (1 или много)
 // TODO: но в целом пофиг, до защиты неделя
-fun DrawScope.drawCar(state: MultiplayerGameState, bitmaps: Map<String, ImageBitmap>) {
+fun DrawScope.drawCars(state: MultiplayerGameState, bitmaps: Map<String, ImageBitmap>) {
     state.players.forEach { player ->
-
             rotate(
                 degrees = player.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = state.gameCamera.worldToScreen(player.car.position)

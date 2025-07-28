@@ -76,7 +76,7 @@ class MultiplayerGameViewModel(
 
         for (player in stateValue.players) {
             val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
-            val newCar = if (player.name != stateValue.mainPlayer.name) {
+            val newCar = if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
                 Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
                 player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
             } else {
@@ -109,7 +109,7 @@ class MultiplayerGameViewModel(
 
     private suspend fun sendPlayerInput() {
         val playerInput = PlayerInputRequest(
-            visualDirection = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
+            visualDirection = stateValue.directionAngle ?: 0f,
             elapsedTime = elapsedTime,
             ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
         )
@@ -138,7 +138,7 @@ class MultiplayerGameViewModel(
 
                 message.players.forEach { playerDto ->
                     val existingPlayerIndex: Int =
-                        newPlayersList.indexOfFirst { it.car.id == playerDto.id }
+                        newPlayersList.indexOfFirst { it.car.playerName == playerDto.id }
 
                     if (existingPlayerIndex != -1) {
                         val existingPlayer = newPlayersList[existingPlayerIndex]
@@ -157,14 +157,14 @@ class MultiplayerGameViewModel(
                         }.toList()
 
                         // Логируем, как мы обновляем другого игрока с сервера
-                        if (existingPlayer.name != stateValue.mainPlayer.name) {
-                            Log.i(TAG, "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
+                        if (existingPlayer.car.playerName != stateValue.mainPlayer.car.playerName) {
+//                            Log.i(TAG, "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
                         }
 
-                        if (existingPlayer.name == stateValue.mainPlayer.name) {
+                        if (existingPlayer.car.playerName == stateValue.mainPlayer.car.playerName) {
                             updatedMainPlayerFromResponse = updatedPlayer
                             // Логируем, если наш игрок тоже обновляется с сервера (для Server Reconciliation)
-                            Log.d(TAG, "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
+//                            Log.d(TAG, "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
                         }
                     } else {
                         Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
