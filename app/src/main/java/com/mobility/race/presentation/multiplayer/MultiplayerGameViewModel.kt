@@ -114,7 +114,7 @@ class MultiplayerGameViewModel(
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
-                throw Exception("Think about it!")
+                println("Server Error: ${message.message}")
             }
 
             is GameCountdownUpdateResponse -> {
@@ -126,26 +126,30 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
-                var updatedPlayers: Array<Player> = emptyArray()
+                var newPlayersList: List<Player> = stateValue.players.toList()
                 var updatedMainPlayerFromResponse: Player? = null
 
-                for (player in message.players) {
-                    val existingPlayer =
-                        stateValue.players.find { it.car.playerName == player.name }
-                    existingPlayer?.let {
-                        val newCar = it.car.copy(
-                            position = Offset(player.posX, player.posY),
-                            visualDirection = player.visualDirection,
-                            speed = player.speed
-                        )
-                        val updatedPlayer = Player(
-                            player.name,
-                            newCar,
-                            player.isFinished
-                        )
-                        updatedPlayers = updatedPlayers.plus(updatedPlayer)
+                message.players.forEach { playerDto ->
+                    val existingPlayerIndex: Int =
+                        newPlayersList.indexOfFirst { it.name == playerDto.id }
 
-                        if (player.name == stateValue.mainPlayer.name) {
+                    if (existingPlayerIndex != -1) {
+                        val existingPlayer = newPlayersList[existingPlayerIndex]
+                        val newCar = existingPlayer.car.copy(
+                            position = Offset(playerDto.posX, playerDto.posY),
+                            visualDirection = playerDto.visualDirection,
+                            speed = playerDto.speed
+                        )
+                        val updatedPlayer = existingPlayer.copy(
+                            car = newCar,
+                            isFinished = playerDto.isFinished
+                        )
+
+                        newPlayersList = newPlayersList.toMutableList().apply {
+                            set(existingPlayerIndex, updatedPlayer)
+                        }.toList()
+
+                        if (existingPlayer.name == stateValue.mainPlayer.name) {
                             updatedMainPlayerFromResponse = updatedPlayer
                         }
                     }
@@ -153,10 +157,21 @@ class MultiplayerGameViewModel(
 
                 modifyState {
                     copy(
-                        players = updatedPlayers,
+                        players = newPlayersList.toTypedArray(),
                         mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
                     )
                 }
+
+                // TODO: Здесь должна быть более сложная логика Server Reconciliation для mainPlayer.
+                // Вместо простого копирования, можно интерполировать или корректировать позицию.
+                // Например:
+                // if (updatedMainPlayerFromResponse != null) {
+                //     val serverPos = updatedMainPlayerFromResponse.car.position
+                //     val clientPos = stateValue.mainPlayer.car.position
+                //     // Сравнить serverPos и clientPos
+                //     // Если расхождение велико, плавно сгладить или телепортнуть
+                //     // Можно сохранить serverPos и currentClientPos и интерполировать между ними
+                // }
             }
 
             else -> Unit
