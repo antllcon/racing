@@ -40,7 +40,9 @@ data class Car(
     }
     fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
         val newSpeed = updateSpeed(directionAngle)
-        val starting = speed <= MIN_SPEED && newSpeed > MIN_SPEED
+        val wasStoppedBefore = speed <= MIN_SPEED
+        val isMovingNow = newSpeed > MIN_SPEED
+        val starting = wasStoppedBefore && isMovingNow
 
         return copy(
             direction = directionAngle ?: this.direction,
@@ -49,7 +51,8 @@ data class Car(
             speedModifier = setSpeedModifier(speedModifier),
             visualDirection = updateVisualDirection(),
             currentSprite = updateCurrentSprite(),
-            isStarting = starting
+            isStarting = starting,
+            wasStopped = newSpeed <= MIN_SPEED
         )
     }
 

@@ -15,6 +15,7 @@ class SingleplayerGameViewModel(private val context: Context) :
     private var gameCycle: Job? = null
     private var carId: String = ((1..6).random().toString())
     private lateinit var soundManager: SoundManager
+    private var previousSpeed: Float = 0f
 
     init {
         startNewGame()
@@ -67,9 +68,13 @@ class SingleplayerGameViewModel(private val context: Context) :
             )
         }
 
-        if (stateValue.car.isStarting) {
+        val currentSpeed = stateValue.car.speed
+
+        if (previousSpeed <= Car.MIN_SPEED && currentSpeed > Car.MIN_SPEED) {
             soundManager.playStartSound()
         }
+
+        previousSpeed = currentSpeed
     }
 
     private fun checkCheckpoints() {
