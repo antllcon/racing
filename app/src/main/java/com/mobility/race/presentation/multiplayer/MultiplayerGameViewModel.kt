@@ -63,23 +63,25 @@ class MultiplayerGameViewModel(
 
     private fun movePlayers(elapsedTime: Float) {
         var newPlayersCopy: Array<Player> = emptyArray()
+        var updatedMainPlayer: Player? = null
 
         for (player in stateValue.players) {
             val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
             val newCar = if (player.name != stateValue.mainPlayer.name) {
                 player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
             } else {
-                player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+                val updatedCarForMainPlayer = player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+                updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
+                updatedCarForMainPlayer
             }
 
-            newPlayersCopy = newPlayersCopy.plus(player.copy(
-                car = newCar
-            ))
+            newPlayersCopy = newPlayersCopy.plus(player.copy(car = newCar))
         }
 
         modifyState {
             copy(
-                players = newPlayersCopy
+                players = newPlayersCopy,
+                mainPlayer = updatedMainPlayer ?: mainPlayer
             )
         }
     }
@@ -87,7 +89,7 @@ class MultiplayerGameViewModel(
     private fun moveCamera() {
         modifyState {
             copy(
-                gameCamera = gameCamera.update(mainPlayer.car.position)
+                gameCamera = gameCamera.update(stateValue.mainPlayer.car.position)
             )
         }
     }
@@ -104,27 +106,34 @@ class MultiplayerGameViewModel(
             }
             is GameStateUpdateResponse -> {
                 var updatedPlayers: Array<Player> = emptyArray()
+                var updatedMainPlayerFromResponse: Player? = null
 
                 for (player in message.players) {
-                    val playerCar = stateValue.players.find { it.car.playerName == player.name }
-
-                    updatedPlayers = updatedPlayers.plus(
-                        Player(
+                    val existingPlayer = stateValue.players.find { it.car.playerName == player.name }
+                    existingPlayer?.let {
+                        val newCar = it.car.copy(
+                            position = Offset(player.posX, player.posY),
+                            visualDirection = player.visualDirection,
+                            speed = player.speed
+                        )
+                        val updatedPlayer = Player(
                             player.name,
-                            playerCar!!.car.copy(
-                                position = Offset(player.posX, player.posY),
-                                visualDirection = player.visualDirection,
-                                speed = player.speed
-                            ),
+                            newCar,
                             player.isAccelerating,
                             player.isFinished
                         )
-                    )
+                        updatedPlayers = updatedPlayers.plus(updatedPlayer)
+
+                        if (player.name == stateValue.mainPlayer.name) {
+                            updatedMainPlayerFromResponse = updatedPlayer
+                        }
+                    }
                 }
 
                 modifyState {
                     copy(
-                        players = updatedPlayers
+                        players = updatedPlayers,
+                        mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
                     )
                 }
 

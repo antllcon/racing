@@ -34,7 +34,8 @@ fun RoomScreen(
                 Text(name)
             }
 
-            if (state.isCreatingRoom && state.playerNames.size != 1) {
+            // TODO: вернуть значение 1
+            if (state.isCreatingRoom && state.playerNames.size != 0) {
                 Button(
                     onClick = {
                         viewModel.startGame()

@@ -9,26 +9,11 @@ import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameState
 import kotlin.math.PI
 
+// TODO: можно сделать абстрактный класс GameState и получать state players (1 или много)
+// TODO: но в целом пофиг, до защиты неделя
 fun DrawScope.drawCar(state: MultiplayerGameState, bitmaps: Map<String, ImageBitmap>) {
-    rotate(
-        degrees = state.mainPlayer.car.visualDirection * (180f / PI.toFloat()) + 90,
-        pivot = state.gameCamera.worldToScreen(state.mainPlayer.car.position)
-    ) {
-        drawImageBitmap (
-            bitmaps["car" + state.mainPlayer.car.id + "_" + state.mainPlayer.car.currentSprite]!!,
-            Offset(
-                state.gameCamera.worldToScreen(state.mainPlayer.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,
-                state.gameCamera.worldToScreen(state.mainPlayer.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2
-            ),
-            Size(
-                Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size),
-                Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size)
-            )
-        )
-    }
-
     state.players.forEach { player ->
-        if (player != state.mainPlayer) {
+
             rotate(
                 degrees = player.car.visualDirection * (180f / PI.toFloat()) + 90,
                 pivot = state.gameCamera.worldToScreen(player.car.position)
@@ -45,6 +30,6 @@ fun DrawScope.drawCar(state: MultiplayerGameState, bitmaps: Map<String, ImageBit
                     )
                 )
             }
-        }
+
     }
 }

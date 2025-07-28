@@ -57,7 +57,6 @@ class RoomViewModel(
         }
     }
 
-
     private fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
