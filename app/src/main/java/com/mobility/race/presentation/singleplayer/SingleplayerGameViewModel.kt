@@ -1,22 +1,44 @@
 package com.mobility.race.presentation.singleplayer
 
+import SoundManager
+import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SingleplayerGameViewModel :
+class SingleplayerGameViewModel(private val context: Context) :
     BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..6).random().toString()))) {
+
     private var gameCycle: Job? = null
+    private var carId: String = ((1..6).random().toString())
+    private lateinit var soundManager: SoundManager
+    private var previousSpeed: Float = 0f
+    private var currentSurface: String = "ROAD"
+    private var lastSurfaceUpdateTime = 0L
+    private val surfaceUpdateInterval = 50L
 
     init {
-        init()
+        startNewGame()
     }
 
-    private fun init() {
+    fun startNewGame() {
+        carId = ((1..6).random().toString())
+
+        soundManager = SoundManager(context)
+        soundManager.playBackgroundMusic()
+
+        gameCycle?.cancel()
+
         modifyState {
-            copy(isGameRunning = true)
+            SingleplayerGameState.default(carId).copy(
+                isGameRunning = true,
+                startTime = System.currentTimeMillis(),
+                finishTime = 0L,
+                lapsCompleted = 0
+            )
         }
 
         runGame()
@@ -43,11 +65,40 @@ class SingleplayerGameViewModel :
     private fun movePlayer(elapsedTime: Float) {
         val speedModifier = stateValue.gameMap.getSpeedModifier(stateValue.car.position)
 
+        val carPos = stateValue.car.position
+        val surfaceType = stateValue.gameMap.getTerrainType(carPos.x.toInt(), carPos.y.toInt())
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastSurfaceUpdateTime > surfaceUpdateInterval) {
+            updateSurfaceSound(surfaceType, stateValue.car.speed)
+            lastSurfaceUpdateTime = currentTime
+        }
+
         modifyState {
             copy(
                 car = car.update(elapsedTime, stateValue.directionAngle, speedModifier),
             )
         }
+
+        val currentSpeed = stateValue.car.speed
+
+        if (previousSpeed <= Car.MIN_SPEED && currentSpeed > Car.MIN_SPEED) {
+            soundManager.playStartSound()
+        }
+
+        previousSpeed = currentSpeed
+    }
+    private fun updateSurfaceSound(surfaceType: String, carSpeed: Float) {
+        if (surfaceType != currentSurface) {
+            currentSurface = surfaceType
+            soundManager.playSurfaceSound(surfaceType, calculateSurfaceVolume(carSpeed))
+        } else {
+            soundManager.updateSurfaceSoundVolume(calculateSurfaceVolume(carSpeed))
+        }
+    }
+
+    private fun calculateSurfaceVolume(carSpeed: Float): Float {
+        return 0.1f + (carSpeed / Car.MAX_SPEED) * 0.9f
     }
 
     private fun checkCheckpoints() {
@@ -66,7 +117,6 @@ class SingleplayerGameViewModel :
             val newLaps = manager.getLapsForCar(carId)
             if (newLaps != stateValue.lapsCompleted) {
                 modifyState { copy(lapsCompleted = newLaps) }
-                println("Lap ${stateValue.lapsCompleted}/${stateValue.totalLaps} completed!")
             }
 
             if (stateValue.lapsCompleted >= stateValue.totalLaps) {
@@ -92,13 +142,25 @@ class SingleplayerGameViewModel :
     }
 
     private fun endRace() {
-        modifyState { copy(isGameRunning = false) }
-        println("Player ${stateValue.car.playerName} finished the race!")
-        // Навигация на экран результатов
+        modifyState {
+            copy(
+                isGameRunning = false,
+                finishTime = System.currentTimeMillis() - startTime
+            )
+        }
+        gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.pauseBackgroundMusic()
     }
 
+    fun restartGame() {
+        startNewGame()
+    }
 
-    fun stopGame() {
+    override fun onCleared() {
+        super.onCleared()
         gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.release()
     }
 }
