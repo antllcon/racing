@@ -4,7 +4,6 @@ import com.mobility.race.domain.GameMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// Enums remain the same
 enum class ClientMessageType {
     INIT_PLAYER,
     CREATE_ROOM,
@@ -30,6 +29,53 @@ enum class ServerMessageType {
     GAME_STATE_UPDATE,
     GAME_STOP
 }
+
+@Serializable
+data class StarterPack(
+    val mapGrid: Array<IntArray>,
+    val mapWidth: Int,
+    val mapHeight: Int,
+    val initialPlayerStates: List<Vector2D>,
+    val startDirection: GameMap.StartDirection,
+    val route: List<Vector2D>,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as StarterPack
+
+        if (mapWidth != other.mapWidth) return false
+        if (mapHeight != other.mapHeight) return false
+        if (!mapGrid.contentDeepEquals(other.mapGrid)) return false
+        if (initialPlayerStates != other.initialPlayerStates) return false
+        if (startDirection != other.startDirection) return false
+        if (route != other.route) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = mapWidth.hashCode()
+        result = 31 * result + mapHeight.hashCode()
+        result = 31 * result + mapGrid.contentDeepHashCode()
+        result = 31 * result + initialPlayerStates.hashCode()
+        result = 31 * result + startDirection.hashCode()
+        result = 31 * result + route.hashCode()
+        return result
+    }
+}
+
+@Serializable
+data class PlayerStateDto(
+    val id: String, // Или playerName, если ID уникален по имени
+    val posX: Float,
+    val posY: Float,
+    val visualDirection: Float,
+    val speed: Float,
+    val isFinished: Boolean,
+//    val currentSprite: Int // Добавлено
+)
 
 @Serializable
 sealed interface ClientMessage {
@@ -74,20 +120,8 @@ data class PlayerActionRequest(val name: String) : ClientMessage {
 }
 
 @Serializable
-data class PlayerStateDto(
-    val id: String, // Или playerName, если ID уникален по имени
-    val posX: Float,
-    val posY: Float,
-    val visualDirection: Float,
-    val speed: Float,
-    val isFinished: Boolean,
-//    val currentSprite: Int // Добавлено
-)
-
-
-@Serializable
 @SerialName("PLAYER_INPUT")
-data class PlayerInputRequest(val visualDirection: Float, val elapsedTime: Float, val ringsCrossed: Int) : ClientMessage {
+data class PlayerInputRequest(val directionAngle: Float, val elapsedTime: Float, val ringsCrossed: Int) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_INPUT
 }
 
@@ -160,42 +194,6 @@ data class LeftRoomResponse(val roomId: String) : ServerMessage {
 
 
 @Serializable
-data class StarterPack(
-    val mapGrid: Array<IntArray>,
-    val mapWidth: Int,
-    val mapHeight: Int,
-    val initialPlayerStates: List<Vector2D>,
-    val startDirection: GameMap.StartDirection,
-    val route: List<Vector2D>,
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as StarterPack
-
-        if (mapWidth != other.mapWidth) return false
-        if (mapHeight != other.mapHeight) return false
-        if (!mapGrid.contentDeepEquals(other.mapGrid)) return false
-        if (initialPlayerStates != other.initialPlayerStates) return false
-        if (startDirection != other.startDirection) return false
-        if (route != other.route) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = mapWidth.hashCode()
-        result = 31 * result + mapHeight.hashCode()
-        result = 31 * result + mapGrid.contentDeepHashCode()
-        result = 31 * result + initialPlayerStates.hashCode()
-        result = 31 * result + startDirection.hashCode()
-        result = 31 * result + route.hashCode()
-        return result
-    }
-}
-
-@Serializable
 @SerialName("STARTED_GAME")
 data class StartedGameResponse(val roomId: String, val starterPack: StarterPack) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.STARTED_GAME
@@ -221,8 +219,25 @@ data class GameCountdownUpdateResponse(val remainingTime: Float) : ServerMessage
 
 @Serializable
 @SerialName("GAME_STATE_UPDATE")
-data class GameStateUpdateResponse(val players: List<PlayerStateDto>) : ServerMessage {
+data class GameStateUpdateResponse(val players: Array<PlayerStateDto>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.GAME_STATE_UPDATE
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GameStateUpdateResponse
+
+        if (!players.contentEquals(other.players)) return false
+        if (type != other.type) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = players.contentHashCode()
+        result = 31 * result + type.hashCode()
+        return result
+    }
 }
 
 @Serializable

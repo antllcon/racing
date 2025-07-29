@@ -1,9 +1,6 @@
 package com.mobility.race.data
 
-import androidx.compose.ui.geometry.Offset
-import com.mobility.race.domain.GameMap
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.Serializable
 
 interface IGateway {
     val messageFlow: Flow<ServerMessage>
@@ -18,4 +15,5 @@ interface IGateway {
     suspend fun startGame(name: String)
     suspend fun leaveRoom()
     suspend fun playerAction(name: PlayerInputRequest)
+    suspend fun playerInput(directionAngle: Float, elapsedTime: Float, ringsCrossed: Int)
 }

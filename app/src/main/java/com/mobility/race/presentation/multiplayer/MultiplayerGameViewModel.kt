@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.mobility.race.domain.Car
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -31,7 +32,7 @@ class MultiplayerGameViewModel(
 ) {
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
-    private val TAG = "MultiplayerGameViewModel"
+    private val tag = "MultiplayerGameViewModel"
 
     init {
         gateway.messageFlow
@@ -47,8 +48,6 @@ class MultiplayerGameViewModel(
                 directionAngle = newAngle
             )
         }
-        // Логируем ввод с джойстика
-        Log.d(TAG, "Joystick direction angle set to: $newAngle")
     }
 
     private fun startGame() {
@@ -69,33 +68,51 @@ class MultiplayerGameViewModel(
         }
     }
 
-    // TODO: причесать
     private fun movePlayers(elapsedTime: Float) {
-        var newPlayersCopy: Array<Player> = emptyArray()
-        var updatedMainPlayer: Player? = null
+        val playersCopy: Array<Player> = stateValue.players.copyOf()
+        var mainPlayerCopy: Player? = null
 
-        for (player in stateValue.players) {
-            val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
-            val newCar = if (player.name != stateValue.mainPlayer.name) {
-                Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
-                player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
-            } else {
-                val updatedCarForMainPlayer =
-                    player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
-                Log.v(TAG, "Client: Moving main player ${player.car.id}. New Pos: ${updatedCarForMainPlayer.position}, Direction: ${stateValue.directionAngle}")
-                updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
-                updatedCarForMainPlayer
+        for (i: Int in stateValue.players.indices) {
+            val player: Player = stateValue.players[i]
+            val speedModifier: Float = stateValue.gameMap.getSpeedModifier(position = player.car.position)
+
+            val updatedCar: Car = updatePlayerCar(player, elapsedTime, speedModifier) { updatedCar ->
+                if (player.name == stateValue.mainPlayer.name) {
+                    mainPlayerCopy = player.copy(car = updatedCar)
+                }
             }
 
-            newPlayersCopy = newPlayersCopy.plus(player.copy(car = newCar))
+            playersCopy[i] = player.copy(car = updatedCar)
         }
-
 
         modifyState {
             copy(
-                players = newPlayersCopy,
-                mainPlayer = updatedMainPlayer ?: mainPlayer
+                players = playersCopy,
+                mainPlayer = mainPlayerCopy ?: mainPlayer
             )
+        }
+    }
+
+    private fun updatePlayerCar(
+        player: Player,
+        elapsedTime: Float,
+        speedModifier: Float,
+        onMainPlayerUpdated: (Car) -> Unit = {}
+    ): Car {
+        return if (player.name == stateValue.mainPlayer.name) {
+            player.car.update(
+                elapsedTime = elapsedTime,
+                directionAngle = stateValue.directionAngle,
+                speedModifier = speedModifier
+            ).also { updatedCar ->
+                Log.v(
+                    tag,
+                    "Main player ${player.name} pos: ${updatedCar.position}, vis direction: ${updatedCar.direction}"
+                )
+                onMainPlayerUpdated(updatedCar)
+            }
+        } else {
+            player.car
         }
     }
 
@@ -109,11 +126,11 @@ class MultiplayerGameViewModel(
 
     private suspend fun sendPlayerInput() {
         val playerInput = PlayerInputRequest(
-            visualDirection = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
+            directionAngle = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
             elapsedTime = elapsedTime,
-            ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
+            ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.name)
         )
-        gateway.playerAction(playerInput)
+        gateway.playerInput(directionAngle = playerInput.directionAngle, elapsedTime = playerInput.elapsedTime, ringsCrossed = playerInput.ringsCrossed)
     }
 
     private fun handleMessage(message: ServerMessage) {
@@ -133,15 +150,15 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
-                var newPlayersList: List<Player> = stateValue.players.toList()
+                var newPlayersArray: Array<Player> = stateValue.players
                 var updatedMainPlayerFromResponse: Player? = null
 
                 message.players.forEach { playerDto ->
                     val existingPlayerIndex: Int =
-                        newPlayersList.indexOfFirst { it.car.id == playerDto.id }
+                        newPlayersArray.indexOfFirst { it.car.id == playerDto.id }
 
                     if (existingPlayerIndex != -1) {
-                        val existingPlayer = newPlayersList[existingPlayerIndex]
+                        val existingPlayer = newPlayersArray[existingPlayerIndex]
                         val newCar = existingPlayer.car.copy(
                             position = Offset(playerDto.posX, playerDto.posY),
                             visualDirection = playerDto.visualDirection,
@@ -152,28 +169,34 @@ class MultiplayerGameViewModel(
                             isFinished = playerDto.isFinished
                         )
 
-                        newPlayersList = newPlayersList.toMutableList().apply {
+                        newPlayersArray = newPlayersArray.toMutableList().apply {
                             set(existingPlayerIndex, updatedPlayer)
-                        }.toList()
+                        }.toTypedArray()
 
                         // Логируем, как мы обновляем другого игрока с сервера
                         if (existingPlayer.name != stateValue.mainPlayer.name) {
-                            Log.i(TAG, "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
+                            Log.i(
+                                tag,
+                                "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}"
+                            )
                         }
 
                         if (existingPlayer.name == stateValue.mainPlayer.name) {
                             updatedMainPlayerFromResponse = updatedPlayer
                             // Логируем, если наш игрок тоже обновляется с сервера (для Server Reconciliation)
-                            Log.d(TAG, "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
+                            Log.d(
+                                tag,
+                                "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}"
+                            )
                         }
                     } else {
-                        Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
+                        Log.w(tag, "Client: Received DTO for unknown player ID: ${playerDto.id}")
                     }
                 }
 
                 modifyState {
                     copy(
-                        players = newPlayersList.toTypedArray(),
+                        players = newPlayersArray,
                         mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
                     )
                 }

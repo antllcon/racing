@@ -107,13 +107,16 @@ class Gateway(
         sendMessage(LeaveRoomRequest)
     }
 
+    override suspend fun playerAction(name: PlayerInputRequest) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun startGame(name: String) {
         sendMessage(StartGameRequest(name))
     }
 
-    override suspend fun playerAction(name: PlayerInputRequest) {
-        println("Gateway: player action with input: $name")
-        sendMessage(name)
+    override suspend fun playerInput(visualDirection: Float, elapsedTime: Float, ringsCrossed: Int) {
+        sendMessage(PlayerInputRequest(visualDirection, elapsedTime, ringsCrossed))
     }
 
     private fun startGettingMessages(session: WebSocketSession): Job {

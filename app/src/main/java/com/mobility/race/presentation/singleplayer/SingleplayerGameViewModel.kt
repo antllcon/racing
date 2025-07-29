@@ -33,8 +33,8 @@ class SingleplayerGameViewModel :
                 movePlayer(elapsedTime)
                 checkCheckpoints()
                 moveCamera()
-                lastTime = currentTime
 
+                lastTime = currentTime
                 delay(16)
             }
         }

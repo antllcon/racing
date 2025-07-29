@@ -90,7 +90,6 @@ data class MultiplayerGameState(
             )
         }
 
-
         private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1
             for (playerId in playerIds) {
