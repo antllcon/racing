@@ -15,6 +15,7 @@ enum class ClientMessageType {
 }
 
 enum class ServerMessageType {
+    PLAYER_INIT,
     PLAYER_CONNECTED,
     PLAYER_DISCONNECTED,
     INFO,
@@ -120,7 +121,7 @@ data class PlayerActionRequest(val name: String) : ClientMessage {
 
 @Serializable
 @SerialName("PLAYER_INPUT")
-data class PlayerInputRequest(val directionAngle: Float, val elapsedTime: Float, val ringsCrossed: Int) : ClientMessage {
+data class PlayerInputRequest(val directionAngle: Float?, val elapsedTime: Float, val ringsCrossed: Int) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_INPUT
 }
 
@@ -129,30 +130,17 @@ sealed interface ServerMessage {
     val type: ServerMessageType
 }
 
+@Serializable
+@SerialName("PLAYER_INIT")
+data class PlayerInitResponse(val playerId: String) : ServerMessage {
+    override val type: ServerMessageType get() = ServerMessageType.PLAYER_INIT
+}
+
 // TODO: поменять название на roomPlayersResponse
 @Serializable
 @SerialName("PLAYER_CONNECTED")
-data class PlayerConnectedResponse(val playerId: String, val playerNames: Array<String>) : ServerMessage {
+data class PlayerConnectedResponse(val playerId: String, val playersName: List<String>, val playersId: List<String>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.PLAYER_CONNECTED
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as PlayerConnectedResponse
-
-        if (playerId != other.playerId) return false
-        if (!playerNames.contentEquals(other.playerNames)) return false
-        if (type != other.type) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = playerId.hashCode()
-        result = 31 * result + playerNames.contentHashCode()
-        result = 31 * result + type.hashCode()
-        return result
-    }
 }
 
 @Serializable

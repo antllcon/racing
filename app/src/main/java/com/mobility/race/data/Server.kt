@@ -18,5 +18,11 @@ data class Server(
             port = 443,
             path = "/"
         )
+
+        fun local() = Server(
+            host = "172.27.198.66",
+            port = 8080,
+            path = "/"
+        )
     }
 }

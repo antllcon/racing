@@ -1,19 +1,22 @@
 package com.mobility.race.data
 
-import com.mobility.race.domain.GameMap
-import io.ktor.client.*
-import io.ktor.client.plugins.websocket.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.http.URLProtocol
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 
 class Gateway(
@@ -38,7 +41,7 @@ class Gateway(
     }
 
     override suspend fun connect() {
-        val protocolString = if (serverConfig.port == 443) "wss" else "ws"
+//        val protocol = if (serverConfig.port == 443) "wss" else "ws"
 
         try {
             session = client.webSocketSession(host = serverConfig.host, path = serverConfig.path) {
@@ -49,7 +52,8 @@ class Gateway(
             }
             job = startGettingMessages(session!!)
 
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("Can't connection to server: ${e.message}")
         }
     }
 
@@ -73,9 +77,12 @@ class Gateway(
             try {
                 sendToSession(session!!, message)
 
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                println("Error sending message: ${e.message}")
             }
         } else {
+            // TODO: придумать как выкидывать игрока из комнаты
+            println("Session is inactive")
         }
     }
 
@@ -103,7 +110,7 @@ class Gateway(
         sendMessage(StartGameRequest(name))
     }
 
-    override suspend fun playerInput(directionAngle: Float, elapsedTime: Float, ringsCrossed: Int) {
+    override suspend fun playerInput(directionAngle: Float?, elapsedTime: Float, ringsCrossed: Int) {
         sendMessage(PlayerInputRequest(directionAngle, elapsedTime, ringsCrossed))
     }
 
@@ -127,7 +134,6 @@ class Gateway(
 
     private suspend fun processIncomingFrame(frame: Frame) {
         if (frame is Frame.Text) {
-            println(frame.readText())
             val text = frame.readText()
             try {
                 val serverMessage: ServerMessage =

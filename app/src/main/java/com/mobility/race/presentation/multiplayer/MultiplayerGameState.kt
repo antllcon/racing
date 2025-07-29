@@ -11,7 +11,7 @@ import com.mobility.race.domain.GameMap
 data class MultiplayerGameState(
     val isGameRunning: Boolean,
     val countdown: Float,
-    val directionAngle: Float,
+    val directionAngle: Float?,
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val controllingStick: ControllingStick,
@@ -21,9 +21,10 @@ data class MultiplayerGameState(
 ) {
     companion object {
         fun default(
-            name: String,
-            playerNames: Array<String>,
-            carSpriteId: String,
+            playerId: String,
+            playerName: String,
+            playersName: List<String>,
+            playersId: List<String>,
             starterPack: StarterPack
         ): MultiplayerGameState {
             var newRouteList: List<Offset> = emptyList()
@@ -42,23 +43,25 @@ data class MultiplayerGameState(
 
             val mainPlayer = Player(
                 Car(
-                    playerName = name,
-                    id = carSpriteId,
-                    position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
+                    id = playerId,
+                    playerName = playerName,
+                    position = starterPack.initialPlayerStates[playersName.indexOf(playerName)].transformToOffset(),
                     visualDirection = startDirection,
+                    isMultiplayer = true
                 ),
                 isFinished = false
             )
 
             var players: Array<Player> = emptyArray()
 
-            for (name: String in playerNames) {
+            for (name: String in playersName) {
                 players = players.plus(
                     element = Player(
                         car = Car(
+//                            spriteId = getSpriteId(playerId, playersId),
                             playerName = name,
-                            id = getSpriteId(name, playerNames).toString(),
-                            position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
+                            id = getPlayerId(playerName, playersName, playersId),
+                            position = starterPack.initialPlayerStates[playersName.indexOf(name)].transformToOffset(),
                             visualDirection = startDirection
                         ),
                         isFinished = false
@@ -86,19 +89,24 @@ data class MultiplayerGameState(
                 controllingStick = ControllingStick(),
                 checkpointManager = CheckpointManager(newRouteList),
                 isGameRunning = true,
-                directionAngle = 0f
+                directionAngle = null
             )
         }
 
-        private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
+        private fun getSpriteId(playerId: String, playersId: List<String>): Int {
             var index = 1
-            for (id in playerIds) {
+            for (id in playersId) {
                 if (playerId == id) {
                     return index
                 }
                 index++
             }
             return index
+        }
+
+        private fun getPlayerId(playerName: String, playersName: List<String>, playersId: List<String>): String {
+            val index = playersName.indexOf(playerName)
+            return if (index != -1 && index < playersId.size) playersId[index] else ""
         }
     }
 

@@ -15,5 +15,5 @@ interface IGateway {
     suspend fun startGame(name: String)
     suspend fun leaveRoom()
     suspend fun playerAction(name: PlayerInputRequest)
-    suspend fun playerInput(directionAngle: Float, elapsedTime: Float, ringsCrossed: Int)
+    suspend fun playerInput(directionAngle: Float?, elapsedTime: Float, ringsCrossed: Int)
 }

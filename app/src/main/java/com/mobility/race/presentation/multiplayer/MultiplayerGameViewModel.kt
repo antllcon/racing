@@ -14,25 +14,25 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import android.util.Log
 import com.mobility.race.domain.Car
 
 class MultiplayerGameViewModel(
     playerId: String,
-    playerNames: Array<String>,
-    carSpriteId: String,
+    playerName: String,
+    playersName: List<String>,
+    playersId: List<String>,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
     MultiplayerGameState.default(
-        name = playerId,
-        playerNames = playerNames,
-        carSpriteId = carSpriteId,
+        playerId = playerId,
+        playerName = playerName,
+        playersName = playersName,
+        playersId = playersId,
         starterPack = gateway.openGatewayStorage()
     )
 ) {
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
-    private val tag = "MultiplayerGameViewModel"
 
     init {
         gateway.messageFlow
@@ -42,7 +42,7 @@ class MultiplayerGameViewModel(
         startGame()
     }
 
-    fun setDirectionAngle(newAngle: Float) {
+    fun setDirectionAngle(newAngle: Float?) {
         modifyState {
             copy(
                 directionAngle = newAngle
@@ -105,10 +105,6 @@ class MultiplayerGameViewModel(
                 directionAngle = stateValue.directionAngle,
                 speedModifier = speedModifier
             ).also { updatedCar ->
-                Log.v(
-                    tag,
-                    "Main player ${player.car.id} pos: ${updatedCar.position}, vis direction: ${updatedCar.direction}"
-                )
                 onMainPlayerUpdated(updatedCar)
             }
         } else {
@@ -126,7 +122,7 @@ class MultiplayerGameViewModel(
 
     private suspend fun sendPlayerInput() {
         val playerInput = PlayerInputRequest(
-            directionAngle = stateValue.directionAngle,
+            directionAngle = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
             elapsedTime = elapsedTime,
             ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
         )
@@ -149,11 +145,22 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
-                var newPlayersArray: Array<Player> = stateValue.players
+                var newPlayersArray: Array<Player> = stateValue.players.copyOf()
+
+                for (player: Player in newPlayersArray)
+                {
+                    println(player.car.id)
+                }
+
+
                 var newMainPlayer: Player? = null
 
                 message.players.forEach { playerDto ->
-                    val existPlayerIndex: Int = newPlayersArray.indexOfFirst { it.car.id == playerDto.id }
+                    val existPlayerIndex: Int = newPlayersArray.indexOfFirst {
+                        it.car.id == playerDto.id
+                    }
+
+                    println("DTO ID = ${playerDto.id}, CAR ID = ${newPlayersArray[0].car.id}")
 
                     if (existPlayerIndex != -1) {
                         val existPlayer: Player = newPlayersArray[existPlayerIndex]

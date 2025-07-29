@@ -26,6 +26,7 @@ val AppJson = Json {
             subclass(PlayerInputRequest::class)
         }
         polymorphic(ServerMessage::class) {
+            subclass(PlayerInitResponse::class)
             subclass(PlayerConnectedResponse::class)
             subclass(PlayerDisconnectedResponse::class)
             subclass(InfoResponse::class)

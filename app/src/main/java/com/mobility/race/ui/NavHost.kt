@@ -48,30 +48,12 @@ object MultiplayerMenuScreen
 
 @Serializable
 data class MultiplayerGame(
-    val nickname: String,
-    val playerNames: Array<String>,
+    val playerId: String,
+    val playerName: String,
+    val playersName: List<String>,
+    val playersId: List<String>,
     val playerSpriteId: String
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as MultiplayerGame
-
-        if (nickname != other.nickname) return false
-        if (!playerNames.contentEquals(other.playerNames)) return false
-        if (playerSpriteId != other.playerSpriteId) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = nickname.hashCode()
-        result = 31 * result + playerNames.contentHashCode()
-        result = 31 * result + playerSpriteId.hashCode()
-        return result
-    }
-}
+)
 
 @Composable
 fun AppNavHost(
@@ -104,10 +86,10 @@ fun AppNavHost(
 
         composable<MultiplayerMenuScreen> {
             MultiplayerMenuScreen(
-                navigateToJoinRoom = { playerName ->
+                navigateToJoinRoom = {playerName ->
                     navController.navigate(route = EnterRoom(playerName))
                 },
-                navigateToCreateRoom = { playerName, roomName ->
+                navigateToCreateRoom = {playerName, roomName ->
                     navController.navigate(route = Room(playerName, roomName, true))
                 }
             )
@@ -151,9 +133,10 @@ fun AppNavHost(
 
             val factory = remember(gateway) {
                 MultiplayerGameViewModelFactory(
-                    args.nickname,
-                    args.playerNames,
-                    args.playerSpriteId,
+                    args.playerId,
+                    args.playerName,
+                    args.playersName,
+                    args.playersId,
                     gateway
                 )
             }

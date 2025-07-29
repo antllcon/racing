@@ -6,6 +6,7 @@ import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.JoinedRoomResponse
 import com.mobility.race.data.PlayerConnectedResponse
+import com.mobility.race.data.PlayerInitResponse
 import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.data.StartedGameResponse
@@ -21,7 +22,7 @@ class RoomViewModel(
     private val isCreatingRoom: Boolean,
     private val navController: NavController,
     private val gateway: IGateway
-) : BaseViewModel<RoomState>(RoomState.default(playerName, roomName, isCreatingRoom)) {
+) : BaseViewModel<RoomState>(initialState = RoomState.default(playerName, roomName, isCreatingRoom)) {
 
     init {
         gateway.messageFlow
@@ -62,6 +63,15 @@ class RoomViewModel(
             is ErrorResponse -> {
                 throw Exception("Think about it!")
             }
+
+            is PlayerInitResponse -> {
+                modifyState {
+                    copy(
+                        playerId = message.playerId
+                    )
+                }
+            }
+
             is RoomCreatedResponse -> {
                 modifyState {
                     copy(
@@ -69,6 +79,7 @@ class RoomViewModel(
                     )
                 }
             }
+
             is JoinedRoomResponse -> {
                 modifyState {
                     copy(
@@ -76,19 +87,26 @@ class RoomViewModel(
                     )
                 }
             }
+
             is PlayerConnectedResponse -> {
                 modifyState {
                     copy(
-                        playerNames = message.playerNames
+                        playersName = message.playersName.toList(),
+                        playersId = message.playersId.toList()
                     )
                 }
             }
+
             is StartedGameResponse -> {
                 gateway.fillGatewayStorage(message.starterPack)
 
+                // 🔍 Лог для проверки
+                println("Final playersId in state: ${stateValue.playersId}")
+                println("Final playersName in state: ${stateValue.playersName}")
+
                 var carSpriteId = 1
 
-                for (name in stateValue.playerNames) {
+                for (name in stateValue.playersName) {
                     if (name == stateValue.playerName) {
                         break
                     }
@@ -96,8 +114,17 @@ class RoomViewModel(
                     carSpriteId++
                 }
 
-                navController.navigate(route = MultiplayerGame(stateValue.playerName, stateValue.playerNames, carSpriteId.toString()))
+                navController.navigate(
+                    route = MultiplayerGame(
+                        stateValue.playerId,
+                        stateValue.playerName,
+                        stateValue.playersName,
+                        stateValue.playersId,
+                        carSpriteId.toString()
+                    )
+                )
             }
+
             else -> Unit
         }
     }

@@ -29,13 +29,13 @@ fun RoomScreen(
             Text(text = state.roomId)
             Text(text = "Players:")
 
-            for (name in state.playerNames)
+            for (name in state.playersName)
             {
                 Text(name)
             }
 
             // TODO: вернуть значение 1
-            if (state.isCreatingRoom && state.playerNames.size != 0) {
+            if (state.isCreatingRoom && state.playersName.size != 0) {
                 Button(
                     onClick = {
                         viewModel.startGame()

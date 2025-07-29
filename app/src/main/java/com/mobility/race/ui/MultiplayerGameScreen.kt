@@ -95,7 +95,7 @@ fun MultiplayerGameScreen(
                                 },
                                 onDragEnd = {
                                     if (isStickActive) {
-                                        viewModel.setDirectionAngle(0f)
+                                        viewModel.setDirectionAngle(null)
                                         isStickActive = false
                                         currentStickInputAngle = null
                                         currentStickInputDistanceFactor = 0f
@@ -103,7 +103,7 @@ fun MultiplayerGameScreen(
                                 },
                                 onDragCancel = {
                                     if (isStickActive) {
-                                        viewModel.setDirectionAngle(0f)
+                                        viewModel.setDirectionAngle(null)
                                         isStickActive = false
                                         currentStickInputAngle = null
                                         currentStickInputDistanceFactor = 0f
