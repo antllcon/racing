@@ -11,12 +11,13 @@ import com.mobility.race.domain.GameMap
 data class MultiplayerGameState(
     val countdown: Float,
     val mainPlayer: Player,
-    val players: Array<Player>,
+    val players: List<Player>,
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val controllingStick: ControllingStick,
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
+    val lapsCompleted: Int,
     val directionAngle: Float?
 ) {
     companion object {
@@ -50,7 +51,7 @@ data class MultiplayerGameState(
                 isFinished = false
             )
 
-            var players: Array<Player> = emptyArray()
+            var players: List<Player> = emptyList()
 
             for (name: String in playerNames) {
                 players = players.plus(
@@ -65,6 +66,9 @@ data class MultiplayerGameState(
                     )
                 )
             }
+
+            val checkpointManager = CheckpointManager(newRouteList)
+            checkpointManager.registerCar(mainPlayer.car.id)
 
             return MultiplayerGameState(
                 countdown = 5f,
@@ -84,8 +88,9 @@ data class MultiplayerGameState(
                     mapHeight = starterPack.mapHeight
                 ),
                 controllingStick = ControllingStick(),
-                checkpointManager = CheckpointManager(newRouteList),
+                checkpointManager = checkpointManager,
                 isGameRunning = true,
+                lapsCompleted = 0,
                 directionAngle = null
             )
         }
@@ -101,40 +106,6 @@ data class MultiplayerGameState(
             }
             return index
         }
-    }
-
-    // TODO: убрать комментарий ниже
-    // IDEA generated this shit (lmao) for equaling and hashing arrays usnig Player type
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as MultiplayerGameState
-
-        if (countdown != other.countdown) return false
-        if (isGameRunning != other.isGameRunning) return false
-        if (directionAngle != other.directionAngle) return false
-        if (mainPlayer != other.mainPlayer) return false
-        if (!players.contentEquals(other.players)) return false
-        if (gameMap != other.gameMap) return false
-        if (gameCamera != other.gameCamera) return false
-        if (controllingStick != other.controllingStick) return false
-        if (checkpointManager != other.checkpointManager) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = countdown.hashCode()
-        result = 31 * result + isGameRunning.hashCode()
-        result = 31 * result + (directionAngle?.hashCode() ?: 0)
-        result = 31 * result + mainPlayer.hashCode()
-        result = 31 * result + players.contentHashCode()
-        result = 31 * result + gameMap.hashCode()
-        result = 31 * result + gameCamera.hashCode()
-        result = 31 * result + controllingStick.hashCode()
-        result = 31 * result + checkpointManager.hashCode()
-        return result
     }
 }
 

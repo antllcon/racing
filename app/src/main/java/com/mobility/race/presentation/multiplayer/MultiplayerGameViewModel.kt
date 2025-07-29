@@ -48,7 +48,7 @@ class MultiplayerGameViewModel(
             )
         }
         // Логируем ввод с джойстика
-        Log.d(TAG, "Joystick direction angle set to: $newAngle")
+//        Log.d(TAG, "Joystick direction angle set to: $newAngle")
     }
 
     private fun startGame() {
@@ -61,6 +61,7 @@ class MultiplayerGameViewModel(
 
                 movePlayers(elapsedTime)
                 moveCamera()
+                checkCheckpoints()
                 sendPlayerInput()
 
                 lastTime = currentTime
@@ -71,18 +72,18 @@ class MultiplayerGameViewModel(
 
     // TODO: причесать
     private fun movePlayers(elapsedTime: Float) {
-        var newPlayersCopy: Array<Player> = emptyArray()
+        var newPlayersCopy: List<Player> = emptyList()
         var updatedMainPlayer: Player? = null
 
         for (player in stateValue.players) {
             val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
             val newCar = if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
-                Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
+//                Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
                 player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
             } else {
                 val updatedCarForMainPlayer =
                     player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
-                Log.v(TAG, "Client: Moving main player ${player.car.id}. New Pos: ${updatedCarForMainPlayer.position}, Direction: ${stateValue.directionAngle}")
+//                Log.v(TAG, "Client: Moving main player ${player.car.id}. New Pos: ${updatedCarForMainPlayer.position}, Direction: ${stateValue.directionAngle}")
                 updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
                 updatedCarForMainPlayer
             }
@@ -96,6 +97,30 @@ class MultiplayerGameViewModel(
                 players = newPlayersCopy,
                 mainPlayer = updatedMainPlayer ?: mainPlayer
             )
+        }
+    }
+
+    private fun checkCheckpoints() {
+        val car = stateValue.mainPlayer.car
+        val manager = stateValue.checkpointManager
+        val carId = car.id
+
+        val nextCheckpoint = manager.getNextCheckpoint(carId) ?: return
+
+        val carCellX = car.position.x.toInt()
+        val carCellY = car.position.y.toInt()
+
+        if (carCellX == nextCheckpoint.x.toInt() && carCellY == nextCheckpoint.y.toInt()) {
+            manager.onCheckpointReached(carId, nextCheckpoint)
+
+            val newLaps = manager.getLapsForCar(carId)
+            if (newLaps != stateValue.lapsCompleted) {
+                modifyState { copy(lapsCompleted = newLaps) }
+            }
+
+            if (stateValue.lapsCompleted >= 3) {
+                println("Finish!")
+            }
         }
     }
 
@@ -116,12 +141,12 @@ class MultiplayerGameViewModel(
         gateway.playerAction(playerInput)
     }
 
-    private fun handleMessage(message: ServerMessage) {
+    private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
-                println("Server Error: ${message.message}")
+//                println("Server Error: ${message.message}")
             }
 
             is GameCountdownUpdateResponse -> {
@@ -167,13 +192,13 @@ class MultiplayerGameViewModel(
 //                            Log.d(TAG, "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}")
                         }
                     } else {
-                        Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
+//                        Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
                     }
                 }
 
                 modifyState {
                     copy(
-                        players = newPlayersList.toTypedArray(),
+                        players = newPlayersList,
                         mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
                     )
                 }
