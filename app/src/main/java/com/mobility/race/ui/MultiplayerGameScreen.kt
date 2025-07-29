@@ -133,7 +133,7 @@ fun MultiplayerGameScreen(
                 currentStickInputDistanceFactor
             )
 
-            drawMinimap(state.gameMap, state.mainPlayer.car)
+            drawMinimap(state.gameMap, state.mainPlayer.car, state.checkpointManager)
 
             drawNextCheckpoint(
                 state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),

@@ -61,6 +61,8 @@ class MultiplayerGameViewModel(
 
                 movePlayers(elapsedTime)
                 moveCamera()
+                checkCheckpoints()
+                sendPlayerInput()
 
                 lastTime = currentTime
                 delay(16)
@@ -95,6 +97,30 @@ class MultiplayerGameViewModel(
                 players = newPlayersCopy,
                 mainPlayer = updatedMainPlayer ?: mainPlayer
             )
+        }
+    }
+
+    private fun checkCheckpoints() {
+        val car = stateValue.mainPlayer.car
+        val manager = stateValue.checkpointManager
+        val carId = car.id
+
+        val nextCheckpoint = manager.getNextCheckpoint(carId) ?: return
+
+        val carCellX = car.position.x.toInt()
+        val carCellY = car.position.y.toInt()
+
+        if (carCellX == nextCheckpoint.x.toInt() && carCellY == nextCheckpoint.y.toInt()) {
+            manager.onCheckpointReached(carId, nextCheckpoint)
+
+            val newLaps = manager.getLapsForCar(carId)
+            if (newLaps != stateValue.lapsCompleted) {
+                modifyState { copy(lapsCompleted = newLaps) }
+            }
+
+            if (stateValue.lapsCompleted >= 3) {
+                println("Finish!")
+            }
         }
     }
 
@@ -169,8 +195,6 @@ class MultiplayerGameViewModel(
 //                        Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
                     }
                 }
-
-                sendPlayerInput()
 
                 modifyState {
                     copy(

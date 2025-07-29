@@ -17,6 +17,7 @@ data class MultiplayerGameState(
     val controllingStick: ControllingStick,
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
+    val lapsCompleted: Int,
     val directionAngle: Float?
 ) {
     companion object {
@@ -66,6 +67,9 @@ data class MultiplayerGameState(
                 )
             }
 
+            val checkpointManager = CheckpointManager(newRouteList)
+            checkpointManager.registerCar(mainPlayer.car.id)
+
             return MultiplayerGameState(
                 countdown = 5f,
                 mainPlayer = mainPlayer,
@@ -84,8 +88,9 @@ data class MultiplayerGameState(
                     mapHeight = starterPack.mapHeight
                 ),
                 controllingStick = ControllingStick(),
-                checkpointManager = CheckpointManager(newRouteList),
+                checkpointManager = checkpointManager,
                 isGameRunning = true,
+                lapsCompleted = 0,
                 directionAngle = null
             )
         }
