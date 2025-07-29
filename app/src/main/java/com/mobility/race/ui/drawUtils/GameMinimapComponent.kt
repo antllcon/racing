@@ -20,7 +20,6 @@ fun DrawScope.drawMinimap(
     val strokeWidth = 8f
     val strokeColor = Color.Gray
     val cornerRadius = 8f
-
     drawRoundRect(
         color = Color.Black.copy(alpha = 0.7f),
         topLeft = minimapPosition,
@@ -42,6 +41,8 @@ fun DrawScope.drawMinimap(
         innerMinimapSize.height / map.height
     )
 
+    val nextCheckpoint = state.checkpointManager.getNextCheckpoint(state.car.id)
+
     for (y in 0 until map.height) {
         for (x in 0 until map.width) {
             val terrain = map.getTerrainType(x, y)
@@ -52,14 +53,30 @@ fun DrawScope.drawMinimap(
                 else -> Color.Gray
             }
 
-            drawRect(
-                color = color,
-                topLeft = Offset(
-                    innerMinimapPosition.x + x * cellSize,
-                    innerMinimapPosition.y + y * cellSize
-                ),
-                size = Size(cellSize, cellSize)
+            val topLeft = Offset(
+                innerMinimapPosition.x + x * cellSize,
+                innerMinimapPosition.y + y * cellSize
             )
+
+            if (nextCheckpoint != null && x.toFloat() == nextCheckpoint.x && y.toFloat() == nextCheckpoint.y) {
+                drawRect(
+                    color = Color.Red.copy(alpha = 0.7f),
+                    topLeft = topLeft,
+                    size = Size(cellSize, cellSize)
+                )
+                drawRect(
+                    color = Color.Yellow,
+                    topLeft = topLeft,
+                    size = Size(cellSize, cellSize),
+                    style = Stroke(width = 2f)
+                )
+            } else {
+                drawRect(
+                    color = color,
+                    topLeft = topLeft,
+                    size = Size(cellSize, cellSize)
+                )
+            }
         }
     }
 

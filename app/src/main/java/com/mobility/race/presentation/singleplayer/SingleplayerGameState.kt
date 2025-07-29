@@ -16,6 +16,8 @@ data class SingleplayerGameState(
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val checkpointManager: CheckpointManager,
+    val startTime: Long = System.currentTimeMillis(),
+    val finishTime: Long = 0L,
     val lapsCompleted: Int = 0,
     val totalLaps: Int = 3
 ) {
