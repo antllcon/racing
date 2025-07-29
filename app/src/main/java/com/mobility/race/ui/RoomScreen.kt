@@ -1,46 +1,26 @@
 package com.mobility.race.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import SoundManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.hoverable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -54,15 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.RoomViewModel
 import com.mobility.race.R
-import com.mobility.race.presentation.multiplayer.RoomState
-import java.time.format.TextStyle
+import com.mobility.race.ui.drawUtils.LockScreenOrientation
+import com.mobility.race.ui.drawUtils.Orientation
 
 @Composable
 fun RoomScreen(
-    viewModel: RoomViewModel
+    viewModel: RoomViewModel,
+    soundManager: SoundManager? = null
 ) {
     val state = viewModel.state.value
-
+    LockScreenOrientation(Orientation.PORTRAIT)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -133,6 +114,9 @@ fun RoomScreen(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0x33FFFFFF))
                                     .padding(vertical = 12.dp, horizontal = 16.dp)
+                                    .clickable {
+                                        soundManager?.playClickSound()
+                                    }
                             ) {
                                 Text(
                                     text = name,
@@ -152,7 +136,11 @@ fun RoomScreen(
 
             if (state.isCreatingRoom && state.playerNames.size > 1) {
                 AnimatedButton(
-                    onClick = { viewModel.startGame() },
+                    onClick = {
+                        soundManager?.playClickSound()
+                        viewModel.startGame()
+                    },
+                    soundManager = soundManager,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
@@ -168,4 +156,3 @@ fun RoomScreen(
         }
     }
 }
-

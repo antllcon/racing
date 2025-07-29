@@ -1,5 +1,3 @@
-package com.mobility.race.ui
-
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -32,6 +30,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LockScreenOrientation
+import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -47,6 +47,7 @@ fun SingleplayerGameScreen(
     onExit: () -> Unit,
     onRestart: () -> Unit,
 ) {
+    LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
     val viewModel: SingleplayerGameViewModel = viewModel(
         factory = SingleplayerGameViewModelFactory(context)
@@ -184,28 +185,5 @@ fun SingleplayerGameScreen(
                 .padding(16.dp),
             style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
         )
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Button(
-                onClick = { onExit() },
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Text("Exit")
-            }
-
-            Button(
-                onClick = {
-                    viewModel.restartGame()
-                    onRestart()
-                },
-                modifier = Modifier.padding(8.dp)
-            ) {
-                Text("Restart")
-            }
-        }
     }
 }

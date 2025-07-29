@@ -1,5 +1,6 @@
 package com.mobility.race.ui
 
+import SoundManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LockScreenOrientation
+import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -29,8 +34,15 @@ import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 
 @Composable
 fun MultiplayerGameScreen(
-    viewModel: MultiplayerGameViewModel
+    viewModel: MultiplayerGameViewModel,
+    soundManager: SoundManager
 ) {
+
+    LaunchedEffect(Unit) {
+        soundManager.pauseBackgroundMusic()
+    }
+    LockScreenOrientation(Orientation.LANDSCAPE)
+    val context = LocalContext.current
     val state = viewModel.state.value
     val bitmaps = bitmapStorage(context)
 

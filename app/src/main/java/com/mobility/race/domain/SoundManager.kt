@@ -10,6 +10,8 @@ import com.mobility.race.R
 class SoundManager(private val context: Context) {
     private val soundPool: SoundPool
     private var startSoundId: Int = 0
+    private var clickSoundId: Int = 0
+
     private val exoPlayer: ExoPlayer
 
     private val surfaceSounds = mutableMapOf<String, Int>()
@@ -28,7 +30,7 @@ class SoundManager(private val context: Context) {
             .build()
 
         startSoundId = soundPool.load(context, R.raw.start, 1)
-
+        clickSoundId = soundPool.load(context, R.raw.click, 1)
         surfaceSounds["ROAD"] = soundPool.load(context, R.raw.road, 1)
         surfaceSounds["GRASS"] = soundPool.load(context, R.raw.grass, 1)
         surfaceSounds["WATER"] = soundPool.load(context, R.raw.water, 1)
@@ -50,11 +52,14 @@ class SoundManager(private val context: Context) {
     }
 
     fun playBackgroundMusic() {
-        val mediaItem = MediaItem.fromUri("android.resource://${context.packageName}/${R.raw.fonk}")
+        val mediaItem = MediaItem.fromUri("android.resource://${context.packageName}/${R.raw.phonk}")
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
+    }
+    fun playClickSound() {
+        soundPool.play(clickSoundId, 1f, 1f, 0, 0, 1f)
     }
     fun playSurfaceSound(surfaceType: String, volume: Float = 1f) {
         currentSurfaceStreamId?.let { soundPool.stop(it) }
@@ -78,9 +83,24 @@ class SoundManager(private val context: Context) {
             currentSurfaceSoundId = null
         }
     }
+    fun playMenuMusic() {
+        val mediaItem = MediaItem.fromUri("android.resource://${context.packageName}/${R.raw.backround_menu}")
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
+        exoPlayer.prepare()
+        exoPlayer.playWhenReady = true
+    }
+
+    fun stopBackgroundMusic() {
+        exoPlayer.stop()
+    }
 
     fun pauseBackgroundMusic() {
         exoPlayer.pause()
+    }
+
+    fun resumeBackgroundMusic() {
+        exoPlayer.play()
     }
     fun setMusicVolume(volume: Float) {
         exoPlayer.volume = volume

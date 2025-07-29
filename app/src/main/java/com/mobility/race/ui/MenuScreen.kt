@@ -23,6 +23,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,13 +48,20 @@ import androidx.compose.ui.unit.sp
 import com.mobility.race.R
 import com.mobility.race.ui.drawUtils.LockScreenOrientation
 import com.mobility.race.ui.drawUtils.Orientation
+import SoundManager
 
 @Composable
 fun MenuScreen(
     navigateToSingleplayer: () -> Unit,
-    navigateToMultiplayerMenuScreen: () -> Unit
+    navigateToMultiplayerMenuScreen: () -> Unit,
+    soundManager: SoundManager
 ) {
     LockScreenOrientation(Orientation.PORTRAIT)
+
+    LaunchedEffect(Unit) {
+        soundManager.playMenuMusic()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -122,6 +130,7 @@ fun MenuScreen(
             ) {
                 AnimatedButton(
                     onClick = navigateToSingleplayer,
+                    soundManager = soundManager,
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 12.dp)
@@ -143,6 +152,7 @@ fun MenuScreen(
 
                 AnimatedButton(
                     onClick = navigateToMultiplayerMenuScreen,
+                    soundManager = soundManager,
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .padding(vertical = 12.dp)
@@ -172,6 +182,7 @@ fun MenuScreen(
 fun AnimatedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    soundManager: SoundManager? = null,
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -201,7 +212,10 @@ fun AnimatedButton(
     )
 
     Button(
-        onClick = onClick,
+        onClick = {
+            soundManager?.playClickSound()
+            onClick()
+        },
         modifier = modifier
             .scale(scale)
             .height(70.dp)

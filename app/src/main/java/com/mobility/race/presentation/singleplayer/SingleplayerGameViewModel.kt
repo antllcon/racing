@@ -18,7 +18,7 @@ class SingleplayerGameViewModel(private val context: Context) :
     private var previousSpeed: Float = 0f
     private var currentSurface: String = "ROAD"
     private var lastSurfaceUpdateTime = 0L
-    private val surfaceUpdateInterval = 50L
+    private val surfaceUpdateInterval = 100L
 
     init {
         startNewGame()

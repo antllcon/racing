@@ -1,7 +1,11 @@
 package com.mobility.race.ui
 
+import SingleplayerGameScreen
+import SoundManager
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -62,7 +66,9 @@ data class MultiplayerGame(
 
 @Composable
 fun AppNavHost(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    context: Context = LocalContext.current,
+    soundManager: SoundManager = remember { SoundManager(context) }
 ) {
     val httpClient = remember {
         HttpClient(CIO) {
@@ -85,7 +91,8 @@ fun AppNavHost(
         composable<Menu> {
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
-                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) }
+                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) },
+                soundManager = soundManager
             )
         }
 
@@ -159,12 +166,19 @@ fun AppNavHost(
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
+            val context = LocalContext.current
+            val soundManager = remember { SoundManager(context) }
 
-            MultiplayerGameScreen(viewModel)
+            MultiplayerGameScreen(
+                viewModel = viewModel,
+                soundManager = soundManager
+            )
         }
 
         composable<RaceFinished> { entry ->
             val args = entry.toRoute<RaceFinished>()
+            val context = LocalContext.current
+            val soundManager = remember { SoundManager(context) }
 
             RaceFinishedScreen(
                 finishTime = args.finishTime,
@@ -179,7 +193,8 @@ fun AppNavHost(
                     navController.navigate(route = Menu) {
                         popUpTo(Menu) { inclusive = true }
                     }
-                }
+                },
+                soundManager = soundManager
             )
         }
     }

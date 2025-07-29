@@ -1,5 +1,6 @@
 package com.mobility.race.ui
 
+import SoundManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,9 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +40,8 @@ import androidx.compose.ui.text.TextStyle
 @Composable
 fun MultiplayerMenuScreen(
     navigateToJoinRoom: (String) -> Unit,
-    navigateToCreateRoom: (String, String) -> Unit
+    navigateToCreateRoom: (String, String) -> Unit,
+    soundManager: SoundManager? = null,
 ) {
     LockScreenOrientation(Orientation.PORTRAIT)
     var playerName by remember { mutableStateOf("") }
@@ -63,7 +63,6 @@ fun MultiplayerMenuScreen(
                 .fillMaxSize()
                 .padding(horizontal = 32.dp)
         ) {
-            // Header Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
@@ -93,11 +92,17 @@ fun MultiplayerMenuScreen(
                     color = Color.White,
                     fontFamily = FontFamily(Font(R.font.jersey25)),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 48.dp)
+                    modifier = Modifier.padding(bottom = 48.dp),
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
                 )
             }
 
-            // Form Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1.5f)
@@ -113,13 +118,13 @@ fun MultiplayerMenuScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Join Room Button
                 AnimatedButton(
                     onClick = {
                         if (playerName.isNotEmpty()) {
                             navigateToJoinRoom(playerName)
                         }
                     },
+                    soundManager = soundManager,
                     enabled = playerName.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -129,7 +134,14 @@ fun MultiplayerMenuScreen(
                         text = "JOIN EXISTING RACE",
                         fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black,
+                                offset = Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
+                        )
                     )
                 }
 
@@ -150,7 +162,14 @@ fun MultiplayerMenuScreen(
                         color = Color.White,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontSize = 16.sp,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black,
+                                offset = Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
+                        )
                     )
 
                     Divider(
@@ -173,7 +192,6 @@ fun MultiplayerMenuScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Create Room Button
                 AnimatedButton(
                     onClick = {
                         if (newRoomName.isNotEmpty() && playerName.isNotEmpty()) {
@@ -189,7 +207,14 @@ fun MultiplayerMenuScreen(
                         text = "CREATE NEW RACE",
                         fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black,
+                                offset = Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
+                        )
                     )
                 }
             }

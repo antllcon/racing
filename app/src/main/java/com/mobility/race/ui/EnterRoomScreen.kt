@@ -1,12 +1,12 @@
 package com.mobility.race.ui
 
+import SoundManager
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -26,7 +25,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -41,7 +39,6 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
@@ -112,7 +109,14 @@ fun EnterRoomScreen(
                     color = Color.White,
                     fontFamily = FontFamily(Font(R.font.jersey25)),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 48.dp)
+                    modifier = Modifier.padding(bottom = 48.dp),
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
                 )
             }
 
@@ -146,7 +150,14 @@ fun EnterRoomScreen(
                         text = "JOIN NOW",
                         fontSize = 24.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = Color.Black,
+                                offset = Offset(2f, 2f),
+                                blurRadius = 4f
+                            )
+                        )
                     )
                 }
             }
@@ -185,7 +196,14 @@ fun AnimatedOutlinedTextField(
                 text = label,
                 color = Color.White,
                 fontFamily = FontFamily(Font(R.font.jersey25)),
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black,
+                        offset = Offset(1f, 1f),
+                        blurRadius = 2f
+                    )
+                )
             )
         },
         modifier = modifier
@@ -202,7 +220,12 @@ fun AnimatedOutlinedTextField(
             color = Color.White,
             fontFamily = FontFamily(Font(R.font.jersey25)),
             fontSize = 20.sp,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            shadow = Shadow(
+                color = Color.Black,
+                offset = Offset(1f, 1f),
+                blurRadius = 2f
+            )
         ),
         singleLine = true,
         colors = TextFieldDefaults.colors(
@@ -225,7 +248,8 @@ fun AnimatedOutlinedTextField(
 fun AnimatedButton(
     onClick: () -> Unit,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier,
+    soundManager: SoundManager? = null,
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -261,7 +285,10 @@ fun AnimatedButton(
     )
 
     Button(
-        onClick = onClick,
+        onClick = {
+            soundManager?.playClickSound()
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier
             .scale(scale)
