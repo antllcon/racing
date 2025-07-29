@@ -125,6 +125,8 @@ fun MultiplayerGameScreen(
                 bitmaps
             )
 
+            drawCars(state, bitmaps)
+
             drawControllingStick(
                 state.controllingStick,
                 currentStickInputAngle,
@@ -138,8 +140,6 @@ fun MultiplayerGameScreen(
                 state.gameCamera,
                 state.gameCamera.getScaledCellSize(state.gameMap.size)
             )
-
-            drawCars(state, bitmaps)
         }
     }
 }
