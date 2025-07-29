@@ -61,7 +61,6 @@ class MultiplayerGameViewModel(
 
                 movePlayers(elapsedTime)
                 moveCamera()
-                sendPlayerInput()
 
                 lastTime = currentTime
                 delay(16)
@@ -116,7 +115,7 @@ class MultiplayerGameViewModel(
         gateway.playerAction(playerInput)
     }
 
-    private fun handleMessage(message: ServerMessage) {
+    private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
@@ -170,6 +169,8 @@ class MultiplayerGameViewModel(
                         Log.w(TAG, "Client: Received DTO for unknown player ID: ${playerDto.id}")
                     }
                 }
+
+                sendPlayerInput()
 
                 modifyState {
                     copy(
