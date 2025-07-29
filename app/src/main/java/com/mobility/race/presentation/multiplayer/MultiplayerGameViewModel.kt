@@ -42,7 +42,7 @@ class MultiplayerGameViewModel(
         startGame()
     }
 
-    fun setDirectionAngle(newAngle: Float?) {
+    fun setDirectionAngle(newAngle: Float) {
         modifyState {
             copy(
                 directionAngle = newAngle
@@ -77,7 +77,7 @@ class MultiplayerGameViewModel(
             val speedModifier: Float = stateValue.gameMap.getSpeedModifier(position = player.car.position)
 
             val updatedCar: Car = updatePlayerCar(player, elapsedTime, speedModifier) { updatedCar ->
-                if (player.name == stateValue.mainPlayer.name) {
+                if (player.car.id == stateValue.mainPlayer.car.id) {
                     mainPlayerCopy = player.copy(car = updatedCar)
                 }
             }
@@ -99,7 +99,7 @@ class MultiplayerGameViewModel(
         speedModifier: Float,
         onMainPlayerUpdated: (Car) -> Unit = {}
     ): Car {
-        return if (player.name == stateValue.mainPlayer.name) {
+        return if (player.car.id == stateValue.mainPlayer.car.id) {
             player.car.update(
                 elapsedTime = elapsedTime,
                 directionAngle = stateValue.directionAngle,
@@ -107,7 +107,7 @@ class MultiplayerGameViewModel(
             ).also { updatedCar ->
                 Log.v(
                     tag,
-                    "Main player ${player.name} pos: ${updatedCar.position}, vis direction: ${updatedCar.direction}"
+                    "Main player ${player.car.id} pos: ${updatedCar.position}, vis direction: ${updatedCar.direction}"
                 )
                 onMainPlayerUpdated(updatedCar)
             }
@@ -126,16 +126,15 @@ class MultiplayerGameViewModel(
 
     private suspend fun sendPlayerInput() {
         val playerInput = PlayerInputRequest(
-            directionAngle = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
+            directionAngle = stateValue.directionAngle,
             elapsedTime = elapsedTime,
-            ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.name)
+            ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
         )
         gateway.playerInput(directionAngle = playerInput.directionAngle, elapsedTime = playerInput.elapsedTime, ringsCrossed = playerInput.ringsCrossed)
     }
 
     private fun handleMessage(message: ServerMessage) {
         when (message) {
-            // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
                 println("Server Error: ${message.message}")
@@ -151,53 +150,42 @@ class MultiplayerGameViewModel(
 
             is GameStateUpdateResponse -> {
                 var newPlayersArray: Array<Player> = stateValue.players
-                var updatedMainPlayerFromResponse: Player? = null
+                var newMainPlayer: Player? = null
 
                 message.players.forEach { playerDto ->
-                    val existingPlayerIndex: Int =
-                        newPlayersArray.indexOfFirst { it.car.id == playerDto.id }
+                    val existPlayerIndex: Int = newPlayersArray.indexOfFirst { it.car.id == playerDto.id }
 
-                    if (existingPlayerIndex != -1) {
-                        val existingPlayer = newPlayersArray[existingPlayerIndex]
-                        val newCar = existingPlayer.car.copy(
-                            position = Offset(playerDto.posX, playerDto.posY),
+                    if (existPlayerIndex != -1) {
+                        val existPlayer: Player = newPlayersArray[existPlayerIndex]
+                        val updateCar: Car = existPlayer.car.copy(
+                            position = Offset(
+                                x = playerDto.posX,
+                                y = playerDto.posY
+                            ),
                             visualDirection = playerDto.visualDirection,
                             speed = playerDto.speed
                         )
-                        val updatedPlayer = existingPlayer.copy(
-                            car = newCar,
+                        val updatePlayer: Player = existPlayer.copy(
+                            car = updateCar,
                             isFinished = playerDto.isFinished
                         )
 
-                        newPlayersArray = newPlayersArray.toMutableList().apply {
-                            set(existingPlayerIndex, updatedPlayer)
-                        }.toTypedArray()
-
-                        // Логируем, как мы обновляем другого игрока с сервера
-                        if (existingPlayer.name != stateValue.mainPlayer.name) {
-                            Log.i(
-                                tag,
-                                "Client: Updated other player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}"
-                            )
+                        newPlayersArray = newPlayersArray.apply {
+                            set(existPlayerIndex, updatePlayer)
                         }
 
-                        if (existingPlayer.name == stateValue.mainPlayer.name) {
-                            updatedMainPlayerFromResponse = updatedPlayer
-                            // Логируем, если наш игрок тоже обновляется с сервера (для Server Reconciliation)
-                            Log.d(
-                                tag,
-                                "Client: Updated main player ${playerDto.id} from server. Pos: (${playerDto.posX}, ${playerDto.posY}), Speed: ${playerDto.speed}, VisualDir: ${playerDto.visualDirection}"
-                            )
+                        if (existPlayer.car.id == stateValue.mainPlayer.car.id) {
+                            newMainPlayer = updatePlayer
                         }
                     } else {
-                        Log.w(tag, "Client: Received DTO for unknown player ID: ${playerDto.id}")
+                        println("Unknown player ID: ${playerDto.id}")
                     }
                 }
 
                 modifyState {
                     copy(
                         players = newPlayersArray,
-                        mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
+                        mainPlayer = newMainPlayer ?: mainPlayer
                     )
                 }
 

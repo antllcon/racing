@@ -1,7 +1,6 @@
 package com.mobility.race.ui
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,11 +31,10 @@ import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
-import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawImageBitmap
+import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 import kotlin.math.PI
-import kotlin.math.min
 
 @Composable
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {

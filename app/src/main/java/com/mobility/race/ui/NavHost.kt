@@ -51,16 +51,36 @@ data class MultiplayerGame(
     val nickname: String,
     val playerNames: Array<String>,
     val playerSpriteId: String
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MultiplayerGame
+
+        if (nickname != other.nickname) return false
+        if (!playerNames.contentEquals(other.playerNames)) return false
+        if (playerSpriteId != other.playerSpriteId) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = nickname.hashCode()
+        result = 31 * result + playerNames.contentHashCode()
+        result = 31 * result + playerSpriteId.hashCode()
+        return result
+    }
+}
 
 @Composable
 fun AppNavHost(
     navController: NavHostController = rememberNavController()
 ) {
-    val httpClient = remember {
-        HttpClient(CIO) {
-            install(WebSockets)
-            install(ContentNegotiation) {
+    val httpClient: HttpClient = remember {
+        HttpClient(engineFactory = CIO) {
+            install(plugin = WebSockets)
+            install(plugin = ContentNegotiation) {
                 json(AppJson)
             }
         }
@@ -68,7 +88,7 @@ fun AppNavHost(
 
     val gateway: IGateway = Gateway(
         client = httpClient,
-        serverConfig = Server.default()
+        serverConfig = Server.local()
     )
 
     NavHost(

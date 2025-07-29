@@ -68,13 +68,12 @@ data class StarterPack(
 
 @Serializable
 data class PlayerStateDto(
-    val id: String, // Или playerName, если ID уникален по имени
+    val id: String,
     val posX: Float,
     val posY: Float,
     val visualDirection: Float,
     val speed: Float,
     val isFinished: Boolean,
-//    val currentSprite: Int // Добавлено
 )
 
 @Serializable

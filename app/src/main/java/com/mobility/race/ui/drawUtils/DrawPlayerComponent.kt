@@ -9,8 +9,6 @@ import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameState
 import kotlin.math.PI
 
-// TODO: можно сделать абстрактный класс GameState и получать state players (1 или много)
-// TODO: но в целом пофиг, до защиты неделя
 fun DrawScope.drawCars(state: MultiplayerGameState, bitmaps: Map<String, ImageBitmap>) {
     state.players.forEach { player ->
             rotate(

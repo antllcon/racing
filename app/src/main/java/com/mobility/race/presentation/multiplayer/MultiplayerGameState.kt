@@ -9,15 +9,15 @@ import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 
 data class MultiplayerGameState(
+    val isGameRunning: Boolean,
     val countdown: Float,
-    val mainPlayer: Player,
-    val players: Array<Player>,
+    val directionAngle: Float,
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val controllingStick: ControllingStick,
     val checkpointManager: CheckpointManager,
-    val isGameRunning: Boolean,
-    val directionAngle: Float?
+    val mainPlayer: Player,
+    val players: Array<Player>
 ) {
     companion object {
         fun default(
@@ -86,7 +86,7 @@ data class MultiplayerGameState(
                 controllingStick = ControllingStick(),
                 checkpointManager = CheckpointManager(newRouteList),
                 isGameRunning = true,
-                directionAngle = null
+                directionAngle = 0f
             )
         }
 
@@ -102,8 +102,6 @@ data class MultiplayerGameState(
         }
     }
 
-    // TODO: убрать комментарий ниже
-    // IDEA generated this shit (lmao) for equaling and hashing arrays usnig Player type
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -126,7 +124,7 @@ data class MultiplayerGameState(
     override fun hashCode(): Int {
         var result = countdown.hashCode()
         result = 31 * result + isGameRunning.hashCode()
-        result = 31 * result + (directionAngle?.hashCode() ?: 0)
+        result = 31 * result + (directionAngle.hashCode())
         result = 31 * result + mainPlayer.hashCode()
         result = 31 * result + players.contentHashCode()
         result = 31 * result + gameMap.hashCode()
