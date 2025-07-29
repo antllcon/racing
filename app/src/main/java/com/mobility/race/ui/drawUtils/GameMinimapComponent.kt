@@ -45,7 +45,7 @@ fun DrawScope.drawMinimap(
             val terrain = state.gameMap.getTerrainType(x, y)
             val color = when (terrain.uppercase()) {
                 "GRASS" -> Color(0xFF4CAF50)
-                "ABYSS" -> Color(0xFF2196F3)
+                "WATER" -> Color(0xFF2196F3)
                 "ROAD" -> Color(0xFF795548)
                 else -> Color.Gray
             }

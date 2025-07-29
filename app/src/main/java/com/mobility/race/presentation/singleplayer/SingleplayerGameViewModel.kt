@@ -16,6 +16,9 @@ class SingleplayerGameViewModel(private val context: Context) :
     private var carId: String = ((1..6).random().toString())
     private lateinit var soundManager: SoundManager
     private var previousSpeed: Float = 0f
+    private var currentSurface: String = "ROAD"
+    private var lastSurfaceUpdateTime = 0L
+    private val surfaceUpdateInterval = 50L
 
     init {
         startNewGame()
@@ -62,6 +65,15 @@ class SingleplayerGameViewModel(private val context: Context) :
     private fun movePlayer(elapsedTime: Float) {
         val speedModifier = stateValue.gameMap.getSpeedModifier(stateValue.car.position)
 
+        val carPos = stateValue.car.position
+        val surfaceType = stateValue.gameMap.getTerrainType(carPos.x.toInt(), carPos.y.toInt())
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastSurfaceUpdateTime > surfaceUpdateInterval) {
+            updateSurfaceSound(surfaceType, stateValue.car.speed)
+            lastSurfaceUpdateTime = currentTime
+        }
+
         modifyState {
             copy(
                 car = car.update(elapsedTime, stateValue.directionAngle, speedModifier),
@@ -75,6 +87,18 @@ class SingleplayerGameViewModel(private val context: Context) :
         }
 
         previousSpeed = currentSpeed
+    }
+    private fun updateSurfaceSound(surfaceType: String, carSpeed: Float) {
+        if (surfaceType != currentSurface) {
+            currentSurface = surfaceType
+            soundManager.playSurfaceSound(surfaceType, calculateSurfaceVolume(carSpeed))
+        } else {
+            soundManager.updateSurfaceSoundVolume(calculateSurfaceVolume(carSpeed))
+        }
+    }
+
+    private fun calculateSurfaceVolume(carSpeed: Float): Float {
+        return 0.1f + (carSpeed / Car.MAX_SPEED) * 0.9f
     }
 
     private fun checkCheckpoints() {
@@ -125,6 +149,7 @@ class SingleplayerGameViewModel(private val context: Context) :
             )
         }
         gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
         soundManager.pauseBackgroundMusic()
     }
 
@@ -135,6 +160,7 @@ class SingleplayerGameViewModel(private val context: Context) :
     override fun onCleared() {
         super.onCleared()
         gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
         soundManager.release()
     }
 }
