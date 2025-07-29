@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LockScreenOrientation
+import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -40,6 +42,7 @@ import kotlin.math.min
 
 @Composable
 fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
+    LockScreenOrientation(Orientation.LANDSCAPE)
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
 
