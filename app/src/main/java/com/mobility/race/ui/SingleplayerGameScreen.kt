@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,8 +32,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -41,34 +40,35 @@ import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 import kotlin.math.PI
-import kotlin.math.min
 
 @Composable
 fun SingleplayerGameScreen(
-    viewModel: SingleplayerGameViewModel = viewModel(factory = SingleplayerGameViewModelFactory(
-        LocalContext.current
+    navigateToFinished: (Long, Int, Int) -> Unit,
+    onExit: () -> Unit,
+    onRestart: () -> Unit,
+) {
+    val context = LocalContext.current
+    val viewModel: SingleplayerGameViewModel = viewModel(
+        factory = SingleplayerGameViewModelFactory(context)
     )
-    ),
-    navigateToFinished: (finishTime: Long, lapsCompleted: Int, totalLaps: Int) -> Unit,
-    onExit: () -> Unit = {},
-    onRestart: () -> Unit = {}
-){
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val state = viewModel.state.value
-    val bitmaps = bitmapStorage()
+    val bitmaps = bitmapStorage(context)
 
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
     var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
 
-    LaunchedEffect(key1 = onRestart) {
-        viewModel.restartGame()
+    LaunchedEffect(state.isRaceFinished) {
+        if (state.isRaceFinished) {
+            navigateToFinished(state.raceTime, state.lapsCompleted, state.totalLaps)
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-    ) {
+            .background(Color.LightGray)
+    )  {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -128,63 +128,83 @@ fun SingleplayerGameScreen(
                     )
                 }
         ) {
-            if (state.isGameRunning) {
-                drawBackgroundTexture(
-                    state.gameMap,
-                    state.gameCamera,
-                    bitmaps["terrain_500"]!!
-                )
-
-                drawGameMap(
-                    state.gameMap,
-                    state.gameCamera,
-                    size,
-                    bitmaps
-                )
-
-            drawMinimap(state)
-
-                drawNextCheckpoint(
-                    state.checkpointManager.getNextCheckpoint(state.car.id),
-                    state.gameCamera,
-                    state.gameCamera.getScaledCellSize(state.gameMap.size)
-                )
-
-                rotate(
-                    degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
-                    pivot = state.gameCamera.worldToScreen(state.car.position)
-                ) {
-                    drawImageBitmap(
-                        bitmaps["car" + state.car.id + "_" + state.car.currentSprite]!!,
-                        Offset(state.gameCamera.worldToScreen(state.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2,
-                            state.gameCamera.worldToScreen(state.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) / 2),
-                        Size(Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size), Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size))
-                    )
-                }
-            }
-        }
-
-        if (state.isGameRunning) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawControllingStick(
-                    state.controllingStick,
-                    currentStickInputAngle,
-                    currentStickInputDistanceFactor
-                )
-            }
-
-            Text(
-                text = "Lap: ${state.lapsCompleted + 1} / ${state.totalLaps}",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp),
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            drawBackgroundTexture(
+                state.gameMap,
+                state.gameCamera,
+                bitmaps["terrain_500"]!!
             )
+
+            drawGameMap(
+                state.gameMap,
+                state.gameCamera,
+                size,
+                bitmaps
+            )
+
+            drawMinimap(state.gameMap, state.car, state.checkpointManager)
+
+            drawControllingStick(
+                state.controllingStick,
+                currentStickInputAngle,
+                currentStickInputDistanceFactor
+            )
+
+            drawNextCheckpoint(
+                state.checkpointManager.getNextCheckpoint(state.car.id),
+                state.gameCamera,
+                state.gameCamera.getScaledCellSize(state.gameMap.size)
+            )
+
+            rotate(
+                degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,
+                pivot = state.gameCamera.worldToScreen(state.car.position)
+            ) {
+                drawImageBitmap(
+                    bitmaps["car" + state.car.id + "_" + state.car.currentSprite]!!,
+                    Offset(
+                        state.gameCamera.worldToScreen(state.car.position).x - Car.LENGTH * state.gameCamera.getScaledCellSize(
+                            state.gameMap.size
+                        ) / 2,
+                        state.gameCamera.worldToScreen(state.car.position).y - Car.WIDTH * state.gameCamera.getScaledCellSize(
+                            state.gameMap.size
+                        ) / 2
+                    ),
+                    Size(
+                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size),
+                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size)
+                    )
+                )
+            }
         }
 
-        if (!state.isGameRunning && state.finishTime > 0) {
-            LaunchedEffect(state.finishTime) {
-                navigateToFinished(state.finishTime, state.lapsCompleted, state.totalLaps)
+        Text(
+            text = "Lap: ${state.lapsCompleted + 1} / ${state.totalLaps}",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(16.dp),
+            style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        )
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Button(
+                onClick = { onExit() },
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text("Exit")
+            }
+
+            Button(
+                onClick = {
+                    viewModel.restartGame()
+                    onRestart()
+                },
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text("Restart")
             }
         }
     }

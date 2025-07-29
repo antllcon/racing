@@ -32,7 +32,7 @@ fun MultiplayerGameScreen(
     viewModel: MultiplayerGameViewModel
 ) {
     val state = viewModel.state.value
-    val bitmaps = bitmapStorage()
+    val bitmaps = bitmapStorage(context)
 
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }

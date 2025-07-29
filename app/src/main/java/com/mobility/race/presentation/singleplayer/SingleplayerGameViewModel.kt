@@ -27,9 +27,13 @@ class SingleplayerGameViewModel(private val context: Context) :
     fun startNewGame() {
         carId = ((1..6).random().toString())
 
-        soundManager = SoundManager(context)
-        soundManager.playBackgroundMusic()
-
+        try {
+            soundManager = SoundManager(context)
+            soundManager.playBackgroundMusic()
+        } catch (e: Exception) {
+            modifyState { copy(isGameRunning = false) }
+            return
+        }
         gameCycle?.cancel()
 
         modifyState {
@@ -145,7 +149,9 @@ class SingleplayerGameViewModel(private val context: Context) :
         modifyState {
             copy(
                 isGameRunning = false,
-                finishTime = System.currentTimeMillis() - startTime
+                isRaceFinished = true,
+                finishTime = System.currentTimeMillis(),
+                raceTime = System.currentTimeMillis() - startTime
             )
         }
         gameCycle?.cancel()
