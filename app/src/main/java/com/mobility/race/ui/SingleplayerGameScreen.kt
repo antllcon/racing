@@ -44,8 +44,6 @@ import kotlin.math.PI
 import kotlin.math.min
 
 @Composable
-fun SingleplayerGameScreen(viewModel: SingleplayerGameViewModel = viewModel()) {
-    LockScreenOrientation(Orientation.LANDSCAPE)
 fun SingleplayerGameScreen(
     viewModel: SingleplayerGameViewModel = viewModel(factory = SingleplayerGameViewModelFactory(
         LocalContext.current
@@ -55,6 +53,7 @@ fun SingleplayerGameScreen(
     onExit: () -> Unit = {},
     onRestart: () -> Unit = {}
 ){
+    LockScreenOrientation(Orientation.LANDSCAPE)
     val state = viewModel.state.value
     val bitmaps = bitmapStorage()
 
@@ -143,7 +142,7 @@ fun SingleplayerGameScreen(
                     bitmaps
                 )
 
-            drawMinimap(state.gameMap, state.car, state.checkpointManager)
+            drawMinimap(state)
 
                 drawNextCheckpoint(
                     state.checkpointManager.getNextCheckpoint(state.car.id),

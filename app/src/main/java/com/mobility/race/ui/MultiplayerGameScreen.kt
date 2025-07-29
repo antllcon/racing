@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.LockScreenOrientation
 import com.mobility.race.ui.drawUtils.Orientation
@@ -136,7 +137,7 @@ fun MultiplayerGameScreen(
                 currentStickInputDistanceFactor
             )
 
-            drawMinimap(state.gameMap, state.mainPlayer.car, state.checkpointManager)
+            drawMinimap(GameMap)
 
             drawNextCheckpoint(
                 state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
