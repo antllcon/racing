@@ -4,7 +4,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,8 +43,7 @@ import kotlin.math.PI
 @Composable
 fun SingleplayerGameScreen(
     navigateToFinished: (Long, Int, Int) -> Unit,
-    onExit: () -> Unit,
-    onRestart: () -> Unit,
+    onBack: () -> Unit
 ) {
     LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
@@ -69,7 +67,7 @@ fun SingleplayerGameScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-    )  {
+    ) {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()

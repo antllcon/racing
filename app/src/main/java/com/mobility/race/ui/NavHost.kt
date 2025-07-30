@@ -114,12 +114,10 @@ fun AppNavHost(
                         popUpTo(SingleplayerGame) { inclusive = true }
                     }
                 },
-                onExit = {
+                onBack = {
                     navController.navigate(route = Menu) {
                         popUpTo(Menu) { inclusive = true }
                     }
-                },
-                onRestart = {
                 }
             )
         }

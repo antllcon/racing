@@ -9,7 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -253,14 +253,14 @@ fun AnimatedButton(
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressed by interactionSource.collectIsPressedAsState()
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val buttonState = isHovered || isFocused
+    val buttonState = isPressed || isFocused
 
     val scale by animateFloatAsState(
         targetValue = when {
             !enabled -> 1f
-            buttonState -> 1.05f
+            buttonState -> 0.98f
             else -> 1f
         },
         animationSpec = spring(dampingRatio = 0.5f, stiffness = 500f)
@@ -269,7 +269,8 @@ fun AnimatedButton(
     val color by animateColorAsState(
         targetValue = when {
             !enabled -> Color(0x66FF4500)
-            buttonState -> Color(0xFFFF4500)
+            isPressed -> Color(0xFFFF4500)
+            isFocused -> Color(0xFFFF4500)
             else -> Color(0xCCFF0000)
         },
         animationSpec = tween(durationMillis = 200)
@@ -306,7 +307,6 @@ fun AnimatedButton(
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 8.dp,
             pressedElevation = 4.dp,
-            hoveredElevation = 12.dp,
             disabledElevation = 2.dp
         ),
         interactionSource = interactionSource

@@ -6,8 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,7 +41,7 @@ fun RaceFinishedScreen(
     onExit: () -> Unit,
     soundManager: SoundManager
 ) {
-    LockScreenOrientation(Orientation.LANDSCAPE)
+    LockScreenOrientation(Orientation.PORTRAIT)
     val onExitWithMusic: () -> Unit = {
         soundManager.playMenuMusic()
         onExit()
@@ -58,118 +56,126 @@ fun RaceFinishedScreen(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .height(300.dp)
                 .background(
-                    brush = Brush.horizontalGradient(
+                    brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color(0x99000000),
                             Color(0xCC000000),
-                            Color(0x99000000)
+                            Color(0xE6000000),
+                            Color(0xCC000000)
                         )
                     ),
                     shape = RoundedCornerShape(24.dp)
                 )
                 .padding(24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Text(
+                text = "RACE FINISHED!",
+                color = Color(0xFFFFA500),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily(Font(R.font.jersey25)),
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color(0xAAFF0000),
+                        offset = Offset(2f, 2f),
+                        blurRadius = 8f
+                    )
+                ),
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
+
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0x66000000),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "THE RACE IS OVER!",
+                    text = "YOUR RESULTS",
                     color = Color(0xFFFFA500),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
                     fontFamily = FontFamily(Font(R.font.jersey25)),
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = Color(0xAAFF0000),
-                            offset = Offset(2f, 2f),
-                            blurRadius = 4f
-                        )
-                    )
+                    fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                ResultItem(
+                    label = "LAPS COMPLETED",
+                    value = "$lapsCompleted/$totalLaps"
+                )
 
-                Column(
-                    modifier = Modifier
-                        .background(
-                            color = Color(0x66000000),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "RESULTS",
-                        color = Color(0xFFFFA500),
-                        fontSize = 18.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Text(
-                        text = "LAPS: $lapsCompleted/$totalLaps",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25))
-                    )
-
-                    Text(
-                        text = "TIME: ${formatTime(finishTime)}",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
+                ResultItem(
+                    label = "FINISH TIME",
+                    value = formatTime(finishTime)
+                )
             }
 
             Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 AnimatedButton(
                     onClick = onRestart,
                     modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(60.dp),
+                        .fillMaxWidth()
+                        .height(56.dp),
                     soundManager = soundManager
                 ) {
                     Text(
-                        text = "RETRY",
-                        fontSize = 22.sp,
+                        text = "RESTART RACE",
+                        fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 AnimatedButton(
                     onClick = onExitWithMusic,
                     modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(60.dp),
+                        .fillMaxWidth()
+                        .height(56.dp),
                     soundManager = soundManager
                 ) {
                     Text(
-                        text = "EXIT",
-                        fontSize = 22.sp,
+                        text = "RETURN TO MENU",
+                        fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ResultItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            color = Color(0xFFFFA500),
+            fontSize = 14.sp,
+            fontFamily = FontFamily(Font(R.font.jersey25)),
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = 18.sp,
+            fontFamily = FontFamily(Font(R.font.jersey25)),
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

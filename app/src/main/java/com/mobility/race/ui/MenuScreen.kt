@@ -1,9 +1,5 @@
 package com.mobility.race.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -15,24 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -85,18 +71,10 @@ fun MenuScreen(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                var isIconHovered by remember { mutableStateOf(false) }
-                val iconScale by animateFloatAsState(
-                    targetValue = if (isIconHovered) 1.05f else 1f,
-                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f)
-                )
-
                 Image(
                     painter = painterResource(R.drawable.app_icon),
                     contentDescription = "App Icon",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .scale(iconScale)
+                    modifier = Modifier.size(150.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -128,7 +106,7 @@ fun MenuScreen(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                AnimatedButton(
+                SimpleButton(
                     onClick = navigateToSingleplayer,
                     soundManager = soundManager,
                     modifier = Modifier
@@ -150,7 +128,7 @@ fun MenuScreen(
                     )
                 }
 
-                AnimatedButton(
+                SimpleButton(
                     onClick = navigateToMultiplayerMenuScreen,
                     soundManager = soundManager,
                     modifier = Modifier
@@ -179,61 +157,30 @@ fun MenuScreen(
 }
 
 @Composable
-fun AnimatedButton(
+fun SimpleButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     soundManager: SoundManager? = null,
     content: @Composable () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val buttonState = isHovered || isFocused
-
-    val scale by animateFloatAsState(
-        targetValue = if (buttonState) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = 0.5f, stiffness = 500f)
-    )
-
-    val color by animateColorAsState(
-        targetValue = when {
-            buttonState -> Color(0xFFFF4500)
-            else -> Color(0xCCFF0000)
-        },
-        animationSpec = tween(durationMillis = 200)
-    )
-
-    val borderColor by animateColorAsState(
-        targetValue = when {
-            buttonState -> Color(0xAAFFFF00)
-            else -> Color(0xAAFFA500)
-        },
-        animationSpec = tween(durationMillis = 200)
-    )
-
     Button(
         onClick = {
             soundManager?.playClickSound()
             onClick()
         },
-        modifier = modifier
-            .scale(scale)
-            .height(70.dp)
-            .clip(MaterialTheme.shapes.medium),
+        modifier = modifier.height(70.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = color,
+            containerColor = Color(0xCCFF0000),
             contentColor = Color.White
         ),
         border = BorderStroke(
             width = 2.dp,
-            color = borderColor
+            color = Color(0xAAFFA500)
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 8.dp,
-            pressedElevation = 4.dp,
-            hoveredElevation = 12.dp
-        ),
-        interactionSource = interactionSource
+            pressedElevation = 4.dp
+        )
     ) {
         Box(
             contentAlignment = Alignment.Center,
