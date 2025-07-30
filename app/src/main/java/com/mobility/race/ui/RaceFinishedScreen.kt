@@ -31,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 
 @Composable
 fun RaceFinishedScreen(
@@ -43,7 +41,6 @@ fun RaceFinishedScreen(
     onExit: () -> Unit,
     soundManager: SoundManager
 ) {
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val onExitWithMusic: () -> Unit = {
         soundManager.playMenuMusic()
         onExit()
@@ -82,7 +79,7 @@ fun RaceFinishedScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "THE RACE IS OVER!",
+                    text = "RACE FINISHED!",
                     color = Color(0xFFFFA500),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
@@ -108,7 +105,7 @@ fun RaceFinishedScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "RESULTS",
+                        text = "YOUR RESULTS",
                         color = Color(0xFFFFA500),
                         fontSize = 18.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
@@ -116,14 +113,14 @@ fun RaceFinishedScreen(
                     )
 
                     Text(
-                        text = "LAPS: $lapsCompleted/$totalLaps",
+                        text = "LAPS COMPLETED: $lapsCompleted/$totalLaps",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25))
                     )
 
                     Text(
-                        text = "TIME: ${formatTime(finishTime)}",
+                        text = "FINISH TIME: ${formatTime(finishTime)}",
                         color = Color.White,
                         fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
@@ -145,7 +142,7 @@ fun RaceFinishedScreen(
                     soundManager = soundManager
                 ) {
                     Text(
-                        text = "RETRY",
+                        text = "RESTART RACE",
                         fontSize = 22.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold
@@ -162,7 +159,7 @@ fun RaceFinishedScreen(
                     soundManager = soundManager
                 ) {
                     Text(
-                        text = "EXIT",
+                        text = "RETURN TO MENU",
                         fontSize = 22.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold

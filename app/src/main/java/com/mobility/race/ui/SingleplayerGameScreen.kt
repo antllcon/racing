@@ -4,7 +4,6 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,8 +29,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -44,10 +41,8 @@ import kotlin.math.PI
 @Composable
 fun SingleplayerGameScreen(
     navigateToFinished: (Long, Int, Int) -> Unit,
-    onExit: () -> Unit,
-    onRestart: () -> Unit,
+    onBack: () -> Unit
 ) {
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
     val viewModel: SingleplayerGameViewModel = viewModel(
         factory = SingleplayerGameViewModelFactory(context)
@@ -69,7 +64,7 @@ fun SingleplayerGameScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
-    )  {
+    ) {
         Canvas(
             modifier = Modifier
                 .fillMaxSize()

@@ -34,16 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.RoomViewModel
 import com.mobility.race.R
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
-
 @Composable
 fun RoomScreen(
     viewModel: RoomViewModel,
     soundManager: SoundManager? = null
 ) {
     val state = viewModel.state.value
-    LockScreenOrientation(Orientation.PORTRAIT)
     Box(
         modifier = Modifier
             .fillMaxSize()
