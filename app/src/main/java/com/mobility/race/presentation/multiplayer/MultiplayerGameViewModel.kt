@@ -16,6 +16,7 @@ import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import com.mobility.race.ui.Menu
+import com.mobility.race.ui.MultiplayerGame
 import com.mobility.race.ui.MultiplayerRaceFinished
 import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
@@ -217,7 +218,13 @@ class MultiplayerGameViewModel(
                 viewModelScope.launch {
                     delay(1000)
                     navController.navigate(route = MultiplayerRaceFinished) {
-                        popUpTo(Menu) { inclusive = true }
+                        popUpTo(
+                            MultiplayerGame(
+                                nickname = stateValue.mainPlayer.car.playerName,
+                                playerNames = stateValue.players.map { it.car.playerName }.toTypedArray(),
+                                playerSpriteId = stateValue.mainPlayer.car.id
+                            )
+                        ) { inclusive = true }
                     }
                 }
             }
