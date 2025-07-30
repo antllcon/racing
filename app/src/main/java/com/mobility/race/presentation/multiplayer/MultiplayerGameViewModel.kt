@@ -4,24 +4,24 @@ import SoundManager
 import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
+import com.mobility.race.data.GameStopResponse
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.PlayerInputRequest
+import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
+import com.mobility.race.ui.MultiplayerRaceFinished
+import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import androidx.navigation.NavController
-import com.mobility.race.data.GameStopResponse
-import com.mobility.race.data.PlayerResultStorage
-import com.mobility.race.domain.Car
-import com.mobility.race.ui.MultiplayerRaceFinished
-import com.mobility.race.ui.PlayerResult
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -38,7 +38,8 @@ class MultiplayerGameViewModel(
         starterPack = gateway.openGatewayStorage()
     )
 ) {
-    private var currentActivePlayerId = stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
+    private var currentActivePlayerId =
+        stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
@@ -51,6 +52,7 @@ class MultiplayerGameViewModel(
 
         soundManager = SoundManager(context)
         soundManager.playBackgroundMusic()
+
         startGame()
     }
 
@@ -77,9 +79,9 @@ class MultiplayerGameViewModel(
                 if (stateValue.players.isNotEmpty()) {
                     moveCamera()
                 }
-                checkCheckpoints()
 
                 if (!stateValue.mainPlayer.isFinished) {
+                    checkCheckpoints()
                     sendPlayerInput()
                 }
 
@@ -100,7 +102,8 @@ class MultiplayerGameViewModel(
 
             if (!player.isFinished) {
                 if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
-                    newCar = player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
+                    newCar =
+                        player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
                 } else {
                     val updatedCarForMainPlayer =
                         player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
@@ -218,9 +221,8 @@ class MultiplayerGameViewModel(
                     PlayerResultStorage.results = PlayerResultStorage.results.plus(thisPlayerResult)
                 }
 
-                print("EHAUISFJADF")
                 gameCycle?.cancel()
-                print("Hello world!")
+
                 navController.navigate(route = MultiplayerRaceFinished)
             }
 
