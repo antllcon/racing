@@ -1,7 +1,6 @@
 package com.mobility.race.ui
 
 import SoundManager
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,12 +29,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
-import com.mobility.race.ui.ModernBackButton
 
 @Composable
 fun MultiplayerMenuScreen(
@@ -43,7 +40,7 @@ fun MultiplayerMenuScreen(
     navigateToCreateRoom: (String, String) -> Unit,
     soundManager: SoundManager? = null,
     onBack: () -> Unit
-)  {
+) {
     var playerName by remember { mutableStateOf("") }
     var newRoomName by remember { mutableStateOf("") }
 
@@ -56,26 +53,27 @@ fun MultiplayerMenuScreen(
                 alpha = 0.9f
             )
     ) {
-    (
-    ModernBackButton(
-        onClick = { onBack() },
-        modifier = Modifier
-            .align(Alignment.TopStart)
-            .padding(horizontal = 10.dp, vertical = 16.dp))
-    )
+        ModernBackButton(
+            onClick = { onBack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 10.dp, vertical = 16.dp)
+        )
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 32.dp)
         ) {
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 60.dp, bottom = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(60.dp))
-
                 Text(
                     text = "MULTIPLAYER",
                     fontSize = 48.sp,
@@ -83,7 +81,6 @@ fun MultiplayerMenuScreen(
                     fontFamily = FontFamily(Font(R.font.jersey25)),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp),
                     style = TextStyle(
                         shadow = Shadow(
                             color = Color(0xAAFF0000),
@@ -99,7 +96,7 @@ fun MultiplayerMenuScreen(
                     color = Color.White,
                     fontFamily = FontFamily(Font(R.font.jersey25)),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 48.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                     style = TextStyle(
                         shadow = Shadow(
                             color = Color.Black,
@@ -112,7 +109,9 @@ fun MultiplayerMenuScreen(
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 AnimatedOutlinedTextField(
                     value = playerName,
@@ -123,7 +122,7 @@ fun MultiplayerMenuScreen(
                         .padding(vertical = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 AnimatedButton(
                     onClick = {
@@ -135,7 +134,7 @@ fun MultiplayerMenuScreen(
                     enabled = playerName.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(56.dp)
                 ) {
                     Text(
                         text = "JOIN EXISTING RACE",
@@ -152,11 +151,10 @@ fun MultiplayerMenuScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
                 ) {
                     Divider(
                         color = Color(0xAAFFFFFF),
@@ -186,7 +184,7 @@ fun MultiplayerMenuScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 AnimatedOutlinedTextField(
                     value = newRoomName,
@@ -197,7 +195,7 @@ fun MultiplayerMenuScreen(
                         .padding(vertical = 8.dp)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 AnimatedButton(
                     onClick = {
@@ -208,7 +206,7 @@ fun MultiplayerMenuScreen(
                     enabled = newRoomName.isNotEmpty() && playerName.isNotEmpty(),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(60.dp)
+                        .height(56.dp)
                 ) {
                     Text(
                         text = "CREATE NEW RACE",
@@ -226,22 +224,7 @@ fun MultiplayerMenuScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(0.5f))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
-}
-
-
-@Composable
-fun Divider(
-    color: Color,
-    thickness: Dp,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(thickness)
-            .background(color = color)
-    )
 }
