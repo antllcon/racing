@@ -3,8 +3,14 @@ package com.mobility.race.ui
 import SingleplayerGameScreen
 import SoundManager
 import android.content.Context
+import android.content.pm.ActivityInfo
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -70,6 +76,13 @@ fun AppNavHost(
     context: Context = LocalContext.current,
     soundManager: SoundManager = remember { SoundManager(context) }
 ) {
+    val activity = LocalActivity.current
+    var orientation by remember { mutableStateOf(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) }
+
+    LaunchedEffect(orientation) {
+        activity?.requestedOrientation = orientation
+    }
+
     val httpClient = remember {
         HttpClient(CIO) {
             install(WebSockets)
@@ -89,6 +102,7 @@ fun AppNavHost(
         startDestination = Menu
     ) {
         composable<Menu> {
+            orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
                 navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) },
@@ -97,6 +111,7 @@ fun AppNavHost(
         }
 
         composable<MultiplayerMenuScreen> {
+            orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             MultiplayerMenuScreen(
                 navigateToJoinRoom = { playerName ->
                     navController.navigate(route = EnterRoom(playerName))
@@ -108,6 +123,7 @@ fun AppNavHost(
         }
 
         composable<SingleplayerGame> {
+            orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             SingleplayerGameScreen(
                 navigateToFinished = { time, laps, total ->
                     navController.navigate(RaceFinished(time, laps, total)) {
@@ -123,6 +139,7 @@ fun AppNavHost(
         }
 
         composable<EnterRoom> { entry ->
+            orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             val args = entry.toRoute<EnterRoom>()
 
             EnterRoomScreen(playerName = args.name, navigateToRoom = { playerName, roomName ->
@@ -131,6 +148,7 @@ fun AppNavHost(
         }
 
         composable<Room> { entry ->
+            orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             val args = entry.toRoute<Room>()
 
             val factory = remember(gateway) {
@@ -152,6 +170,7 @@ fun AppNavHost(
                 typeOf<Map<String, String>>() to MapStringType
             )
         ) { entry ->
+            orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             val args = entry.toRoute<MultiplayerGame>()
 
             val factory = remember(gateway) {
@@ -174,6 +193,7 @@ fun AppNavHost(
         }
 
         composable<RaceFinished> { entry ->
+            orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             val args = entry.toRoute<RaceFinished>()
             val context = LocalContext.current
             val soundManager = remember { SoundManager(context) }

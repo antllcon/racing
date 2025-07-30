@@ -32,8 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
 
@@ -43,7 +41,6 @@ fun MultiplayerMenuScreen(
     navigateToCreateRoom: (String, String) -> Unit,
     soundManager: SoundManager? = null,
 ) {
-    LockScreenOrientation(Orientation.PORTRAIT)
     var playerName by remember { mutableStateOf("") }
     var newRoomName by remember { mutableStateOf("") }
 

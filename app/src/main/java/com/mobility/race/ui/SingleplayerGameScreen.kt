@@ -29,8 +29,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -45,7 +43,6 @@ fun SingleplayerGameScreen(
     navigateToFinished: (Long, Int, Int) -> Unit,
     onBack: () -> Unit
 ) {
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
     val viewModel: SingleplayerGameViewModel = viewModel(
         factory = SingleplayerGameViewModelFactory(context)

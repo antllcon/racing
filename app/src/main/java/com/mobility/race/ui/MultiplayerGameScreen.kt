@@ -22,8 +22,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -41,7 +39,6 @@ fun MultiplayerGameScreen(
     LaunchedEffect(Unit) {
         soundManager.pauseBackgroundMusic()
     }
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
     val state = viewModel.state.value
     val bitmaps = bitmapStorage(context)

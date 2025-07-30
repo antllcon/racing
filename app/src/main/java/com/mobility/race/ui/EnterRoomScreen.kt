@@ -53,15 +53,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.R
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
+
 
 @Composable
 fun EnterRoomScreen(
     playerName: String,
     navigateToRoom: (String, String) -> Unit
 ) {
-    LockScreenOrientation(Orientation.PORTRAIT)
     var roomName by remember { mutableStateOf("") }
 
     Box(
