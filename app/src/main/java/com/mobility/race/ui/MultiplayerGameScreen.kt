@@ -39,9 +39,9 @@ import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 @Composable
 fun MultiplayerGameScreen(
     viewModel: MultiplayerGameViewModel,
-    soundManager: SoundManager
+    soundManager: SoundManager,
+    onBack: () -> Unit = {}
 ) {
-
     LaunchedEffect(Unit) {
         soundManager.pauseBackgroundMusic()
     }
@@ -165,5 +165,13 @@ fun MultiplayerGameScreen(
             style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
         )
 
+        ModernBackButton(
+            onClick = {
+                onBack()
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
+        )
     }
 }

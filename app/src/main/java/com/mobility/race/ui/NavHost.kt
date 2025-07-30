@@ -203,7 +203,12 @@ fun AppNavHost(
 
             MultiplayerGameScreen(
                 viewModel = viewModel,
-                soundManager = soundManager
+                soundManager = soundManager,
+                onBack = {
+                    navController.navigate(route = Menu) {
+                        popUpTo(Menu) { inclusive = true }
+                    }
+                }
             )
         }
 
