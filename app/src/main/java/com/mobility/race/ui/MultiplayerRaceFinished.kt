@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
+import kotlinx.serialization.Serializable
 
 @Composable
 fun MultiplayerRaceFinishedScreen(

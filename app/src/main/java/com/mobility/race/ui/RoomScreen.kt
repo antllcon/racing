@@ -137,7 +137,7 @@ fun RoomScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            if (state.isCreatingRoom && state.playerNames.size > 1) {
+            if (state.isCreatingRoom) {
                 AnimatedButton(
                     onClick = {
                         soundManager?.playClickSound()

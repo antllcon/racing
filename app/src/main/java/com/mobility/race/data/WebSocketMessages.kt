@@ -93,8 +93,8 @@ data class PlayerInputRequest(val visualDirection: Float, val elapsedTime: Float
 }
 
 @Serializable
-@SerialName("PLAYER_FINISH")
-data class PlayerFinishedRequest(val playerName: String): ClientMessage {
+@SerialName("PLAYER_FINISHED")
+data class PlayerFinishedRequest(val name: String): ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_FINISHED
 }
 
@@ -234,6 +234,6 @@ data class GameStateUpdateResponse(val players: List<PlayerStateDto>) : ServerMe
 
 @Serializable
 @SerialName("GAME_STOP")
-data class GameStopResponse(val result: MutableMap<String, Long>) : ServerMessage {
+data class GameStopResponse(val result: MutableMap<String, Float>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.GAME_STOP
 }
