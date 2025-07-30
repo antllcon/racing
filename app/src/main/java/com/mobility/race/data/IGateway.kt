@@ -18,4 +18,5 @@ interface IGateway {
     suspend fun startGame(name: String)
     suspend fun leaveRoom()
     suspend fun playerAction(name: PlayerInputRequest)
+    suspend fun playerFinished(name: String)
 }
