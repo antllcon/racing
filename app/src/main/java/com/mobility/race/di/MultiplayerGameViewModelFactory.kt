@@ -1,5 +1,6 @@
 package com.mobility.race.di
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
@@ -14,6 +15,7 @@ class MultiplayerGameViewModelFactory(
     private val nickname: String,
     private val playerNames: Array<String>,
     private val carSpriteId: String,
+    private val context: Context,
     private val navController: NavController,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
@@ -25,6 +27,7 @@ class MultiplayerGameViewModelFactory(
                 nickname,
                 playerNames,
                 carSpriteId,
+                context,
                 navController,
                 gateway
             ) as T

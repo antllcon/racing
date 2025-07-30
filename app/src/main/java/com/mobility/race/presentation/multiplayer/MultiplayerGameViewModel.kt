@@ -1,6 +1,7 @@
 package com.mobility.race.presentation.multiplayer
 
 import SoundManager
+import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
@@ -15,18 +16,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import android.util.Log
 import androidx.navigation.NavController
 import com.mobility.race.data.GameStopResponse
 import com.mobility.race.domain.Car
-import com.mobility.race.ui.MenuScreen
-import com.mobility.race.ui.MultiplayerMenuScreen
-import com.mobility.race.ui.SingleplayerGame
+import com.mobility.race.ui.MultiplayerRaceFinished
+import com.mobility.race.ui.PlayerResult
 
 class MultiplayerGameViewModel(
     playerId: String,
     playerNames: Array<String>,
     carSpriteId: String,
+    private val context: Context,
     private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
@@ -34,19 +34,22 @@ class MultiplayerGameViewModel(
         name = playerId,
         playerNames = playerNames,
         carSpriteId = carSpriteId,
-        starterPack = gateway.openGatewayStorage()
+        starterPack = gateway.openStarterGatewayStorage()
     )
 ) {
     private var currentActivePlayerId = stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
+    private lateinit var soundManager: SoundManager
 
     init {
         gateway.messageFlow
             .onEach(::handleMessage)
             .launchIn(viewModelScope)
 
+        soundManager = SoundManager(context)
+        soundManager.playBackgroundMusic()
         startGame()
     }
 
@@ -200,8 +203,21 @@ class MultiplayerGameViewModel(
                     )
                 }
 
-                Log.d("FINISH", message.result.toString())
+                var playerResultList: List<PlayerResult> = emptyList()
+
+                for ((playerName, playerTime) in message.result) {
+                    val thisPlayerResult = PlayerResult(
+                        playerName = playerName,
+                        finishTime = playerTime.toLong(),
+                        isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
+                    )
+
+                    playerResultList = playerResultList.plus(thisPlayerResult)
+                }
+
                 gameCycle?.cancel()
+                gateway.fillEnderGatewayStorage(playerResultList)
+                navController.navigate(route = MultiplayerRaceFinished)
             }
 
             is GameCountdownUpdateResponse -> {

@@ -1,15 +1,15 @@
 package com.mobility.race.data
 
-import androidx.compose.ui.geometry.Offset
-import com.mobility.race.domain.GameMap
+import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.Serializable
 
 interface IGateway {
     val messageFlow: Flow<ServerMessage>
 
-    fun fillGatewayStorage(starterPack: StarterPack)
-    fun openGatewayStorage(): StarterPack
+    fun fillStarterGatewayStorage(starterPack: StarterPack)
+    fun openStarterGatewayStorage(): StarterPack
+    fun fillEnderGatewayStorage(playerResult: List<PlayerResult>)
+    fun openEnderGatewayStorage(): List<PlayerResult>
     suspend fun connect()
     suspend fun disconnect()
     suspend fun initPlayer(name: String)

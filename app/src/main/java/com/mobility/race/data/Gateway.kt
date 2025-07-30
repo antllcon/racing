@@ -1,6 +1,7 @@
 package com.mobility.race.data
 
 import com.mobility.race.domain.GameMap
+import com.mobility.race.ui.PlayerResult
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.URLProtocol
@@ -22,19 +23,28 @@ class Gateway(
 ) : IGateway {
     private var session: WebSocketSession? = null
     private var job: Job? = null
-    private lateinit var gatewayStorage: StarterPack
+    private lateinit var starterGatewayStorage: StarterPack
+    private lateinit var enderGatewayStorage: List<PlayerResult>
 
     override val messageFlow: Flow<ServerMessage>
         get() = mMessageFlow.asSharedFlow()
 
     private val mMessageFlow = MutableSharedFlow<ServerMessage>()
 
-    override fun fillGatewayStorage(starterPack: StarterPack) {
-        gatewayStorage = starterPack
+    override fun fillStarterGatewayStorage(starterPack: StarterPack) {
+        starterGatewayStorage = starterPack
     }
 
-    override fun openGatewayStorage(): StarterPack {
-        return gatewayStorage
+    override fun openStarterGatewayStorage(): StarterPack {
+        return starterGatewayStorage
+    }
+
+    override fun fillEnderGatewayStorage(playerResult: List<PlayerResult>) {
+        enderGatewayStorage = playerResult
+    }
+
+    override fun openEnderGatewayStorage(): List<PlayerResult> {
+        return enderGatewayStorage
     }
 
     override suspend fun connect() {

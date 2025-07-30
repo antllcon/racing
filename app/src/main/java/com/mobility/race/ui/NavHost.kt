@@ -54,6 +54,9 @@ data class RaceFinished(
 )
 
 @Serializable
+object MultiplayerRaceFinished
+
+@Serializable
 data class Room(
     val playerName: String,
     val roomName: String,
@@ -187,19 +190,20 @@ fun AppNavHost(
         ) { entry ->
             orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             val args = entry.toRoute<MultiplayerGame>()
+            val context = LocalContext.current
 
             val factory = remember(gateway) {
                 MultiplayerGameViewModelFactory(
                     args.nickname,
                     args.playerNames,
                     args.playerSpriteId,
+                    context,
                     navController,
                     gateway
                 )
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
-            val context = LocalContext.current
             val soundManager = remember { SoundManager(context) }
 
             MultiplayerGameScreen(
@@ -226,6 +230,27 @@ fun AppNavHost(
                 onRestart = {
                     navController.navigate(SingleplayerGame) {
                         popUpTo(SingleplayerGame) { inclusive = true }
+                    }
+                },
+                onExit = {
+                    navController.navigate(route = Menu) {
+                        popUpTo(Menu) { inclusive = true }
+                    }
+                },
+                soundManager = soundManager
+            )
+        }
+
+        composable<MultiplayerRaceFinished> {
+            orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            val context = LocalContext.current
+            val soundManager = remember { SoundManager(context) }
+
+            MultiplayerRaceFinishedScreen(
+                playerResults = gateway.openEnderGatewayStorage(),
+                onRestart = {
+                    navController.navigate(MultiplayerMenuScreen) {
+                        popUpTo(MultiplayerMenuScreen) { inclusive = true }
                     }
                 },
                 onExit = {
