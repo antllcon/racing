@@ -93,8 +93,8 @@ data class PlayerInputRequest(val visualDirection: Float, val elapsedTime: Float
 }
 
 @Serializable
-@SerialName("PLAYER_FINISH")
-data class PlayerFinishedRequest(val playerName: String): ClientMessage {
+@SerialName("PLAYER_FINISHED")
+data class PlayerFinishedRequest(val name: String): ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_FINISHED
 }
 

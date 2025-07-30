@@ -1,5 +1,6 @@
 package com.mobility.race.presentation.multiplayer
 
+import SoundManager
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
@@ -15,11 +16,17 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import android.util.Log
+import androidx.navigation.NavController
+import com.mobility.race.data.GameStopResponse
+import com.mobility.race.ui.MenuScreen
+import com.mobility.race.ui.MultiplayerMenuScreen
+import com.mobility.race.ui.SingleplayerGame
 
 class MultiplayerGameViewModel(
     playerId: String,
     playerNames: Array<String>,
     carSpriteId: String,
+    private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
     MultiplayerGameState.default(
@@ -100,7 +107,7 @@ class MultiplayerGameViewModel(
         }
     }
 
-    private fun checkCheckpoints() {
+    private suspend fun checkCheckpoints() {
         val car = stateValue.mainPlayer.car
         val manager = stateValue.checkpointManager
         val carId = car.id
@@ -119,7 +126,16 @@ class MultiplayerGameViewModel(
             }
 
             if (stateValue.lapsCompleted >= 3) {
-                println("Finish!")
+                val newMainPlayer = stateValue.mainPlayer.copy(
+                    isFinished = true
+                )
+
+                modifyState {
+                    copy(
+                        mainPlayer = newMainPlayer
+                    )
+                }
+                gateway.playerFinished(stateValue.mainPlayer.car.playerName)
             }
         }
     }
@@ -141,12 +157,17 @@ class MultiplayerGameViewModel(
         gateway.playerAction(playerInput)
     }
 
-    private suspend fun handleMessage(message: ServerMessage) {
+    private fun handleMessage(message: ServerMessage) {
         when (message) {
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
 //                println("Server Error: ${message.message}")
+            }
+
+            is GameStopResponse -> {
+                gameCycle?.cancel()
+                Log.d("FINISH", message.result.toString())
             }
 
             is GameCountdownUpdateResponse -> {

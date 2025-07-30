@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.navigation.NavController
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
@@ -13,6 +14,7 @@ class MultiplayerGameViewModelFactory(
     private val nickname: String,
     private val playerNames: Array<String>,
     private val carSpriteId: String,
+    private val navController: NavController,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -23,6 +25,7 @@ class MultiplayerGameViewModelFactory(
                 nickname,
                 playerNames,
                 carSpriteId,
+                navController,
                 gateway
             ) as T
         }

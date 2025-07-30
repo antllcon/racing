@@ -60,7 +60,7 @@ class RoomViewModel(
     private fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
-                throw Exception("Think about it!")
+                throw Exception(message.message)
             }
             is RoomCreatedResponse -> {
                 modifyState {

@@ -161,6 +161,7 @@ fun AppNavHost(
                     args.nickname,
                     args.playerNames,
                     args.playerSpriteId,
+                    navController,
                     gateway
                 )
             }
