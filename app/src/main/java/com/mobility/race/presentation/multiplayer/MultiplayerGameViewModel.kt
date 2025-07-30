@@ -37,6 +37,7 @@ class MultiplayerGameViewModel(
         starterPack = gateway.openGatewayStorage()
     )
 ) {
+    private var currentActivePlayerId = stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
@@ -133,7 +134,7 @@ class MultiplayerGameViewModel(
                 modifyState { copy(lapsCompleted = newLaps) }
             }
 
-            if (stateValue.lapsCompleted >= 3) {
+            if (stateValue.lapsCompleted >= 1) {
                 val newMainPlayer = stateValue.mainPlayer.copy(
                     isFinished = true
                 )
@@ -159,9 +160,18 @@ class MultiplayerGameViewModel(
     }
 
     private fun moveCamera() {
+        if (stateValue.players[currentActivePlayerId].isFinished) {
+            for (i in 0 until stateValue.players.size) {
+                if (!stateValue.players[i].isFinished) {
+                    currentActivePlayerId = i
+                    break
+                }
+            }
+        }
+
         modifyState {
             copy(
-                gameCamera = gameCamera.update(stateValue.mainPlayer.car.position)
+                gameCamera = gameCamera.update(stateValue.players[currentActivePlayerId].car.position)
             )
         }
     }

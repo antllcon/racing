@@ -161,7 +161,7 @@ fun MultiplayerGameScreen(
         }
 
         Text(
-            text = "Lap: ${state.lapsCompleted + 1} / 3",
+            text = "Lap: ${state.lapsCompleted + 1} / 1",
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(16.dp),
