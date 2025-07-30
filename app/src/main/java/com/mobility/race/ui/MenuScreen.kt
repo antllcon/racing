@@ -110,7 +110,7 @@ fun MenuScreen(
                         .padding(vertical = 12.dp)
                 ) {
                     Text(
-                        text = "SINGLEPLAYER",
+                        text = "TRAINING",
                         fontSize = 24.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold,
