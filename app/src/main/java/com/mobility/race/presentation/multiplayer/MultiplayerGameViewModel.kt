@@ -15,6 +15,7 @@ import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
+import com.mobility.race.ui.Menu
 import com.mobility.race.ui.MultiplayerRaceFinished
 import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
@@ -216,7 +217,7 @@ class MultiplayerGameViewModel(
                 viewModelScope.launch {
                     delay(1000)
                     navController.navigate(route = MultiplayerRaceFinished) {
-                        popUpTo(MultiplayerRaceFinished) { inclusive = true }
+                        popUpTo(Menu) { inclusive = true }
                     }
                 }
             }
