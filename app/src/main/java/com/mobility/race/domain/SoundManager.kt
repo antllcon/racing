@@ -8,6 +8,12 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.mobility.race.R
 
 class SoundManager(private val context: Context) {
+    private companion object {
+        const val BACKGROUND_MUSIC_VOLUME = 0.4f
+        const val GRASS_SOUND_VOLUME = 0.3f
+        const val DEFAULT_SOUND_VOLUME = 1f
+    }
+
     private val soundPool: SoundPool
     private var startSoundId: Int = 0
     private var clickSoundId: Int = 0
@@ -44,11 +50,12 @@ class SoundManager(private val context: Context) {
                 true
             )
             .build()
+
+        exoPlayer.volume = BACKGROUND_MUSIC_VOLUME
     }
 
-
     fun playStartSound() {
-        soundPool.play(startSoundId, 1f, 1f, 0, 0, 1f)
+        soundPool.play(startSoundId, DEFAULT_SOUND_VOLUME, DEFAULT_SOUND_VOLUME, 0, 0, 1f)
     }
 
     fun playBackgroundMusic() {
@@ -57,22 +64,32 @@ class SoundManager(private val context: Context) {
         exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
+        exoPlayer.volume = BACKGROUND_MUSIC_VOLUME
     }
+
     fun playClickSound() {
-        soundPool.play(clickSoundId, 1f, 1f, 0, 0, 1f)
+        soundPool.play(clickSoundId, DEFAULT_SOUND_VOLUME, DEFAULT_SOUND_VOLUME, 0, 0, 1f)
     }
+
     fun playSurfaceSound(surfaceType: String, volume: Float = 1f) {
         currentSurfaceStreamId?.let { soundPool.stop(it) }
 
         val soundId = surfaceSounds[surfaceType] ?: surfaceSounds["ROAD"]!!
 
-        currentSurfaceStreamId = soundPool.play(soundId, volume, volume, 0, -1, 1f)
+        val actualVolume = if (surfaceType == "GRASS") GRASS_SOUND_VOLUME * volume else volume
+
+        currentSurfaceStreamId = soundPool.play(soundId, actualVolume, actualVolume, 0, -1, 1f)
         currentSurfaceSoundId = soundId
     }
 
     fun updateSurfaceSoundVolume(volume: Float) {
         currentSurfaceStreamId?.let {
-            soundPool.setVolume(it, volume, volume)
+            val actualVolume = if (currentSurfaceSoundId == surfaceSounds["GRASS"]) {
+                GRASS_SOUND_VOLUME * volume
+            } else {
+                volume
+            }
+            soundPool.setVolume(it, actualVolume, actualVolume)
         }
     }
 
