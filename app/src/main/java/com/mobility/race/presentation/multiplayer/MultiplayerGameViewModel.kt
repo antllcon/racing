@@ -158,7 +158,6 @@ class MultiplayerGameViewModel(
                     copy(
                         mainPlayer = newMainPlayer,
                         players = newPlayers,
-                        isGameRunning = false
                     )
                 }
                 gateway.playerFinished(stateValue.mainPlayer.car.playerName)
