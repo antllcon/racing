@@ -125,7 +125,7 @@ class MultiplayerGameViewModel(
                 modifyState { copy(lapsCompleted = newLaps) }
             }
 
-            if (stateValue.lapsCompleted >= 3) {
+            if (stateValue.lapsCompleted >= 1) {
                 val newMainPlayer = stateValue.mainPlayer.copy(
                     isFinished = true
                 )
