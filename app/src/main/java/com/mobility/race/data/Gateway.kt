@@ -116,6 +116,10 @@ class Gateway(
         sendMessage(name)
     }
 
+    override suspend fun playerFinished(name: String) {
+        sendMessage(PlayerFinishedRequest(name))
+    }
+
     private fun startGettingMessages(session: WebSocketSession): Job {
         return CoroutineScope(Dispatchers.IO).launch {
             try {

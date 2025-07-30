@@ -9,7 +9,7 @@ import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
 
 data class MultiplayerGameState(
-    val countdown: Float,
+    val countdown: Int,
     val mainPlayer: Player,
     val players: List<Player>,
     val gameMap: GameMap,
@@ -71,7 +71,7 @@ data class MultiplayerGameState(
             checkpointManager.registerCar(mainPlayer.car.id)
 
             return MultiplayerGameState(
-                countdown = 5f,
+                countdown = 5,
                 mainPlayer = mainPlayer,
                 players = players,
                 gameMap = GameMap(

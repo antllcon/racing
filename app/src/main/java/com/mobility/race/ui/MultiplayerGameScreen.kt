@@ -60,7 +60,7 @@ fun MultiplayerGameScreen(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Text(text = (state.countdown.toInt() + 1).toString())
+                Text(text = (state.countdown).toString())
             }
             return@Box
         }
