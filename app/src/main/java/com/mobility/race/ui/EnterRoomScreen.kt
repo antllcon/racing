@@ -1,22 +1,28 @@
 package com.mobility.race.ui
 
 import SoundManager
+import android.R.attr.text
 import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -58,8 +65,9 @@ import com.mobility.race.R
 @Composable
 fun EnterRoomScreen(
     playerName: String,
-    navigateToRoom: (String, String) -> Unit
-) {
+    navigateToRoom: (String, String) -> Unit,
+    onBack: () -> Unit
+)  {
     var roomName by remember { mutableStateOf("") }
 
     Box(
@@ -71,6 +79,12 @@ fun EnterRoomScreen(
                 alpha = 0.9f
             )
     ) {
+        ModernBackButton(
+            onClick = { onBack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 10.dp, vertical = 16.dp))
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -314,6 +328,88 @@ fun AnimatedButton(
             modifier = Modifier.fillMaxSize()
         ) {
             content()
+        }
+    }
+}
+@Composable
+fun ModernBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    soundManager: SoundManager? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f)
+    )
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isPressed) Color(0x77222222) else Color(0x77000000),
+        animationSpec = tween(200)
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isPressed) Color(0xFFFFA500) else Color(0xAAFFA500),
+        animationSpec = tween(200)
+    )
+
+    val textColor by animateColorAsState(
+        targetValue = if (isPressed) Color(0xFFFFA500) else Color.White,
+        animationSpec = tween(200)
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .scale(scale)
+            .shadow(
+                elevation = if (isPressed) 4.dp else 8.dp,
+                shape = RoundedCornerShape(24.dp),
+                spotColor = Color(0x40FFA500)
+            )
+            .border(
+                width = 2.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(24.dp)
+            )
+            .clip(RoundedCornerShape(24.dp))
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {
+                    soundManager?.playClickSound()
+                    onClick()
+                }
+            )
+            .padding(horizontal = 15.dp, vertical = 5.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "◄",
+                color = textColor,
+                fontSize = 18.sp,
+                fontFamily = FontFamily.Default,
+                modifier = Modifier.offset(y = (-1).dp) )
+            Text(
+                text = "BACK",
+                color = textColor,
+                fontSize = 16.sp,
+                fontFamily = FontFamily(Font(R.font.jersey25)),
+                fontWeight = FontWeight.Bold,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = if (isPressed) Color.Transparent else Color.Black,
+                        offset = Offset(1f, 1f),
+                        blurRadius = 2f
+                    )
+                )
+            )
         }
     }
 }

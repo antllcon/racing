@@ -37,7 +37,8 @@ import com.mobility.race.R
 @Composable
 fun RoomScreen(
     viewModel: RoomViewModel,
-    soundManager: SoundManager? = null
+    soundManager: SoundManager? = null,
+    onBack: () -> Unit
 ) {
     val state = viewModel.state.value
     Box(
@@ -50,6 +51,12 @@ fun RoomScreen(
             )
             .background(Color(0x99000000))
     ) {
+        ModernBackButton(
+            onClick = { onBack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 10.dp, vertical = 16.dp)
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,

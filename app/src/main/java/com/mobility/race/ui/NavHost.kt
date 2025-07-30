@@ -118,7 +118,11 @@ fun AppNavHost(
                 },
                 navigateToCreateRoom = { playerName, roomName ->
                     navController.navigate(route = Room(playerName, roomName, true))
-                }
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+                soundManager = soundManager
             )
         }
 
@@ -142,9 +146,15 @@ fun AppNavHost(
             orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             val args = entry.toRoute<EnterRoom>()
 
-            EnterRoomScreen(playerName = args.name, navigateToRoom = { playerName, roomName ->
-                navController.navigate(route = Room(playerName, roomName, false))
-            })
+            EnterRoomScreen(
+                playerName = args.name,
+                navigateToRoom = { playerName, roomName ->
+                    navController.navigate(route = Room(playerName, roomName, false))
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable<Room> { entry ->
@@ -162,7 +172,12 @@ fun AppNavHost(
             }
             val viewModel: RoomViewModel = viewModel(factory = factory)
 
-            RoomScreen(viewModel = viewModel)
+            RoomScreen(
+                viewModel = viewModel,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable<MultiplayerGame>(
