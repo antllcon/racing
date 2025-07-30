@@ -164,5 +164,6 @@ fun MultiplayerGameScreen(
                 .padding(16.dp),
             style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
         )
+
     }
 }

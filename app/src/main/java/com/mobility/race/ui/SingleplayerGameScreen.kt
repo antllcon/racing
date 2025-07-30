@@ -4,6 +4,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
+import com.mobility.race.ui.ModernBackButton
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawControllingStick
@@ -179,6 +182,15 @@ fun SingleplayerGameScreen(
                 .align(Alignment.TopCenter)
                 .padding(16.dp),
             style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        )
+
+        ModernBackButton(
+            onClick = {
+                onBack()
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
         )
     }
 }
