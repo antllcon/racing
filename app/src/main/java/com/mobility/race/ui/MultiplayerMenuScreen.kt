@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,18 +33,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
+import com.mobility.race.ui.ModernBackButton
 
 @Composable
 fun MultiplayerMenuScreen(
     navigateToJoinRoom: (String) -> Unit,
     navigateToCreateRoom: (String, String) -> Unit,
     soundManager: SoundManager? = null,
-) {
-    LockScreenOrientation(Orientation.PORTRAIT)
+    onBack: () -> Unit
+)  {
     var playerName by remember { mutableStateOf("") }
     var newRoomName by remember { mutableStateOf("") }
 
@@ -56,6 +56,13 @@ fun MultiplayerMenuScreen(
                 alpha = 0.9f
             )
     ) {
+    (
+    ModernBackButton(
+        onClick = { onBack() },
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(horizontal = 10.dp, vertical = 16.dp))
+    )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -223,6 +230,7 @@ fun MultiplayerMenuScreen(
         }
     }
 }
+
 
 @Composable
 fun Divider(

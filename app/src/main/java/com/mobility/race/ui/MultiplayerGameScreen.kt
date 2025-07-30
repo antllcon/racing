@@ -28,8 +28,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -41,13 +39,12 @@ import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 @Composable
 fun MultiplayerGameScreen(
     viewModel: MultiplayerGameViewModel,
-    soundManager: SoundManager
+    soundManager: SoundManager,
+    onBack: () -> Unit = {}
 ) {
-
     LaunchedEffect(Unit) {
         soundManager.pauseBackgroundMusic()
     }
-    LockScreenOrientation(Orientation.LANDSCAPE)
     val context = LocalContext.current
     val state = viewModel.state.value
     val bitmaps = bitmapStorage(context)
@@ -166,6 +163,15 @@ fun MultiplayerGameScreen(
                 .align(Alignment.TopCenter)
                 .padding(16.dp),
             style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        )
+
+        ModernBackButton(
+            onClick = {
+                onBack()
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
         )
     }
 }

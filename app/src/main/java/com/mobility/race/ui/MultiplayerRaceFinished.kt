@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,10 +35,8 @@ import com.mobility.race.R
 import androidx.compose.ui.text.TextStyle
 
 @Composable
-fun RaceFinishedScreen(
-    finishTime: Long,
-    lapsCompleted: Int,
-    totalLaps: Int,
+fun MultiplayerRaceFinishedScreen(
+    playerResults: List<PlayerResult>,
     onRestart: () -> Unit,
     onExit: () -> Unit,
     soundManager: SoundManager
@@ -58,7 +58,7 @@ fun RaceFinishedScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .height(300.dp)
+                .height(500.dp)
                 .background(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
@@ -93,39 +93,35 @@ fun RaceFinishedScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Column(
+                Text(
+                    text = "FINAL RESULTS",
+                    color = Color(0xFFFFA500),
+                    fontSize = 18.sp,
+                    fontFamily = FontFamily(Font(R.font.jersey25)),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                LazyColumn(
                     modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
                         .background(
                             color = Color(0x66000000),
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "YOUR RESULTS",
-                        color = Color(0xFFFFA500),
-                        fontSize = 18.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Text(
-                        text = "LAPS COMPLETED: $lapsCompleted/$totalLaps",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25))
-                    )
-
-                    Text(
-                        text = "FINISH TIME: ${formatTime(finishTime)}",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    itemsIndexed(playerResults) { index, result ->
+                        PlayerResultItem(
+                            position = index + 1,
+                            playerName = result.playerName,
+                            finishTime = result.finishTime,
+                            isCurrentPlayer = result.isCurrentPlayer
+                        )
+                    }
                 }
             }
 
@@ -142,7 +138,7 @@ fun RaceFinishedScreen(
                     soundManager = soundManager
                 ) {
                     Text(
-                        text = "RESTART RACE",
+                        text = "REMATCH",
                         fontSize = 22.sp,
                         fontFamily = FontFamily(Font(R.font.jersey25)),
                         fontWeight = FontWeight.Bold
@@ -170,6 +166,40 @@ fun RaceFinishedScreen(
     }
 }
 
+@Composable
+private fun PlayerResultItem(
+    position: Int,
+    playerName: String,
+    finishTime: Long,
+    isCurrentPlayer: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = if (isCurrentPlayer) Color(0x44FFA500) else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "$position. $playerName",
+            color = if (isCurrentPlayer) Color(0xFFFFA500) else Color.White,
+            fontSize = 18.sp,
+            fontFamily = FontFamily(Font(R.font.jersey25))
+        )
+
+        Text(
+            text = formatTime(finishTime),
+            color = if (isCurrentPlayer) Color(0xFFFFA500) else Color.White,
+            fontSize = 18.sp,
+            fontFamily = FontFamily(Font(R.font.jersey25))
+        )
+    }
+}
+
 @SuppressLint("DefaultLocale")
 private fun formatTime(millis: Long): String {
     val seconds = millis / 1000
@@ -177,3 +207,9 @@ private fun formatTime(millis: Long): String {
     val remainingSeconds = seconds % 60
     return String.format("%02d:%02d.%03d", minutes, remainingSeconds, millis % 1000)
 }
+
+data class PlayerResult(
+    val playerName: String,
+    val finishTime: Long,
+    val isCurrentPlayer: Boolean
+)

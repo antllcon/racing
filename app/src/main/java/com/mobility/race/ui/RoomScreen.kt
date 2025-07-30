@@ -34,16 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.RoomViewModel
 import com.mobility.race.R
-import com.mobility.race.ui.drawUtils.LockScreenOrientation
-import com.mobility.race.ui.drawUtils.Orientation
-
 @Composable
 fun RoomScreen(
     viewModel: RoomViewModel,
-    soundManager: SoundManager? = null
+    soundManager: SoundManager? = null,
+    onBack: () -> Unit
 ) {
     val state = viewModel.state.value
-    LockScreenOrientation(Orientation.PORTRAIT)
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -54,6 +51,12 @@ fun RoomScreen(
             )
             .background(Color(0x99000000))
     ) {
+        ModernBackButton(
+            onClick = { onBack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(horizontal = 10.dp, vertical = 16.dp)
+        )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
