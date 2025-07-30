@@ -122,7 +122,7 @@ class MultiplayerGameViewModel(
 
     private suspend fun sendPlayerInput() {
         val playerInput = PlayerInputRequest(
-            directionAngle = stateValue.directionAngle ?: stateValue.mainPlayer.car.direction,
+            directionAngle = stateValue.directionAngle,
             elapsedTime = elapsedTime,
             ringsCrossed = stateValue.checkpointManager.getLapsForCar(stateValue.mainPlayer.car.id)
         )
