@@ -11,11 +11,15 @@ import com.mobility.race.domain.GameMap
 data class SingleplayerGameState(
     val directionAngle: Float?,
     val isGameRunning: Boolean,
+    val isRaceFinished: Boolean = false,
     val controllingStick: ControllingStick,
     val car: Car,
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val checkpointManager: CheckpointManager,
+    val startTime: Long = System.currentTimeMillis(),
+    val finishTime: Long = 0L,
+    val raceTime: Long = 0L,
     val lapsCompleted: Int = 0,
     val totalLaps: Int = 3
 ) {

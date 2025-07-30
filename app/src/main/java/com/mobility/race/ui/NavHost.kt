@@ -1,7 +1,11 @@
 package com.mobility.race.ui
 
+import SingleplayerGameScreen
+import SoundManager
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -37,6 +41,13 @@ data class EnterRoom(
 )
 
 @Serializable
+data class RaceFinished(
+    val finishTime: Long = 0L,
+    val lapsCompleted: Int = 0,
+    val totalLaps: Int = 0
+)
+
+@Serializable
 data class Room(
     val playerName: String,
     val roomName: String,
@@ -55,7 +66,9 @@ data class MultiplayerGame(
 
 @Composable
 fun AppNavHost(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    context: Context = LocalContext.current,
+    soundManager: SoundManager = remember { SoundManager(context) }
 ) {
     val httpClient = remember {
         HttpClient(CIO) {
@@ -78,7 +91,8 @@ fun AppNavHost(
         composable<Menu> {
             MenuScreen(
                 navigateToSingleplayer = { navController.navigate(route = SingleplayerGame) },
-                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) }
+                navigateToMultiplayerMenuScreen = { navController.navigate(route = MultiplayerMenuScreen) },
+                soundManager = soundManager
             )
         }
 
@@ -94,7 +108,20 @@ fun AppNavHost(
         }
 
         composable<SingleplayerGame> {
-            SingleplayerGameScreen()
+            SingleplayerGameScreen(
+                navigateToFinished = { time, laps, total ->
+                    navController.navigate(RaceFinished(time, laps, total)) {
+                        popUpTo(SingleplayerGame) { inclusive = true }
+                    }
+                },
+                onExit = {
+                    navController.navigate(route = Menu) {
+                        popUpTo(Menu) { inclusive = true }
+                    }
+                },
+                onRestart = {
+                }
+            )
         }
 
         composable<EnterRoom> { entry ->
@@ -139,8 +166,36 @@ fun AppNavHost(
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
+            val context = LocalContext.current
+            val soundManager = remember { SoundManager(context) }
 
-            MultiplayerGameScreen(viewModel)
+            MultiplayerGameScreen(
+                viewModel = viewModel,
+                soundManager = soundManager
+            )
+        }
+
+        composable<RaceFinished> { entry ->
+            val args = entry.toRoute<RaceFinished>()
+            val context = LocalContext.current
+            val soundManager = remember { SoundManager(context) }
+
+            RaceFinishedScreen(
+                finishTime = args.finishTime,
+                lapsCompleted = args.lapsCompleted,
+                totalLaps = args.totalLaps,
+                onRestart = {
+                    navController.navigate(SingleplayerGame) {
+                        popUpTo(SingleplayerGame) { inclusive = true }
+                    }
+                },
+                onExit = {
+                    navController.navigate(route = Menu) {
+                        popUpTo(Menu) { inclusive = true }
+                    }
+                },
+                soundManager = soundManager
+            )
         }
     }
 }

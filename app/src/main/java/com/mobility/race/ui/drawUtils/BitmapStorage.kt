@@ -1,12 +1,13 @@
 package com.mobility.race.ui.drawUtils
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.imageResource
 import com.mobility.race.R
 
 @Composable
-fun bitmapStorage(): Map<String, ImageBitmap> {
+fun bitmapStorage(context: Context): Map<String, ImageBitmap> {
     return mutableMapOf(
         "car1_1" to ImageBitmap.imageResource(R.drawable.car1_1),
         "car1_2" to ImageBitmap.imageResource(R.drawable.car1_2),

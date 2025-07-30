@@ -1,5 +1,6 @@
 package com.mobility.race.ui
 
+import SoundManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LockScreenOrientation
+import com.mobility.race.ui.drawUtils.Orientation
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -29,10 +34,17 @@ import com.mobility.race.ui.drawUtils.drawNextCheckpoint
 
 @Composable
 fun MultiplayerGameScreen(
-    viewModel: MultiplayerGameViewModel
+    viewModel: MultiplayerGameViewModel,
+    soundManager: SoundManager
 ) {
+
+    LaunchedEffect(Unit) {
+        soundManager.pauseBackgroundMusic()
+    }
+    LockScreenOrientation(Orientation.LANDSCAPE)
+    val context = LocalContext.current
     val state = viewModel.state.value
-    val bitmaps = bitmapStorage()
+    val bitmaps = bitmapStorage(context)
 
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
@@ -57,59 +69,59 @@ fun MultiplayerGameScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .onSizeChanged { size ->
-                        state.controllingStick.setScreenSize(
+                    state.controllingStick.setScreenSize(
+                        size.width.toFloat(),
+                        size.height.toFloat()
+                    )
+                    state.gameCamera.setNewViewportSize(
+                        Size(
                             size.width.toFloat(),
                             size.height.toFloat()
                         )
-                        state.gameCamera.setNewViewportSize(
-                            Size(
-                                size.width.toFloat(),
-                                size.height.toFloat()
-                            )
-                        )
-                    }
-                        .pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = { offset ->
-                                    if (state.controllingStick.isInside(offset)) {
-                                        isStickActive = true
-                                        val angle = state.controllingStick.getTouchAngle(offset)
-                                        viewModel.setDirectionAngle(angle)
-                                        currentStickInputAngle = angle
-                                        currentStickInputDistanceFactor =
-                                            state.controllingStick.getDistanceFactor(offset)
-                                    } else {
-                                        isStickActive = false
-                                        currentStickInputAngle = null
-                                        currentStickInputDistanceFactor = 0f
-                                    }
-                                },
-                                onDrag = { change, _ ->
-                                    if (isStickActive) {
-                                        val angle = state.controllingStick.getTouchAngle(change.position)
-                                        viewModel.setDirectionAngle(angle)
-                                        currentStickInputAngle = angle
-                                        currentStickInputDistanceFactor =
-                                            state.controllingStick.getDistanceFactor(change.position)
-                                    }
-                                },
-                                onDragEnd = {
-                                    if (isStickActive) {
-                                        viewModel.setDirectionAngle(null)
-                                        isStickActive = false
-                                        currentStickInputAngle = null
-                                        currentStickInputDistanceFactor = 0f
-                                    }
-                                },
-                                onDragCancel = {
-                                    if (isStickActive) {
-                                        viewModel.setDirectionAngle(null)
-                                        isStickActive = false
-                                        currentStickInputAngle = null
-                                        currentStickInputDistanceFactor = 0f
-                                    }
-                                }
-                            )
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            if (state.controllingStick.isInside(offset)) {
+                                isStickActive = true
+                                val angle = state.controllingStick.getTouchAngle(offset)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(offset)
+                            } else {
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (isStickActive) {
+                                val angle = state.controllingStick.getTouchAngle(change.position)
+                                viewModel.setDirectionAngle(angle)
+                                currentStickInputAngle = angle
+                                currentStickInputDistanceFactor =
+                                    state.controllingStick.getDistanceFactor(change.position)
+                            }
+                        },
+                        onDragEnd = {
+                            if (isStickActive) {
+                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        },
+                        onDragCancel = {
+                            if (isStickActive) {
+                                viewModel.setDirectionAngle(null)
+                                isStickActive = false
+                                currentStickInputAngle = null
+                                currentStickInputDistanceFactor = 0f
+                            }
+                        }
+                    )
                 }
         ) {
             drawBackgroundTexture(
