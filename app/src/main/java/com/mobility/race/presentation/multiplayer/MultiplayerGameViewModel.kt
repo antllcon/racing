@@ -145,23 +145,16 @@ class MultiplayerGameViewModel(
             }
 
             if (stateValue.lapsCompleted >= 1) {
-                val newMainPlayer = stateValue.mainPlayer.copy(
-                    isFinished = true
-                )
-                var newPlayers = emptyList<Player>()
-
-                for (player in stateValue.players) {
-                    newPlayers = if (player != stateValue.mainPlayer) {
-                        newPlayers.plus(player)
-                    } else {
-                        newPlayers.plus(newPlayers)
-                    }
+                val newMainPlayer = stateValue.mainPlayer.copy(isFinished = true)
+                val newPlayers = stateValue.players.map { player ->
+                    if (player.car.playerName == stateValue.mainPlayer.car.playerName) newMainPlayer else player
                 }
 
                 modifyState {
                     copy(
                         mainPlayer = newMainPlayer,
-                        players = newPlayers
+                        players = newPlayers,
+                        isGameRunning = false
                     )
                 }
                 gateway.playerFinished(stateValue.mainPlayer.car.playerName)
@@ -200,30 +193,32 @@ class MultiplayerGameViewModel(
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
-//                println("Server Error: ${message.message}")
+                println("Server Error: ${message.message}")
             }
 
             is GameStopResponse -> {
+                PlayerResultStorage.results = message.result.map { (playerName, playerTime) ->
+                    PlayerResult(
+                        playerName = playerName,
+                        finishTime = playerTime.toLong(),
+                        isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
+                    )
+                }
+
                 modifyState {
                     copy(
                         isGameRunning = false
                     )
                 }
 
-                for ((playerName, playerTime) in message.result) {
-                    val thisPlayerResult = PlayerResult(
-                        playerName = playerName,
-                        finishTime = playerTime.toLong(),
-                        isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
-                    )
-
-                    println("$playerName $playerTime")
-                    PlayerResultStorage.results = PlayerResultStorage.results.plus(thisPlayerResult)
-                }
-
                 gameCycle?.cancel()
 
-                navController.navigate(route = MultiplayerRaceFinished)
+                viewModelScope.launch {
+                    delay(1000)
+                    navController.navigate(route = MultiplayerRaceFinished) {
+                        popUpTo(MultiplayerRaceFinished) { inclusive = true }
+                    }
+                }
             }
 
             is GameCountdownUpdateResponse -> {
