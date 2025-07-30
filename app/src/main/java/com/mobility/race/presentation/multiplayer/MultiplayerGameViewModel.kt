@@ -19,11 +19,13 @@ import com.mobility.race.ui.Menu
 import com.mobility.race.ui.MultiplayerGame
 import com.mobility.race.ui.MultiplayerRaceFinished
 import com.mobility.race.ui.PlayerResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -192,13 +194,17 @@ class MultiplayerGameViewModel(
 
     private fun handleMessage(message: ServerMessage) {
         when (message) {
-            // TODO: проверить можно ли подключаться во время запущенной игры
-            // TODO: перекидывать в наблюдателей (если есть место в комнате)
             is ErrorResponse -> {
                 println("Server Error: ${message.message}")
             }
 
             is GameStopResponse -> {
+                if (!stateValue.isGameRunning) {
+                    return@handleMessage
+                }
+
+
+
                 PlayerResultStorage.results = message.result.map { (playerName, playerTime) ->
                     PlayerResult(
                         playerName = playerName,
@@ -216,15 +222,18 @@ class MultiplayerGameViewModel(
                 gameCycle?.cancel()
 
                 viewModelScope.launch {
-                    delay(1000)
-                    navController.navigate(route = MultiplayerRaceFinished) {
-                        popUpTo(
-                            MultiplayerGame(
+                    delay(500)
+
+                    withContext(Dispatchers.Main) {
+                        navController.navigate(route = MultiplayerRaceFinished) {
+                            popUpTo(MultiplayerGame(
                                 nickname = stateValue.mainPlayer.car.playerName,
                                 playerNames = stateValue.players.map { it.car.playerName }.toTypedArray(),
                                 playerSpriteId = stateValue.mainPlayer.car.id
-                            )
-                        ) { inclusive = true }
+                            )) {
+                                inclusive = true
+                            }
+                        }
                     }
                 }
             }
