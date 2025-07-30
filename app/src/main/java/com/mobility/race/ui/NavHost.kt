@@ -22,6 +22,7 @@ import com.mobility.race.data.AppJson
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.MapStringType
+import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.Server
 import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.di.RoomViewModelFactory
@@ -243,11 +244,9 @@ fun AppNavHost(
 
         composable<MultiplayerRaceFinished> {
             orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            val context = LocalContext.current
-            val soundManager = remember { SoundManager(context) }
 
             MultiplayerRaceFinishedScreen(
-                playerResults = gateway.openEnderGatewayStorage(),
+                playerResults = PlayerResultStorage.results,
                 onRestart = {
                     navController.navigate(MultiplayerMenuScreen) {
                         popUpTo(MultiplayerMenuScreen) { inclusive = true }

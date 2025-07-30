@@ -84,7 +84,7 @@ class RoomViewModel(
                 }
             }
             is StartedGameResponse -> {
-                gateway.fillStarterGatewayStorage(message.starterPack)
+                gateway.fillGatewayStorage(message.starterPack)
 
                 var carSpriteId = 1
 

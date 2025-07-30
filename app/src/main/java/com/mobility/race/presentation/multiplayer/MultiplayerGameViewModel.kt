@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import com.mobility.race.data.GameStopResponse
+import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.domain.Car
 import com.mobility.race.ui.MultiplayerRaceFinished
 import com.mobility.race.ui.PlayerResult
@@ -34,7 +35,7 @@ class MultiplayerGameViewModel(
         name = playerId,
         playerNames = playerNames,
         carSpriteId = carSpriteId,
-        starterPack = gateway.openStarterGatewayStorage()
+        starterPack = gateway.openGatewayStorage()
     )
 ) {
     private var currentActivePlayerId = stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
@@ -71,8 +72,11 @@ class MultiplayerGameViewModel(
                 val currentTime = System.currentTimeMillis()
                 elapsedTime = (currentTime - lastTime) / 1000f
 
+
                 movePlayers(elapsedTime)
-                moveCamera()
+                if (stateValue.players.isNotEmpty()) {
+                    moveCamera()
+                }
                 checkCheckpoints()
 
                 if (!stateValue.mainPlayer.isFinished) {
@@ -203,8 +207,6 @@ class MultiplayerGameViewModel(
                     )
                 }
 
-                var playerResultList: List<PlayerResult> = emptyList()
-
                 for ((playerName, playerTime) in message.result) {
                     val thisPlayerResult = PlayerResult(
                         playerName = playerName,
@@ -212,11 +214,13 @@ class MultiplayerGameViewModel(
                         isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
                     )
 
-                    playerResultList = playerResultList.plus(thisPlayerResult)
+                    println("$playerName $playerTime")
+                    PlayerResultStorage.results = PlayerResultStorage.results.plus(thisPlayerResult)
                 }
 
+                print("EHAUISFJADF")
                 gameCycle?.cancel()
-                gateway.fillEnderGatewayStorage(playerResultList)
+                print("Hello world!")
                 navController.navigate(route = MultiplayerRaceFinished)
             }
 
