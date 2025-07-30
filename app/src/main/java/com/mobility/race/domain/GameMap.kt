@@ -25,8 +25,8 @@ class GameMap(
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 10
-        private const val DEFAULT_MAP_HEIGHT = 10
+        private const val DEFAULT_MAP_WIDTH = 13
+        private const val DEFAULT_MAP_HEIGHT = 13
         private const val DEFAULT_CORE_POINT = 13
         private const val DEFAULT_WATER_PROPABILITY = 0.1f
         private const val EMPTY_CELL_CODE = 0
