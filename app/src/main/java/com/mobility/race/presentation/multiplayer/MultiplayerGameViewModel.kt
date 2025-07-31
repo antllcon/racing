@@ -313,7 +313,7 @@ class MultiplayerGameViewModel(
                 for ((playerName, playerTime) in message.result) {
                     val thisPlayerResult = PlayerResult(
                         playerName = playerName,
-                        finishTime = playerTime.toLong(),
+                        finishTime = (playerTime * 1000).toLong(),
                         isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
                     )
 
