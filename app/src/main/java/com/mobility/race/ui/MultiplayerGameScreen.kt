@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -48,6 +49,12 @@ fun MultiplayerGameScreen(
     LaunchedEffect(Unit) {
         soundManager.pauseBackgroundMusic()
     }
+
+    LifecycleEventHandler(
+        onPause = { soundManager.pauseBackgroundMusic() },
+        onResume = { soundManager.resumeBackgroundMusic() }
+    )
+
     val context = LocalContext.current
     val state = viewModel.state.value
     val bitmaps = bitmapStorage(context)

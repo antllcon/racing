@@ -28,6 +28,7 @@ import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.di.RoomViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.presentation.multiplayer.RoomViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -86,6 +87,11 @@ fun AppNavHost(
     LaunchedEffect(orientation) {
         activity?.requestedOrientation = orientation
     }
+
+    LifecycleEventHandler(
+        onPause = { soundManager.pauseBackgroundMusic() },
+        onResume = { soundManager.resumeBackgroundMusic() }
+    )
 
     val httpClient = remember {
         HttpClient(CIO) {
