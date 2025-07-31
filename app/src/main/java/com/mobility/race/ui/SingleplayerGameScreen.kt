@@ -1,3 +1,4 @@
+import android.view.WindowManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -8,6 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -39,6 +41,7 @@ import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawImageBitmap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
+import com.mobility.race.util.findActivity
 import kotlin.math.PI
 
 @Composable
@@ -60,6 +63,14 @@ fun SingleplayerGameScreen(
     LaunchedEffect(state.isRaceFinished) {
         if (state.isRaceFinished) {
             navigateToFinished(state.raceTime, state.lapsCompleted, state.totalLaps)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val window = context.findActivity()?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 
