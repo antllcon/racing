@@ -195,21 +195,23 @@ class MultiplayerGameViewModel(
     }
 
     private fun moveCamera() {
+        updateActivePlayerId()
+
+        modifyState {
+            copy(
+                gameCamera = gameCamera.update(stateValue.players[currentActivePlayerId].car.position)
+            )
+        }
+    }
+
+    private fun updateActivePlayerId() {
         if (stateValue.players[currentActivePlayerId].isFinished) {
             for (i in 0 until stateValue.players.size) {
                 if (!stateValue.players[i].isFinished) {
                     currentActivePlayerId = i
                     break
                 }
-
-                println(i)
             }
-        }
-
-        modifyState {
-            copy(
-                gameCamera = gameCamera.update(stateValue.players[currentActivePlayerId].car.position)
-            )
         }
     }
 
@@ -242,6 +244,8 @@ class MultiplayerGameViewModel(
                         players = newPlayersList
                     )
                 }
+
+                updateActivePlayerId()
             }
 
             is GameCountdownUpdateResponse -> {

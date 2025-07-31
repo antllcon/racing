@@ -160,28 +160,40 @@ fun MultiplayerGameScreen(
 
             drawCars(state, bitmaps)
 
-            drawControllingStick(
-                state.controllingStick,
-                currentStickInputAngle,
-                currentStickInputDistanceFactor
-            )
-
             drawMinimap(state.gameMap, state.mainPlayer.car, state.checkpointManager)
 
-            drawNextCheckpoint(
-                state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
-                state.gameCamera,
-                state.gameCamera.getScaledCellSize(state.gameMap.size)
-            )
+            if (!state.mainPlayer.isFinished) {
+                drawControllingStick(
+                    state.controllingStick,
+                    currentStickInputAngle,
+                    currentStickInputDistanceFactor
+                )
+
+                drawNextCheckpoint(
+                    state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
+                    state.gameCamera,
+                    state.gameCamera.getScaledCellSize(state.gameMap.size)
+                )
+            }
         }
 
-        Text(
-            text = "Lap: ${state.lapsCompleted + 1} / 1",
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(16.dp),
-            style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-        )
+        if (state.mainPlayer.isFinished) {
+            Text(
+                text = "You've completed the race!",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp),
+                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            )
+        } else {
+            Text(
+                text = "Lap: ${state.lapsCompleted + 1} / 1",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(16.dp),
+                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            )
+        }
 
         ModernBackButton(
             onClick = {
