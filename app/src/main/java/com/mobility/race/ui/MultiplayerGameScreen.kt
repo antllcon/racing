@@ -51,8 +51,8 @@ fun MultiplayerGameScreen(
     }
 
     LifecycleEventHandler(
-        onPause = { soundManager.pauseBackgroundMusic() },
-        onResume = { soundManager.resumeBackgroundMusic() }
+        onPause = { viewModel.soundManager.pauseBackgroundMusic() },
+        onResume = { viewModel.soundManager.resumeBackgroundMusic() }
     )
 
     val context = LocalContext.current

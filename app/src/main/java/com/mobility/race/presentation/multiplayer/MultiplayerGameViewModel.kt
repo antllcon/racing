@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import SoundManager
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
@@ -47,7 +48,7 @@ class MultiplayerGameViewModel(
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
-    private var soundManager: SoundManager
+    var soundManager: SoundManager
     var onFinish: () -> Unit = {}
     var onError: () -> Unit = {}
 
@@ -174,6 +175,7 @@ class MultiplayerGameViewModel(
                 val newPlayers = stateValue.players.map { player ->
                     if (player.car.playerName == stateValue.mainPlayer.car.playerName) newMainPlayer else player
                 }
+                Log.d("TAG", "${newPlayers[0].toString()} $currentActivePlayerId")
 
                 modifyState {
                     copy(
@@ -193,6 +195,8 @@ class MultiplayerGameViewModel(
                     currentActivePlayerId = i
                     break
                 }
+
+                println(i)
             }
         }
 
