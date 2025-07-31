@@ -1,7 +1,5 @@
 package com.mobility.race.presentation.multiplayer
 
-import SoundManager
-import android.content.Context
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
@@ -16,51 +14,39 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import androidx.navigation.NavController
-import com.mobility.race.data.GameStopResponse
-import com.mobility.race.domain.Car
-import com.mobility.race.ui.MultiplayerRaceFinished
-import com.mobility.race.ui.PlayerResult
+import android.util.Log
 
 class MultiplayerGameViewModel(
     playerId: String,
     playerNames: Array<String>,
     carSpriteId: String,
-    private val context: Context,
-    private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
     MultiplayerGameState.default(
         name = playerId,
         playerNames = playerNames,
         carSpriteId = carSpriteId,
-        starterPack = gateway.openStarterGatewayStorage()
+        starterPack = gateway.openGatewayStorage()
     )
 ) {
-    private var currentActivePlayerId = stateValue.players.indexOfFirst { it == stateValue.mainPlayer }
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
-    private lateinit var soundManager: SoundManager
 
     init {
         gateway.messageFlow
             .onEach(::handleMessage)
             .launchIn(viewModelScope)
 
-        soundManager = SoundManager(context)
-        soundManager.playBackgroundMusic()
         startGame()
     }
 
     fun setDirectionAngle(newAngle: Float?) {
-        modifyState {
-            copy(
+        modifyState { currentState ->
+            currentState.copy(
                 directionAngle = newAngle
             )
         }
-        // Логируем ввод с джойстика
-//        Log.d(TAG, "Joystick direction angle set to: $newAngle")
     }
 
     private fun startGame() {
@@ -74,10 +60,7 @@ class MultiplayerGameViewModel(
                 movePlayers(elapsedTime)
                 moveCamera()
                 checkCheckpoints()
-
-                if (!stateValue.mainPlayer.isFinished) {
-                    sendPlayerInput()
-                }
+                sendPlayerInput()
 
                 lastTime = currentTime
                 delay(16)
@@ -89,48 +72,33 @@ class MultiplayerGameViewModel(
     private fun movePlayers(elapsedTime: Float) {
         var newPlayersCopy: List<Player> = emptyList()
         var updatedMainPlayer: Player? = null
-        val newBonuses = stateValue.bonuses.toMutableList()
 
         for (player in stateValue.players) {
-            var updatedCar = player.car.copy()
-
-            updatedCar = updatedCar.updateBonuses(elapsedTime)
-
-            val terrainModifier = stateValue.gameMap.getSpeedModifier(updatedCar.position)
-            val totalSpeedModifier = terrainModifier * updatedCar.speedModifier
-
-            if (!player.isFinished) {
-                stateValue.gameMap.checkBonusCollision(updatedCar.position)?.let { bonus ->
-                    updatedCar = updatedCar.applyBonus(bonus)
-                    newBonuses.remove(bonus)
-                }
-
-                updatedCar = if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
-                    updatedCar.update(elapsedTime, updatedCar.visualDirection, totalSpeedModifier)
-                } else {
-                    val mainCar = updatedCar.update(
-                        elapsedTime,
-                        stateValue.directionAngle,
-                        totalSpeedModifier
-                    )
-                    updatedMainPlayer = player.copy(car = mainCar)
-                    mainCar
-                }
+            val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
+            val newCar = if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
+//                Log.v(TAG, "Client: Moving other player ${player.car.id}. Old Pos: ${player.car.position}, VisualDir: ${player.car.visualDirection}")
+                player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
+            } else {
+                val updatedCarForMainPlayer =
+                    player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
+//                Log.v(TAG, "Client: Moving main player ${player.car.id}. New Pos: ${updatedCarForMainPlayer.position}, Direction: ${stateValue.directionAngle}")
+                updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
+                updatedCarForMainPlayer
             }
 
-            newPlayersCopy = newPlayersCopy.plus(player.copy(car = updatedCar))
+            newPlayersCopy = newPlayersCopy.plus(player.copy(car = newCar))
         }
 
-        modifyState {
-            copy(
+
+        modifyState { currentState ->
+            currentState.copy(
                 players = newPlayersCopy,
-                mainPlayer = updatedMainPlayer ?: mainPlayer,
-                bonuses = newBonuses
+                mainPlayer = updatedMainPlayer ?: currentState.mainPlayer
             )
         }
     }
 
-    private suspend fun checkCheckpoints() {
+    private fun checkCheckpoints() {
         val car = stateValue.mainPlayer.car
         val manager = stateValue.checkpointManager
         val carId = car.id
@@ -145,47 +113,21 @@ class MultiplayerGameViewModel(
 
             val newLaps = manager.getLapsForCar(carId)
             if (newLaps != stateValue.lapsCompleted) {
-                modifyState { copy(lapsCompleted = newLaps) }
+                modifyState { currentState ->
+                    currentState.copy(lapsCompleted = newLaps)
+                }
             }
 
-            if (stateValue.lapsCompleted >= 1) {
-                val newMainPlayer = stateValue.mainPlayer.copy(
-                    isFinished = true
-                )
-                var newPlayers = emptyList<Player>()
-
-                for (player in stateValue.players) {
-                    newPlayers = if (player != stateValue.mainPlayer) {
-                        newPlayers.plus(player)
-                    } else {
-                        newPlayers.plus(newPlayers)
-                    }
-                }
-
-                modifyState {
-                    copy(
-                        mainPlayer = newMainPlayer,
-                        players = newPlayers
-                    )
-                }
-                gateway.playerFinished(stateValue.mainPlayer.car.playerName)
+            if (stateValue.lapsCompleted >= 3) {
+                println("Finish!")
             }
         }
     }
 
     private fun moveCamera() {
-        if (stateValue.players[currentActivePlayerId].isFinished) {
-            for (i in 0 until stateValue.players.size) {
-                if (!stateValue.players[i].isFinished) {
-                    currentActivePlayerId = i
-                    break
-                }
-            }
-        }
-
-        modifyState {
-            copy(
-                gameCamera = gameCamera.update(stateValue.players[currentActivePlayerId].car.position)
+        modifyState { currentState ->
+            currentState.copy(
+                gameCamera = currentState.gameCamera.update(currentState.mainPlayer.car.position)
             )
         }
     }
@@ -199,7 +141,7 @@ class MultiplayerGameViewModel(
         gateway.playerAction(playerInput)
     }
 
-    private fun handleMessage(message: ServerMessage) {
+    private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             // TODO: проверить можно ли подключаться во время запущенной игры
             // TODO: перекидывать в наблюдателей (если есть место в комнате)
@@ -207,33 +149,9 @@ class MultiplayerGameViewModel(
 //                println("Server Error: ${message.message}")
             }
 
-            is GameStopResponse -> {
-                modifyState {
-                    copy(
-                        isGameRunning = false
-                    )
-                }
-
-                var playerResultList: List<PlayerResult> = emptyList()
-
-                for ((playerName, playerTime) in message.result) {
-                    val thisPlayerResult = PlayerResult(
-                        playerName = playerName,
-                        finishTime = playerTime.toLong(),
-                        isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
-                    )
-
-                    playerResultList = playerResultList.plus(thisPlayerResult)
-                }
-
-                gameCycle?.cancel()
-                gateway.fillEnderGatewayStorage(playerResultList)
-                navController.navigate(route = MultiplayerRaceFinished)
-            }
-
             is GameCountdownUpdateResponse -> {
-                modifyState {
-                    copy(
+                modifyState { currentState ->
+                    currentState.copy(
                         countdown = message.remainingTime
                     )
                 }
@@ -278,10 +196,10 @@ class MultiplayerGameViewModel(
                     }
                 }
 
-                modifyState {
-                    copy(
+                modifyState { currentState ->
+                    currentState.copy(
                         players = newPlayersList,
-                        mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
+                        mainPlayer = updatedMainPlayerFromResponse ?: currentState.mainPlayer
                     )
                 }
 

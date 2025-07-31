@@ -10,8 +10,7 @@ class GameMap(
     val height: Int,
     val startCellPos: Offset,
     val startDirection: StartDirection,
-    val route: List<Offset>,
-    val bonuses: List<Bonus> = emptyList()
+    val route: List<Offset>
 ) {
     enum class StartDirection {
         HORIZONTAL,
@@ -30,7 +29,6 @@ class GameMap(
         private const val DEFAULT_MAP_HEIGHT = 13
         private const val DEFAULT_CORE_POINT = 13
         private const val DEFAULT_WATER_PROPABILITY = 0.1f
-        private const val DEFAULT_BONUS_COUNT = 5
         private const val EMPTY_CELL_CODE = 0
         private const val CORE_CELL_CODE = 1
         private const val ROAD_CELL_CODE = 2
@@ -53,60 +51,6 @@ class GameMap(
             width: Int = DEFAULT_MAP_WIDTH,
             height: Int = DEFAULT_MAP_HEIGHT,
             roomCount: Int = DEFAULT_CORE_POINT,
-            waterProbability: Float = DEFAULT_WATER_PROPABILITY,
-            bonusCount: Int = DEFAULT_BONUS_COUNT
-        ): GameMap {
-            val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
-            val maxPossibleRooms = ((width - 2) / 2 + 1) * ((height - 2) / 2 + 1)
-            val actualRoomCount = roomCount.coerceAtMost(maxPossibleRooms)
-
-            generateCoresInternal(grid, actualRoomCount)
-            generateRoadsInternal(grid)
-            removeDeadEndsInternal(grid)
-
-            createWaterCellsInternal(grid, waterProbability)
-            determinationCellTypesInternal(grid)
-
-            val startInfo = findStartCellInternal(grid)
-            val route = generateRouteFromStart(grid, startInfo.position)
-
-            val bonuses = generateBonuses(grid, bonusCount)
-
-            return GameMap(
-                grid,
-                width,
-                height,
-                startInfo.position,
-                startInfo.direction,
-                route,
-                bonuses
-            )
-        }
-
-        fun generateBonuses(grid: Array<IntArray>, count: Int): List<Bonus>{
-            val bonuses = mutableListOf<Bonus>()
-            val roadCells = mutableListOf<Offset>()
-
-            for (y in grid.indices) {
-                for (x in grid[y].indices) {
-                    if (grid[y][x] in listOf(CORE_CELL_CODE, ROAD_CELL_CODE)) {
-                        roadCells.add(Offset(x.toFloat(), y.toFloat()))
-                    }
-                }
-            }
-
-            roadCells.shuffle()
-            for (i in 0 until count.coerceAtMost(roadCells.size)) {
-                bonuses.add(Bonus.generateRandomBonus(roadCells[i]))
-            }
-
-            return bonuses
-        }
-
-        fun generateDungeonMap(
-            width: Int = DEFAULT_MAP_WIDTH,
-            height: Int = DEFAULT_MAP_HEIGHT,
-            roomCount: Int = DEFAULT_CORE_POINT,
             waterProbability: Float = DEFAULT_WATER_PROPABILITY
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
@@ -121,17 +65,11 @@ class GameMap(
             determinationCellTypesInternal(grid)
 
             val startInfo = findStartCellInternal(grid)
-
             val route = generateRouteFromStart(grid, startInfo.position)
 
-            return GameMap(
-                grid,
-                width,
-                height,
-                startInfo.position,
-                startInfo.direction,
-                route
-            )
+            val map = GameMap(grid, width, height, startInfo.position, startInfo.direction, route)
+            map.generateBonuses(5)
+            return map
         }
 
         private fun generateCoresInternal(grid: Array<IntArray>, roomCount: Int) {
@@ -496,11 +434,11 @@ class GameMap(
 
     fun getTerrainName(x: Int, y: Int): String {
         if (y !in grid.indices || x !in grid[y].indices) {
+            println("Warning: Attempted to get terrain name for out-of-bounds cell ($x, $y). Returning terrain_0.")
             return "terrain_${EMPTY_CELL_CODE}"
         }
         return "terrain_" + grid[y][x].toString().padStart(3, '0')
     }
-
     fun getTerrainType(x: Int, y: Int): String {
         return when (grid[y][x] / 100) {
             1 -> "ROAD"
@@ -513,6 +451,7 @@ class GameMap(
 
     private fun getTerrainAt(x: Int, y: Int): TerrainType {
         if (y !in grid.indices || x !in grid[y].indices) {
+            println("Warning: Attempted to get terrain at out-of-bounds cell ($x, $y). Returning ABYSS.")
             return TerrainType.ABYSS
         }
 
@@ -535,17 +474,24 @@ class GameMap(
     fun getSpeedModifier(position: Offset): Float {
         val cellX: Int = position.x.toInt().coerceIn(0, width - 1)
         val cellY: Int = position.y.toInt().coerceIn(0, height - 1)
+
         return getTerrainAt(x = cellX, y = cellY).speedModifier
     }
+    data class Bonus(val type: String, val position: Offset, var isActive: Boolean = true)
 
-    fun checkBonusCollision(carPosition: Offset): Bonus? {
-        val carX = carPosition.x.toInt()
-        val carY = carPosition.y.toInt()
+    private val bonuses = mutableListOf<Bonus>()
 
-        return bonuses.firstOrNull { bonus ->
-            bonus.isActive &&
-                    carX == bonus.position.x.toInt() &&
-                    carY == bonus.position.y.toInt()
+    fun generateBonuses(count: Int) {
+        bonuses.clear()
+        repeat(count) {
+            val x = Random.nextInt(1, width - 1)
+            val y = Random.nextInt(1, height - 1)
+            if (getTerrainType(x, y) == "ROAD") {
+                val type = if (Random.nextBoolean()) "bonus_speed" else "bonus_size"
+                bonuses.add(Bonus(type, Offset(x.toFloat(), y.toFloat())))
+            }
         }
     }
+
+    fun getBonuses(): List<Bonus> = bonuses
 }

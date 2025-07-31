@@ -16,13 +16,13 @@ data class Car(
     var speed: Float = 0f,
     var direction: Float = 0f,
     var visualDirection: Float = 0f,
-    var speedModifier: Float = 1f,
+    val speedModifier: Float = 1f,
     val currentSprite: Int = 1,
     var distanceBeforeSpriteChange: Float = DEFAULT_SPRITE_CHANGE_DISTANCE,
     val isStarting: Boolean = false,
     var wasStopped: Boolean = true,
-    var massModifier: Float = 1f,
-    var activeBonuses: Map<Bonus.BonusType, Float> = emptyMap()) {
+    val sizeModifier: Float = 1f
+) {
     companion object {
         const val MIN_SPEED = 0f
         const val MAX_SPEED = 2.5f
@@ -53,47 +53,8 @@ data class Car(
             visualDirection = updateVisualDirection(),
             currentSprite = updateCurrentSprite(),
             isStarting = starting,
-            wasStopped = newSpeed <= MIN_SPEED
-        )
-    }
-
-    fun applyBonus(bonus: Bonus): Car {
-        return when (bonus.type) {
-            Bonus.BonusType.SPEED_BOOST -> copy(
-                speedModifier = 1.5f,
-                activeBonuses = activeBonuses + (bonus.type to bonus.duration)
-            )
-            Bonus.BonusType.MASS_INCREASE -> copy(
-                massModifier = 1.5f,
-                activeBonuses = activeBonuses + (bonus.type to bonus.duration)
-            )
-        }
-    }
-
-    fun updateBonuses(elapsedTime: Float): Car {
-        val updatedBonuses = activeBonuses.toMutableMap()
-        var newSpeedModifier = speedModifier
-        var newMassModifier = massModifier
-
-        val iterator = updatedBonuses.iterator()
-        while (iterator.hasNext()) {
-            val (type, remainingTime) = iterator.next()
-            val newTime = remainingTime - elapsedTime
-            if (newTime <= 0) {
-                iterator.remove()
-                when (type) {
-                    Bonus.BonusType.SPEED_BOOST -> newSpeedModifier = 1f
-                    Bonus.BonusType.MASS_INCREASE -> newMassModifier = 1f
-                }
-            } else {
-                updatedBonuses[type] = newTime
-            }
-        }
-
-        return copy(
-            speedModifier = newSpeedModifier,
-            massModifier = newMassModifier,
-            activeBonuses = updatedBonuses
+            wasStopped = newSpeed <= MIN_SPEED,
+            sizeModifier = if (speedModifier > 1.0f) 2.0f else 1f
         )
     }
 
@@ -198,4 +159,7 @@ data class Car(
 
         return visualDirection
     }
+
 }
+
+

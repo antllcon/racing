@@ -45,5 +45,15 @@ fun DrawScope.drawGameMap(gameMap: GameMap, gameCamera: GameCamera, canvasSize: 
         if ((y + 1) * scaledCellSize > gameCamera.position.y * scaledCellSize + gameCamera.viewportSize.height / 2) {
             break
         }
+        gameMap.getBonuses().forEach { bonus ->
+            if (bonus.isActive) {
+                val screenPos = gameCamera.worldToScreen(bonus.position)
+                drawImageBitmap(
+                    bitmapStorage[bonus.type]!!,
+                    screenPos,
+                    cellSizePx
+                )
+            }
+        }
     }
 }
