@@ -2,11 +2,9 @@ package com.mobility.race.presentation.multiplayer
 
 import SoundManager
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
@@ -17,18 +15,13 @@ import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
-import com.mobility.race.domain.CollisionManager
 import com.mobility.race.presentation.BaseViewModel
-import com.mobility.race.ui.MultiplayerGame
-import com.mobility.race.ui.MultiplayerRaceFinished
 import com.mobility.race.ui.PlayerResult
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -297,6 +290,7 @@ class MultiplayerGameViewModel(
 
                                 val newCar = existingPlayer.car.copy(
                                     position = Offset(correctedX, correctedY),
+                                    direction = playerDto.direction,
                                     visualDirection = playerDto.visualDirection,
                                     speed = playerDto.speed
                                 )
@@ -308,8 +302,10 @@ class MultiplayerGameViewModel(
                                     set(existingPlayerIndex, updatedPlayer)
                                 }.toList()
                                 updatedMainPlayerFromResponse = updatedPlayer
+
                             } else {
                                 val newCar = existingPlayer.car.copy(
+                                    direction = playerDto.direction,
                                     visualDirection = playerDto.visualDirection,
                                     speed = playerDto.speed
                                 )

@@ -75,13 +75,13 @@ data class PlayerActionRequest(val name: String) : ClientMessage {
 
 @Serializable
 data class PlayerStateDto(
-    val id: String, // Или playerName, если ID уникален по имени
+    val id: String,
     val posX: Float,
     val posY: Float,
+    val direction: Float,
     val visualDirection: Float,
     val speed: Float,
     val isFinished: Boolean,
-//    val currentSprite: Int // Добавлено
 )
 
 
