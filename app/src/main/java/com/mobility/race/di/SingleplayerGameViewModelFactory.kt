@@ -1,4 +1,4 @@
-package com.mobility.race.presentation
+package com.mobility.race.di
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

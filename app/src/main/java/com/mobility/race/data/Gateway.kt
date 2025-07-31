@@ -24,27 +24,18 @@ class Gateway(
     private var session: WebSocketSession? = null
     private var job: Job? = null
     private lateinit var starterGatewayStorage: StarterPack
-    private lateinit var enderGatewayStorage: List<PlayerResult>
 
     override val messageFlow: Flow<ServerMessage>
         get() = mMessageFlow.asSharedFlow()
 
     private val mMessageFlow = MutableSharedFlow<ServerMessage>()
 
-    override fun fillStarterGatewayStorage(starterPack: StarterPack) {
+    override fun fillGatewayStorage(starterPack: StarterPack) {
         starterGatewayStorage = starterPack
     }
 
-    override fun openStarterGatewayStorage(): StarterPack {
+    override fun openGatewayStorage(): StarterPack {
         return starterGatewayStorage
-    }
-
-    override fun fillEnderGatewayStorage(playerResult: List<PlayerResult>) {
-        enderGatewayStorage = playerResult
-    }
-
-    override fun openEnderGatewayStorage(): List<PlayerResult> {
-        return enderGatewayStorage
     }
 
     override suspend fun connect() {

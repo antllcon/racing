@@ -1,15 +1,12 @@
 package com.mobility.race.data
 
-import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.flow.Flow
 
 interface IGateway {
     val messageFlow: Flow<ServerMessage>
 
-    fun fillStarterGatewayStorage(starterPack: StarterPack)
-    fun openStarterGatewayStorage(): StarterPack
-    fun fillEnderGatewayStorage(playerResult: List<PlayerResult>)
-    fun openEnderGatewayStorage(): List<PlayerResult>
+    fun fillGatewayStorage(starterPack: StarterPack)
+    fun openGatewayStorage(): StarterPack
     suspend fun connect()
     suspend fun disconnect()
     suspend fun initPlayer(name: String)

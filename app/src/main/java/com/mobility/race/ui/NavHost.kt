@@ -22,11 +22,13 @@ import com.mobility.race.data.AppJson
 import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.MapStringType
+import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.Server
 import com.mobility.race.di.MultiplayerGameViewModelFactory
 import com.mobility.race.di.RoomViewModelFactory
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.presentation.multiplayer.RoomViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -85,6 +87,11 @@ fun AppNavHost(
     LaunchedEffect(orientation) {
         activity?.requestedOrientation = orientation
     }
+
+    LifecycleEventHandler(
+        onPause = { soundManager.pauseBackgroundMusic() },
+        onResume = { soundManager.resumeBackgroundMusic() }
+    )
 
     val httpClient = remember {
         HttpClient(CIO) {
@@ -169,6 +176,7 @@ fun AppNavHost(
                     args.playerName,
                     args.roomName,
                     args.isCreatingRoom,
+                    context,
                     navController,
                     gateway
                 )
@@ -198,12 +206,13 @@ fun AppNavHost(
                     args.playerNames,
                     args.playerSpriteId,
                     context,
-                    navController,
                     gateway
                 )
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
+            viewModel.onFinish = { navController.navigate(route = MultiplayerRaceFinished) }
+            viewModel.onError = {navController.navigate(route = Menu)}
             val soundManager = remember { SoundManager(context) }
 
             MultiplayerGameScreen(
@@ -243,20 +252,20 @@ fun AppNavHost(
 
         composable<MultiplayerRaceFinished> {
             orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            val context = LocalContext.current
-            val soundManager = remember { SoundManager(context) }
 
             MultiplayerRaceFinishedScreen(
-                playerResults = gateway.openEnderGatewayStorage(),
+                playerResults = PlayerResultStorage.results,
                 onRestart = {
                     navController.navigate(MultiplayerMenuScreen) {
                         popUpTo(MultiplayerMenuScreen) { inclusive = true }
                     }
+                    PlayerResultStorage.results = emptyList()
                 },
                 onExit = {
                     navController.navigate(route = Menu) {
                         popUpTo(Menu) { inclusive = true }
                     }
+                    PlayerResultStorage.results = emptyList()
                 },
                 soundManager = soundManager
             )

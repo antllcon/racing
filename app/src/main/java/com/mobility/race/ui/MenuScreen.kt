@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.R
 import SoundManager
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 
 @Composable
 fun MenuScreen(

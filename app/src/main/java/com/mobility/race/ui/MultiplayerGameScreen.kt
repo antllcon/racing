@@ -1,6 +1,7 @@
 package com.mobility.race.ui
 
 import SoundManager
+import android.view.WindowManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
+import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
 import com.mobility.race.ui.drawUtils.drawCars
@@ -35,6 +38,7 @@ import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
 import com.mobility.race.ui.drawUtils.drawNextCheckpoint
+import com.mobility.race.util.findActivity
 
 @Composable
 fun MultiplayerGameScreen(
@@ -45,6 +49,12 @@ fun MultiplayerGameScreen(
     LaunchedEffect(Unit) {
         soundManager.pauseBackgroundMusic()
     }
+
+    LifecycleEventHandler(
+        onPause = { viewModel.soundManager.pauseBackgroundMusic() },
+        onResume = { viewModel.soundManager.resumeBackgroundMusic() }
+    )
+
     val context = LocalContext.current
     val state = viewModel.state.value
     val bitmaps = bitmapStorage(context)
@@ -52,6 +62,14 @@ fun MultiplayerGameScreen(
     var isStickActive by remember { mutableStateOf(false) }
     var currentStickInputAngle: Float? by remember { mutableStateOf(null) }
     var currentStickInputDistanceFactor: Float by remember { mutableFloatStateOf(0f) }
+
+    DisposableEffect(Unit) {
+        val window = context.findActivity()?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -167,6 +185,7 @@ fun MultiplayerGameScreen(
 
         ModernBackButton(
             onClick = {
+                viewModel.disconnect()
                 onBack()
             },
             modifier = Modifier
