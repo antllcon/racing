@@ -110,6 +110,6 @@ data class MultiplayerGameState(
 }
 
 data class Player(
-    val car: Car,
+    var car: Car,
     val isFinished: Boolean = false
 )
