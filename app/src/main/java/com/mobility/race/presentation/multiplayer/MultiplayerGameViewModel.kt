@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import SoundManager
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -32,7 +33,6 @@ class MultiplayerGameViewModel(
     playerNames: Array<String>,
     carSpriteId: String,
     private val context: Context,
-    private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
     MultiplayerGameState.default(
@@ -49,6 +49,7 @@ class MultiplayerGameViewModel(
     private val TAG = "MultiplayerGameViewModel"
     private var soundManager: SoundManager
     var onFinish: () -> Unit = {}
+    var onError: () -> Unit = {}
 
     private val targetPlayerPositions: MutableMap<String, Offset> = mutableMapOf()
     private val targetPlayerDirections: MutableMap<String, Float> = mutableMapOf()
@@ -214,7 +215,8 @@ class MultiplayerGameViewModel(
     private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
-                println("Server Error: ${message.message}")
+                Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
+                onError()
             }
             is GameCountdownUpdateResponse -> {
                 modifyState {

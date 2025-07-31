@@ -170,6 +170,7 @@ fun AppNavHost(
                     args.playerName,
                     args.roomName,
                     args.isCreatingRoom,
+                    context,
                     navController,
                     gateway
                 )
@@ -199,13 +200,13 @@ fun AppNavHost(
                     args.playerNames,
                     args.playerSpriteId,
                     context,
-                    navController,
                     gateway
                 )
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
             viewModel.onFinish = { navController.navigate(route = MultiplayerRaceFinished) }
+            viewModel.onError = {navController.navigate(route = Menu)}
             val soundManager = remember { SoundManager(context) }
 
             MultiplayerGameScreen(

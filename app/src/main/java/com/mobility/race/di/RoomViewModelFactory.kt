@@ -1,5 +1,6 @@
 package com.mobility.race.di
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -11,6 +12,7 @@ class RoomViewModelFactory(
     private val playerName: String,
     private val roomName: String,
     private val isCreatingRoom: Boolean,
+    private val context: Context,
     private val navController: NavController,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
@@ -22,6 +24,7 @@ class RoomViewModelFactory(
                 playerName,
                 roomName,
                 isCreatingRoom,
+                context,
                 navController,
                 gateway
             ) as T
