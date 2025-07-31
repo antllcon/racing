@@ -1,7 +1,5 @@
 package com.mobility.race.data
 
-import com.mobility.race.domain.GameMap
-import com.mobility.race.ui.PlayerResult
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.http.URLProtocol
@@ -14,7 +12,6 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.serialization.Serializable
 
 
 class Gateway(
