@@ -2,6 +2,7 @@ package com.mobility.race.ui
 
 import SoundManager
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +55,11 @@ fun MultiplayerGameScreen(
         onPause = { viewModel.soundManager.pauseBackgroundMusic() },
         onResume = { viewModel.soundManager.resumeBackgroundMusic() }
     )
+
+    BackHandler {
+        viewModel.disconnect()
+        onBack()
+    }
 
     val context = LocalContext.current
     val state = viewModel.state.value

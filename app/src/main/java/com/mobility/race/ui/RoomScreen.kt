@@ -1,6 +1,7 @@
 package com.mobility.race.ui
 
 import SoundManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +42,11 @@ fun RoomScreen(
     onBack: () -> Unit
 ) {
     val state = viewModel.state.value
+    BackHandler {
+        viewModel.disconnect()
+        onBack()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
