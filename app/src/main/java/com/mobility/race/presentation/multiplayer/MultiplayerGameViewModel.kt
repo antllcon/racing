@@ -48,6 +48,7 @@ class MultiplayerGameViewModel(
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
     private var soundManager: SoundManager
+    var onFinish: () -> Unit = {}
 
     private val targetPlayerPositions: MutableMap<String, Offset> = mutableMapOf()
     private val targetPlayerDirections: MutableMap<String, Float> = mutableMapOf()
@@ -322,9 +323,7 @@ class MultiplayerGameViewModel(
 
                 gameCycle?.cancel()
                 gateway.disconnect()
-                navController.navigate(
-                    route = MultiplayerRaceFinished
-                )
+                onFinish()
             }
             else -> Unit
         }

@@ -205,6 +205,7 @@ fun AppNavHost(
             }
 
             val viewModel: MultiplayerGameViewModel = viewModel(factory = factory)
+            viewModel.onFinish = { navController.navigate(route = MultiplayerRaceFinished) }
             val soundManager = remember { SoundManager(context) }
 
             MultiplayerGameScreen(
