@@ -1,6 +1,5 @@
 package com.mobility.race.data
 
-import com.mobility.race.domain.GameMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -172,7 +171,7 @@ data class StarterPack(
     val mapWidth: Int,
     val mapHeight: Int,
     val initialPlayerStates: List<Vector2D>,
-    val startDirection: GameMap.StartDirection,
+    val startAngle: Float,
     val route: List<Vector2D>,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -185,7 +184,7 @@ data class StarterPack(
         if (mapHeight != other.mapHeight) return false
         if (!mapGrid.contentDeepEquals(other.mapGrid)) return false
         if (initialPlayerStates != other.initialPlayerStates) return false
-        if (startDirection != other.startDirection) return false
+        if (startAngle != other.startAngle) return false
         if (route != other.route) return false
 
         return true
@@ -196,7 +195,7 @@ data class StarterPack(
         result = 31 * result + mapHeight.hashCode()
         result = 31 * result + mapGrid.contentDeepHashCode()
         result = 31 * result + initialPlayerStates.hashCode()
-        result = 31 * result + startDirection.hashCode()
+        result = 31 * result + startAngle.hashCode()
         result = 31 * result + route.hashCode()
         return result
     }

@@ -28,25 +28,19 @@ data class MultiplayerGameState(
             starterPack: StarterPack
         ): MultiplayerGameState {
             var newRouteList: List<Offset> = emptyList()
+            var newBonusList: List<Offset> = emptyList()
 
             starterPack.route.forEach {
                 newRouteList = newRouteList.plus(it.transformToOffset())
+                newBonusList = newBonusList.plus(it.transformToOffset())
             }
-
-            val startDirection =
-                if (starterPack.startDirection == GameMap.StartDirection.VERTICAL) {
-                    Car.DIRECTION_UP
-                } else {
-                    Car.DIRECTION_RIGHT
-                }
-
 
             val mainPlayer = Player(
                 Car(
                     playerName = name,
                     id = carSpriteId,
                     position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
-                    visualDirection = startDirection,
+                    visualDirection = starterPack.startAngle,
                 ),
                 isFinished = false
             )
@@ -60,7 +54,7 @@ data class MultiplayerGameState(
                             playerName = name,
                             id = getSpriteId(name, playerNames).toString(),
                             position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
-                            visualDirection = startDirection
+                            visualDirection = starterPack.startAngle
                         ),
                         isFinished = false
                     )
@@ -81,8 +75,9 @@ data class MultiplayerGameState(
                     width = starterPack.mapWidth,
                     height = starterPack.mapHeight,
                     startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
-                    startDirection = starterPack.startDirection,
-                    route = newRouteList
+                    startAngle = starterPack.startAngle,
+                    route = newRouteList,
+                    bonusPoints = newBonusList
                 ),
                 gameCamera = GameCamera(
                     position = mainPlayer.car.position,

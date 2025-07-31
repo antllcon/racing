@@ -27,15 +27,11 @@ data class SingleplayerGameState(
         fun default(carId: String): SingleplayerGameState {
             val gameMap: GameMap = GameMap.generateDungeonMap()
             val checkpointManager = CheckpointManager(gameMap.route)
-            val initialDirection = when (gameMap.startDirection) {
-                GameMap.StartDirection.HORIZONTAL -> Car.DIRECTION_RIGHT
-                GameMap.StartDirection.VERTICAL -> Car.DIRECTION_UP
-            }
             val car = Car(
                 position = Offset(gameMap.startCellPos.x + 0.4f, gameMap.startCellPos.y + 0.5f),
                 id = carId,
-                direction = initialDirection,
-                visualDirection = initialDirection
+                direction = gameMap.startAngle,
+                visualDirection = gameMap.startAngle
             )
 
             checkpointManager.registerCar(car.id)
