@@ -4,6 +4,7 @@ import SoundManager
 import android.content.Context
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.GameMap
 import com.mobility.race.presentation.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -23,6 +24,7 @@ class SingleplayerGameViewModel(private val context: Context) :
     init {
         startNewGame()
     }
+
 
     fun startNewGame() {
         carId = ((1..6).random().toString())
@@ -50,6 +52,7 @@ class SingleplayerGameViewModel(private val context: Context) :
         runGame()
     }
 
+
     private fun runGame() {
         var lastTime = System.currentTimeMillis()
 
@@ -61,10 +64,11 @@ class SingleplayerGameViewModel(private val context: Context) :
                 movePlayer(elapsedTime)
                 checkCheckpoints()
                 moveCamera()
+                stateValue.gameMap.updateBonuses(currentTime)
 
                 val expired = stateValue.activeBonuses.filter { it.value <= currentTime }.keys
                 if (expired.isNotEmpty()) {
-                    modifyState { state: SingleplayerGameState ->
+                    modifyState { state ->
                         state.copy(activeBonuses = state.activeBonuses - expired)
                     }
                 }
@@ -74,6 +78,7 @@ class SingleplayerGameViewModel(private val context: Context) :
             }
         }
     }
+
     private fun getSpeedModifier(): Float {
         val baseModifier = stateValue.gameMap.getSpeedModifier(stateValue.car.position)
         val bonusModifier = if (stateValue.activeBonuses.containsKey("bonus_speed")) 1.5f else 1f
@@ -110,22 +115,36 @@ class SingleplayerGameViewModel(private val context: Context) :
         val car = stateValue.car
         val carCellX = car.position.x.toInt()
         val carCellY = car.position.y.toInt()
+        val currentTime = System.currentTimeMillis()
 
         stateValue.gameMap.getBonuses().forEach { bonus ->
-            if (bonus.isActive && carCellX == bonus.position.x.toInt() && carCellY == bonus.position.y.toInt()) {
+            if (bonus.isActive &&
+                carCellX == bonus.position.x.toInt() &&
+                carCellY == bonus.position.y.toInt()) {
+
                 bonus.isActive = false
+                bonus.spawnTime = currentTime
                 applyBonus(bonus.type)
             }
         }
     }
 
     private fun applyBonus(type: String) {
-        val duration = 5000L
+        val duration = when(type) {
+            GameMap.Bonus.TYPE_SPEED -> 5000L
+            GameMap.Bonus.TYPE_SIZE -> 7000L
+            else -> 5000L
+        }
+
         val currentTime = System.currentTimeMillis()
 
-        modifyState { state: SingleplayerGameState ->
+        modifyState { state ->
             val newBonuses = state.activeBonuses.toMutableMap().apply {
                 put(type, currentTime + duration)
+                if (type == GameMap.Bonus.TYPE_SIZE) {
+                    remove(GameMap.Bonus.TYPE_SIZE)
+                    put(GameMap.Bonus.TYPE_SIZE, currentTime + duration)
+                }
             }
             state.copy(activeBonuses = newBonuses)
         }

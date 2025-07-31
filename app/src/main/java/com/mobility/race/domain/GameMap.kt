@@ -16,7 +16,6 @@ class GameMap(
         HORIZONTAL,
         VERTICAL
     }
-
     enum class TerrainType(val speedModifier: Float) {
         ROAD(speedModifier = 1.0f),
         GRASS(speedModifier = 0.6f),
@@ -477,19 +476,73 @@ class GameMap(
 
         return getTerrainAt(x = cellX, y = cellY).speedModifier
     }
-    data class Bonus(val type: String, val position: Offset, var isActive: Boolean = true)
-
+    data class Bonus(
+        val type: String,
+        val position: Offset,
+        var isActive: Boolean = true,
+        var spawnTime: Long = System.currentTimeMillis(),
+        var animationProgress: Float = 0f
+    ) {
+        companion object {
+            const val TYPE_SPEED = "bonus_speed"
+            const val TYPE_SIZE = "bonus_size"
+            const val SPAWN_INTERVAL = 10000L
+            const val ANIMATION_DURATION = 1000L
+        }
+    }
     private val bonuses = mutableListOf<Bonus>()
-
+    private var lastBonusSpawnTime = 0L
     fun generateBonuses(count: Int) {
         bonuses.clear()
-        repeat(count) {
+        repeat(count.coerceAtMost(5)) {
+            spawnBonus()
+        }
+    }
+
+    private fun spawnBonus() {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastBonusSpawnTime < Bonus.SPAWN_INTERVAL) return
+
+        var attempts = 0
+        val maxAttempts = 20
+
+        while (attempts < maxAttempts) {
             val x = Random.nextInt(1, width - 1)
             val y = Random.nextInt(1, height - 1)
-            if (getTerrainType(x, y) == "ROAD") {
-                val type = if (Random.nextBoolean()) "bonus_speed" else "bonus_size"
+
+            if (getTerrainType(x, y) == "ROAD" &&
+                !bonuses.any { it.position.x.toInt() == x && it.position.y.toInt() == y }) {
+
+                val type = when(Random.nextInt(0, 100)) {
+                    in 0..60 -> Bonus.TYPE_SPEED
+                    else -> Bonus.TYPE_SIZE
+                }
+
                 bonuses.add(Bonus(type, Offset(x.toFloat(), y.toFloat())))
+                lastBonusSpawnTime = currentTime
+                return
             }
+            attempts++
+        }
+    }
+
+    fun updateBonuses(currentTime: Long) {
+        bonuses.removeAll { bonus ->
+            !bonus.isActive && currentTime - bonus.spawnTime > Bonus.ANIMATION_DURATION * 5
+        }
+
+        bonuses.forEach { bonus ->
+            val timeSinceSpawn = currentTime - bonus.spawnTime
+            bonus.animationProgress = when {
+                timeSinceSpawn < Bonus.ANIMATION_DURATION ->
+                    timeSinceSpawn.toFloat() / Bonus.ANIMATION_DURATION
+                else -> 1f
+            }
+        }
+
+        if (bonuses.count { it.isActive } < 3 &&
+            currentTime - lastBonusSpawnTime >= Bonus.SPAWN_INTERVAL) {
+            spawnBonus()
         }
     }
 

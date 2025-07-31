@@ -1,9 +1,5 @@
 package mobility.domain
 
-import android.R.attr.x
-import android.R.attr.y
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.CornerRadius.Companion.Zero
 import androidx.compose.ui.geometry.Offset
 import com.mobility.race.domain.Car
 import kotlin.math.atan2
