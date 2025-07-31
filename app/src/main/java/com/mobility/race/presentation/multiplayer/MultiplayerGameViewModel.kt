@@ -175,7 +175,6 @@ class MultiplayerGameViewModel(
                 val newPlayers = stateValue.players.map { player ->
                     if (player.car.playerName == stateValue.mainPlayer.car.playerName) newMainPlayer else player
                 }
-                Log.d("TAG", "${newPlayers[0].toString()} $currentActivePlayerId")
 
                 modifyState {
                     copy(
@@ -259,7 +258,6 @@ class MultiplayerGameViewModel(
                             }.toList()
 
                         } else {
-
                             val serverPos = Offset(playerDto.posX, playerDto.posY)
                             val currentClientPos = stateValue.mainPlayer.car.position
 

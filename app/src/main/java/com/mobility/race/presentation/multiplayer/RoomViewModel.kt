@@ -8,6 +8,7 @@ import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.JoinedRoomResponse
 import com.mobility.race.data.PlayerConnectedResponse
+import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.data.StartedGameResponse
@@ -47,6 +48,12 @@ class RoomViewModel(
 
     }
 
+    fun disconnect() {
+        viewModelScope.launch {
+            gateway.disconnect()
+        }
+    }
+
     private fun init() {
         viewModelScope.launch {
             gateway.connect()
@@ -65,6 +72,21 @@ class RoomViewModel(
             is ErrorResponse -> {
                 Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
+            }
+            is PlayerDisconnectedResponse -> {
+                var newPlayersList = emptyArray<String>()
+
+                for (player in stateValue.playerNames) {
+                    if (player != message.playerId) {
+                        newPlayersList = newPlayersList.plus(player)
+                    }
+                }
+
+                modifyState {
+                    copy(
+                        playerNames = newPlayersList
+                    )
+                }
             }
             is RoomCreatedResponse -> {
                 modifyState {

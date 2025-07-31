@@ -52,7 +52,10 @@ fun RoomScreen(
             .background(Color(0x99000000))
     ) {
         ModernBackButton(
-            onClick = { onBack() },
+            onClick = {
+                onBack()
+                viewModel.disconnect()
+                },
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(horizontal = 10.dp, vertical = 16.dp)
@@ -137,7 +140,7 @@ fun RoomScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            if (state.isCreatingRoom) {
+            if (state.playerNames[0] == state.playerName) {
                 AnimatedButton(
                     onClick = {
                         soundManager?.playClickSound()
