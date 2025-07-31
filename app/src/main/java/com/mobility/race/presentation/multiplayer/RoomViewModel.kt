@@ -1,5 +1,7 @@
 package com.mobility.race.presentation.multiplayer
 
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.mobility.race.data.ErrorResponse
@@ -19,6 +21,7 @@ class RoomViewModel(
     private val playerName: String,
     private val roomName: String,
     private val isCreatingRoom: Boolean,
+    private val context: Context,
     private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<RoomState>(RoomState.default(playerName, roomName, isCreatingRoom)) {
@@ -60,7 +63,7 @@ class RoomViewModel(
     private fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
-                throw Exception(message.message)
+                Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
             }
             is RoomCreatedResponse -> {
                 modifyState {

@@ -42,129 +42,129 @@ fun MultiplayerRaceFinishedScreen(
     onExit: () -> Unit,
     soundManager: SoundManager
 ) {
-    val onExitWithMusic: () -> Unit = {
-        soundManager.playMenuMusic()
-        onExit()
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .paint(
-                painter = painterResource(R.drawable.finished_room),
-                contentScale = ContentScale.Crop
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .height(500.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0x99000000),
-                            Color(0xCC000000),
-                            Color(0x99000000)
-                        )
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "RACE FINISHED!",
-                    color = Color(0xFFFFA500),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily(Font(R.font.jersey25)),
-                    style = TextStyle(
-                        shadow = Shadow(
-                            color = Color(0xAAFF0000),
-                            offset = Offset(2f, 2f),
-                            blurRadius = 4f
-                        )
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "FINAL RESULTS",
-                    color = Color(0xFFFFA500),
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily(Font(R.font.jersey25)),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .background(
-                            color = Color(0x66000000),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(playerResults) { index, result ->
-                        PlayerResultItem(
-                            position = index + 1,
-                            playerName = result.playerName,
-                            finishTime = result.finishTime,
-                            isCurrentPlayer = result.isCurrentPlayer
-                        )
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                AnimatedButton(
-                    onClick = onRestart,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(60.dp),
-                    soundManager = soundManager
-                ) {
-                    Text(
-                        text = "REMATCH",
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                AnimatedButton(
-                    onClick = onExitWithMusic,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(60.dp),
-                    soundManager = soundManager
-                ) {
-                    Text(
-                        text = "RETURN TO MENU",
-                        fontSize = 22.sp,
-                        fontFamily = FontFamily(Font(R.font.jersey25)),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
+//    val onExitWithMusic: () -> Unit = {
+//        soundManager.playMenuMusic()
+//        onExit()
+//    }
+//
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .paint(
+//                painter = painterResource(R.drawable.finished_room),
+//                contentScale = ContentScale.Crop
+//            ),
+//        contentAlignment = Alignment.Center
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth(0.9f)
+//                .height(500.dp)
+//                .background(
+//                    brush = Brush.horizontalGradient(
+//                        colors = listOf(
+//                            Color(0x99000000),
+//                            Color(0xCC000000),
+//                            Color(0x99000000)
+//                        )
+//                    ),
+//                    shape = RoundedCornerShape(24.dp)
+//                )
+//                .padding(24.dp),
+//            horizontalArrangement = Arrangement.SpaceBetween,
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Column(
+//                modifier = Modifier.weight(1f),
+//                horizontalAlignment = Alignment.CenterHorizontally,
+//                verticalArrangement = Arrangement.Center
+//            ) {
+//                Text(
+//                    text = "RACE FINISHED!",
+//                    color = Color(0xFFFFA500),
+//                    fontSize = 28.sp,
+//                    fontWeight = FontWeight.Bold,
+//                    fontFamily = FontFamily(Font(R.font.jersey25)),
+//                    style = TextStyle(
+//                        shadow = Shadow(
+//                            color = Color(0xAAFF0000),
+//                            offset = Offset(2f, 2f),
+//                            blurRadius = 4f
+//                        )
+//                    )
+//                )
+//
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                Text(
+//                    text = "FINAL RESULTS",
+//                    color = Color(0xFFFFA500),
+//                    fontSize = 18.sp,
+//                    fontFamily = FontFamily(Font(R.font.jersey25)),
+//                    modifier = Modifier.padding(bottom = 8.dp)
+//                )
+//
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .height(200.dp)
+//                        .background(
+//                            color = Color(0x66000000),
+//                            shape = RoundedCornerShape(12.dp)
+//                        )
+//                        .padding(8.dp),
+//                    verticalArrangement = Arrangement.spacedBy(8.dp)
+//                ) {
+//                    itemsIndexed(playerResults) { index, result ->
+//                        PlayerResultItem(
+//                            position = index + 1,
+//                            playerName = result.playerName,
+//                            finishTime = result.finishTime,
+//                            isCurrentPlayer = result.isCurrentPlayer
+//                        )
+//                    }
+//                }
+//            }
+//
+//            Column(
+//                modifier = Modifier.weight(1f),
+//                horizontalAlignment = Alignment.CenterHorizontally,
+//                verticalArrangement = Arrangement.Center
+//            ) {
+//                AnimatedButton(
+//                    onClick = onRestart,
+//                    modifier = Modifier
+//                        .fillMaxWidth(0.8f)
+//                        .height(60.dp),
+//                    soundManager = soundManager
+//                ) {
+//                    Text(
+//                        text = "REMATCH",
+//                        fontSize = 22.sp,
+//                        fontFamily = FontFamily(Font(R.font.jersey25)),
+//                        fontWeight = FontWeight.Bold
+//                    )
+//                }
+//
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                AnimatedButton(
+//                    onClick = onExitWithMusic,
+//                    modifier = Modifier
+//                        .fillMaxWidth(0.8f)
+//                        .height(60.dp),
+//                    soundManager = soundManager
+//                ) {
+//                    Text(
+//                        text = "RETURN TO MENU",
+//                        fontSize = 22.sp,
+//                        fontFamily = FontFamily(Font(R.font.jersey25)),
+//                        fontWeight = FontWeight.Bold
+//                    )
+//                }
+//            }
+//        }
+//    }
 }
 
 @Composable

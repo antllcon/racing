@@ -170,6 +170,7 @@ fun AppNavHost(
                     args.playerName,
                     args.roomName,
                     args.isCreatingRoom,
+                    context,
                     navController,
                     gateway
                 )
