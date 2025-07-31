@@ -59,7 +59,6 @@ fun DrawScope.drawGameMap(
         if (!bonus.isActive && timeSinceSpawn > GameMap.Bonus.ANIMATION_DURATION) return@forEach
 
         val screenPos = gameCamera.worldToScreen(bonus.position)
-        // Уменьшаем размер бонуса в 5 раз
         val bonusSize = Size(cellSizePx.width / 5f, cellSizePx.height / 5f)
         val centerPos = screenPos + Offset(bonusSize.width / 2, bonusSize.height / 2)
 
@@ -88,7 +87,7 @@ fun DrawScope.drawGameMap(
                 drawImageBitmap(
                     imageBitmap = bonusTexture,
                     offset = screenPos,
-                    size = bonusSize // Используем уменьшенный размер
+                    size = bonusSize
                 )
             }
         }

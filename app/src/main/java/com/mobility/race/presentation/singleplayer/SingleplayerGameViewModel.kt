@@ -87,6 +87,7 @@ class SingleplayerGameViewModel(private val context: Context) :
 
     private fun movePlayer(elapsedTime: Float) {
         val speedModifier = getSpeedModifier()
+        val hasSizeBonus = stateValue.activeBonuses.containsKey(GameMap.Bonus.TYPE_SIZE)
 
         val carPos = stateValue.car.position
         val surfaceType = stateValue.gameMap.getTerrainType(carPos.x.toInt(), carPos.y.toInt())
@@ -99,7 +100,12 @@ class SingleplayerGameViewModel(private val context: Context) :
 
         modifyState { currentState ->
             currentState.copy(
-                car = currentState.car.update(elapsedTime, currentState.directionAngle, speedModifier)
+                car = currentState.car.update(
+                    elapsedTime = elapsedTime,
+                    directionAngle = currentState.directionAngle,
+                    speedModifier = speedModifier,
+                    hasSizeBonus = hasSizeBonus // Передаем информацию о бонусе
+                )
             )
         }
 
@@ -136,17 +142,9 @@ class SingleplayerGameViewModel(private val context: Context) :
             else -> 5000L
         }
 
-        val currentTime = System.currentTimeMillis()
-
         modifyState { state ->
-            val newBonuses = state.activeBonuses.toMutableMap().apply {
-                put(type, currentTime + duration)
-                if (type == GameMap.Bonus.TYPE_SIZE) {
-                    remove(GameMap.Bonus.TYPE_SIZE)
-                    put(GameMap.Bonus.TYPE_SIZE, currentTime + duration)
-                }
-            }
-            state.copy(activeBonuses = newBonuses)
+            state.copy(
+                activeBonuses = state.activeBonuses + (type to (System.currentTimeMillis() + duration)))
         }
 
         //soundManager.playBonusSound()

@@ -513,12 +513,14 @@ class GameMap(
             if (getTerrainType(x, y) == "ROAD" &&
                 !bonuses.any { it.position.x.toInt() == x && it.position.y.toInt() == y }) {
 
+                val centeredPosition = Offset(x.toFloat() + 0.5f, y.toFloat() + 0.5f)
+
                 val type = when(Random.nextInt(0, 100)) {
                     in 0..60 -> Bonus.TYPE_SPEED
                     else -> Bonus.TYPE_SIZE
                 }
 
-                bonuses.add(Bonus(type, Offset(x.toFloat(), y.toFloat())))
+                bonuses.add(Bonus(type, centeredPosition))
                 lastBonusSpawnTime = currentTime
                 return
             }

@@ -167,8 +167,8 @@ fun SingleplayerGameScreen(
                         ) / 2
                     ),
                     Size(
-                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size),
-                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size)
+                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * state.car.sizeModifier,
+                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * state.car.sizeModifier
                     )
                 )
             }

@@ -42,8 +42,7 @@ data class Car(
         const val DIRECTION_UP = (3 * PI / 2).toFloat()
         const val SIZE_TRANSITION_SPEED = 2f
     }
-    fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
-        // Update size transition
+    fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float, hasSizeBonus: Boolean = false): Car {
         val sizeTransitionSpeed = SIZE_TRANSITION_SPEED * elapsedTime
         sizeTransitionProgress = when {
             sizeTransitionProgress < 1f -> (sizeTransitionProgress + sizeTransitionSpeed).coerceAtMost(1f)
@@ -71,7 +70,7 @@ data class Car(
             isStarting = starting,
             wasStopped = newSpeed <= MIN_SPEED,
             sizeModifier = currentSizeModifier,
-            targetSizeModifier = if (speedModifier > 1.0f) 1.5f else 1f,
+            targetSizeModifier = if (hasSizeBonus) 2.0f else 1f,
             sizeTransitionProgress = sizeTransitionProgress
         )
     }
