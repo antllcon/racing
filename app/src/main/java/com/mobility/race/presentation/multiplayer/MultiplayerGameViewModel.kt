@@ -205,7 +205,7 @@ class MultiplayerGameViewModel(
     }
 
     private fun updateActivePlayerId() {
-        if (stateValue.players[currentActivePlayerId].isFinished) {
+        if (currentActivePlayerId >= stateValue.players.size || stateValue.players[currentActivePlayerId].isFinished) {
             for (i in 0 until stateValue.players.size) {
                 if (!stateValue.players[i].isFinished) {
                     currentActivePlayerId = i
