@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
 import com.mobility.race.data.StarterPack
+import com.mobility.race.domain.Bonus
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.ControllingStick
@@ -18,9 +19,11 @@ data class MultiplayerGameState(
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
     val lapsCompleted: Int,
-    val directionAngle: Float?
+    val directionAngle: Float?,
+    val bonuses: List<Bonus>
 ) {
     companion object {
+        private const val DEFAULT_BONUS_COUNT = 5
         fun default(
             name: String,
             playerNames: Array<String>,
@@ -39,7 +42,6 @@ data class MultiplayerGameState(
                 } else {
                     Car.DIRECTION_RIGHT
                 }
-
 
             val mainPlayer = Player(
                 Car(
@@ -70,18 +72,21 @@ data class MultiplayerGameState(
             val checkpointManager = CheckpointManager(newRouteList)
             checkpointManager.registerCar(mainPlayer.car.id)
 
+            val gameMap = GameMap(
+                grid = starterPack.mapGrid,
+                width = starterPack.mapWidth,
+                height = starterPack.mapHeight,
+                startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
+                startDirection = starterPack.startDirection,
+                route = newRouteList,
+                bonuses = GameMap.generateBonuses(starterPack.mapGrid, DEFAULT_BONUS_COUNT)
+            )
+
             return MultiplayerGameState(
                 countdown = 5,
                 mainPlayer = mainPlayer,
                 players = players,
-                gameMap = GameMap(
-                    grid = starterPack.mapGrid,
-                    width = starterPack.mapWidth,
-                    height = starterPack.mapHeight,
-                    startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
-                    startDirection = starterPack.startDirection,
-                    route = newRouteList
-                ),
+                gameMap = gameMap,
                 gameCamera = GameCamera(
                     position = mainPlayer.car.position,
                     mapWidth = starterPack.mapWidth,
@@ -91,10 +96,10 @@ data class MultiplayerGameState(
                 checkpointManager = checkpointManager,
                 isGameRunning = true,
                 lapsCompleted = 0,
-                directionAngle = null
+                directionAngle = null,
+                bonuses = gameMap.bonuses
             )
         }
-
 
         private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1

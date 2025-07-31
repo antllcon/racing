@@ -89,32 +89,43 @@ class MultiplayerGameViewModel(
     private fun movePlayers(elapsedTime: Float) {
         var newPlayersCopy: List<Player> = emptyList()
         var updatedMainPlayer: Player? = null
+        val newBonuses = stateValue.bonuses.toMutableList()
 
         for (player in stateValue.players) {
-            val speedModifier = stateValue.gameMap.getSpeedModifier(player.car.position)
-            var newCar: Car
+            var updatedCar = player.car.copy()
+
+            updatedCar = updatedCar.updateBonuses(elapsedTime)
+
+            val terrainModifier = stateValue.gameMap.getSpeedModifier(updatedCar.position)
+            val totalSpeedModifier = terrainModifier * updatedCar.speedModifier
 
             if (!player.isFinished) {
-                if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
-                    newCar = player.car.update(elapsedTime, player.car.visualDirection, speedModifier)
-                } else {
-                    val updatedCarForMainPlayer =
-                        player.car.update(elapsedTime, stateValue.directionAngle, speedModifier)
-                    updatedMainPlayer = player.copy(car = updatedCarForMainPlayer)
-                    newCar = updatedCarForMainPlayer
+                stateValue.gameMap.checkBonusCollision(updatedCar.position)?.let { bonus ->
+                    updatedCar = updatedCar.applyBonus(bonus)
+                    newBonuses.remove(bonus)
                 }
-            } else {
-                newCar = player.car
+
+                updatedCar = if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
+                    updatedCar.update(elapsedTime, updatedCar.visualDirection, totalSpeedModifier)
+                } else {
+                    val mainCar = updatedCar.update(
+                        elapsedTime,
+                        stateValue.directionAngle,
+                        totalSpeedModifier
+                    )
+                    updatedMainPlayer = player.copy(car = mainCar)
+                    mainCar
+                }
             }
 
-            newPlayersCopy = newPlayersCopy.plus(player.copy(car = newCar))
+            newPlayersCopy = newPlayersCopy.plus(player.copy(car = updatedCar))
         }
-
 
         modifyState {
             copy(
                 players = newPlayersCopy,
-                mainPlayer = updatedMainPlayer ?: mainPlayer
+                mainPlayer = updatedMainPlayer ?: mainPlayer,
+                bonuses = newBonuses
             )
         }
     }
