@@ -253,11 +253,13 @@ fun AppNavHost(
                     navController.navigate(MultiplayerMenuScreen) {
                         popUpTo(MultiplayerMenuScreen) { inclusive = true }
                     }
+                    PlayerResultStorage.results = emptyList()
                 },
                 onExit = {
                     navController.navigate(route = Menu) {
                         popUpTo(Menu) { inclusive = true }
                     }
+                    PlayerResultStorage.results = emptyList()
                 },
                 soundManager = soundManager
             )

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mobility.race.domain.Car
-import com.mobility.race.presentation.SingleplayerGameViewModelFactory
+import com.mobility.race.di.SingleplayerGameViewModelFactory
 import com.mobility.race.presentation.singleplayer.SingleplayerGameViewModel
 import com.mobility.race.ui.ModernBackButton
 import com.mobility.race.ui.drawUtils.bitmapStorage

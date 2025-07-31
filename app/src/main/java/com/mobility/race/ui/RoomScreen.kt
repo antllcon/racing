@@ -65,7 +65,7 @@ fun RoomScreen(
                 .padding(32.dp)
         ) {
             Text(
-                text = "Room Code: ${state.roomId}",
+                text = "Room Name: ${state.roomName}",
                 fontSize = 24.sp,
                 color = Color(0xFFFFA500),
                 fontFamily = FontFamily(Font(R.font.jersey25)),
@@ -155,6 +155,22 @@ fun RoomScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
+            } else {
+                Text(
+                    text = "Wait for the game to start!",
+                    fontSize = 24.sp,
+                    color = Color(0xFFFFA500),
+                    fontFamily = FontFamily(Font(R.font.jersey25)),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 32.dp),
+                    style = androidx.compose.ui.text.TextStyle(
+                        shadow = Shadow(
+                            color = Color(0xAA000000),
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
             }
         }
     }

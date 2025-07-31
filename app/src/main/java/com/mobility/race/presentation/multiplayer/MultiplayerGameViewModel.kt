@@ -323,11 +323,20 @@ class MultiplayerGameViewModel(
                     PlayerResultStorage.results = PlayerResultStorage.results.plus(thisPlayerResult)
                 }
 
-                gameCycle?.cancel()
                 gateway.disconnect()
                 onFinish()
+                soundManager.stopSurfaceSound()
+                soundManager.release()
             }
             else -> Unit
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.release()
     }
 }
