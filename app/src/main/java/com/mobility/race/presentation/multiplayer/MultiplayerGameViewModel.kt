@@ -2,6 +2,8 @@ package com.mobility.race.presentation.multiplayer
 
 import SoundManager
 import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -10,6 +12,7 @@ import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.GameStopResponse
 import com.mobility.race.data.IGateway
+import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
@@ -32,7 +35,6 @@ class MultiplayerGameViewModel(
     playerNames: Array<String>,
     carSpriteId: String,
     private val context: Context,
-    private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<MultiplayerGameState>(
     MultiplayerGameState.default(
@@ -47,8 +49,9 @@ class MultiplayerGameViewModel(
     private var gameCycle: Job? = null
     private var elapsedTime: Float = 0f
     private val TAG = "MultiplayerGameViewModel"
-    private var soundManager: SoundManager
+    var soundManager: SoundManager
     var onFinish: () -> Unit = {}
+    var onError: () -> Unit = {}
 
     private val targetPlayerPositions: MutableMap<String, Offset> = mutableMapOf()
     private val targetPlayerDirections: MutableMap<String, Float> = mutableMapOf()
@@ -76,6 +79,12 @@ class MultiplayerGameViewModel(
         }
         // Логируем ввод с джойстика
 //        Log.d(TAG, "Joystick direction angle set to: $newAngle")
+    }
+
+    fun disconnect() {
+        viewModelScope.launch {
+            gateway.disconnect()
+        }
     }
 
     private fun startGame() {
@@ -192,6 +201,8 @@ class MultiplayerGameViewModel(
                     currentActivePlayerId = i
                     break
                 }
+
+                println(i)
             }
         }
 
@@ -214,8 +225,25 @@ class MultiplayerGameViewModel(
     private suspend fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
-                println("Server Error: ${message.message}")
+                Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
+                onError()
             }
+            is PlayerDisconnectedResponse -> {
+                var newPlayersList = emptyList<Player>()
+
+                for (player in stateValue.players) {
+                    if (player.car.playerName != message.playerId) {
+                        newPlayersList = newPlayersList.plus(player)
+                    }
+                }
+
+                modifyState {
+                    copy(
+                        players = newPlayersList
+                    )
+                }
+            }
+
             is GameCountdownUpdateResponse -> {
                 modifyState {
                     copy(
@@ -253,7 +281,6 @@ class MultiplayerGameViewModel(
                             }.toList()
 
                         } else {
-
                             val serverPos = Offset(playerDto.posX, playerDto.posY)
                             val currentClientPos = stateValue.mainPlayer.car.position
 
@@ -313,7 +340,7 @@ class MultiplayerGameViewModel(
                 for ((playerName, playerTime) in message.result) {
                     val thisPlayerResult = PlayerResult(
                         playerName = playerName,
-                        finishTime = playerTime.toLong(),
+                        finishTime = (playerTime * 1000).toLong(),
                         isCurrentPlayer = playerName == stateValue.mainPlayer.car.playerName
                     )
 
@@ -321,11 +348,20 @@ class MultiplayerGameViewModel(
                     PlayerResultStorage.results = PlayerResultStorage.results.plus(thisPlayerResult)
                 }
 
-                gameCycle?.cancel()
                 gateway.disconnect()
                 onFinish()
+                soundManager.stopSurfaceSound()
+                soundManager.release()
             }
             else -> Unit
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.release()
     }
 }

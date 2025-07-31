@@ -14,7 +14,7 @@ class SingleplayerGameViewModel(private val context: Context) :
 
     private var gameCycle: Job? = null
     private var carId: String = ((1..6).random().toString())
-    private lateinit var soundManager: SoundManager
+    lateinit var soundManager: SoundManager
     private var previousSpeed: Float = 0f
     private var currentSurface: String = "ROAD"
     private var lastSurfaceUpdateTime = 0L

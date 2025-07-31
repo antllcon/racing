@@ -16,7 +16,6 @@ class MultiplayerGameViewModelFactory(
     private val playerNames: Array<String>,
     private val carSpriteId: String,
     private val context: Context,
-    private val navController: NavController,
     private val gateway: IGateway
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
@@ -28,7 +27,6 @@ class MultiplayerGameViewModelFactory(
                 playerNames,
                 carSpriteId,
                 context,
-                navController,
                 gateway
             ) as T
         }

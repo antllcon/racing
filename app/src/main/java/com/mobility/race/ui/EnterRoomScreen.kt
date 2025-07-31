@@ -225,7 +225,7 @@ fun AnimatedOutlinedTextField(
                 shape = RoundedCornerShape(12.dp)
             ),
         keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Characters,
+//            capitalization = KeyboardCapitalization.Characters,
             keyboardType = KeyboardType.Text
         ),
         textStyle = TextStyle(

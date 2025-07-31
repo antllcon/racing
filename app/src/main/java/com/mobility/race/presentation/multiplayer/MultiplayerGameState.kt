@@ -61,6 +61,8 @@ data class MultiplayerGameState(
                 )
             }
 
+            println(players)
+
             val checkpointManager = CheckpointManager(newRouteList)
             checkpointManager.registerCar(mainPlayer.car.id)
 
