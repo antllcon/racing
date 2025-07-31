@@ -104,7 +104,7 @@ class SingleplayerGameViewModel(private val context: Context) :
                     elapsedTime = elapsedTime,
                     directionAngle = currentState.directionAngle,
                     speedModifier = speedModifier,
-                    hasSizeBonus = hasSizeBonus // Передаем информацию о бонусе
+                    hasSizeBonus = hasSizeBonus
                 )
             )
         }
@@ -147,7 +147,7 @@ class SingleplayerGameViewModel(private val context: Context) :
                 activeBonuses = state.activeBonuses + (type to (System.currentTimeMillis() + duration)))
         }
 
-        //soundManager.playBonusSound()
+        soundManager.playBonusSound()
     }
     private fun updateSurfaceSound(surfaceType: String, carSpeed: Float) {
         if (surfaceType != currentSurface) {

@@ -26,7 +26,7 @@ class MultiplayerGameViewModel(
         name = playerId,
         playerNames = playerNames,
         carSpriteId = carSpriteId,
-        starterPack = gateway.openGatewayStorage()
+        starterPack = gateway.openStarterGatewayStorage()
     )
 ) {
     private var gameCycle: Job? = null

@@ -19,8 +19,7 @@ data class MultiplayerGameState(
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
     val lapsCompleted: Int,
-    val directionAngle: Float?,
-    val bonuses: List<Bonus>
+    val directionAngle: Float?
 ) {
     companion object {
         private const val DEFAULT_BONUS_COUNT = 5
@@ -79,7 +78,7 @@ data class MultiplayerGameState(
                 startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
                 startDirection = starterPack.startDirection,
                 route = newRouteList,
-                bonuses = GameMap.generateBonuses(starterPack.mapGrid, DEFAULT_BONUS_COUNT)
+                //bonuses = GameMap.generateBonuses(starterPack.mapGrid, DEFAULT_BONUS_COUNT)
             )
 
             return MultiplayerGameState(
@@ -96,8 +95,8 @@ data class MultiplayerGameState(
                 checkpointManager = checkpointManager,
                 isGameRunning = true,
                 lapsCompleted = 0,
-                directionAngle = null,
-                bonuses = gameMap.bonuses
+                directionAngle = null
+               // bonuses = gameMap.bonuses
             )
         }
 
