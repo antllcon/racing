@@ -185,6 +185,7 @@ fun MultiplayerGameScreen(
 
         ModernBackButton(
             onClick = {
+                viewModel.disconnect()
                 onBack()
             },
             modifier = Modifier

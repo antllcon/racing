@@ -12,6 +12,7 @@ import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
 import com.mobility.race.data.GameStopResponse
 import com.mobility.race.data.IGateway
+import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
@@ -78,6 +79,12 @@ class MultiplayerGameViewModel(
         }
         // Логируем ввод с джойстика
 //        Log.d(TAG, "Joystick direction angle set to: $newAngle")
+    }
+
+    fun disconnect() {
+        viewModelScope.launch {
+            gateway.disconnect()
+        }
     }
 
     private fun startGame() {
@@ -221,6 +228,22 @@ class MultiplayerGameViewModel(
                 Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
                 onError()
             }
+            is PlayerDisconnectedResponse -> {
+                var newPlayersList = emptyList<Player>()
+
+                for (player in stateValue.players) {
+                    if (player.car.playerName != message.playerId) {
+                        newPlayersList = newPlayersList.plus(player)
+                    }
+                }
+
+                modifyState {
+                    copy(
+                        players = newPlayersList
+                    )
+                }
+            }
+
             is GameCountdownUpdateResponse -> {
                 modifyState {
                     copy(
