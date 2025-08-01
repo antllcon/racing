@@ -14,8 +14,6 @@ import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
-import com.mobility.race.domain.Car
-import com.mobility.race.domain.CollisionManager
 import com.mobility.race.presentation.BaseViewModel
 import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
@@ -23,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlin.math.PI
 
 class MultiplayerGameViewModel(
     playerId: String,
@@ -47,10 +46,11 @@ class MultiplayerGameViewModel(
     var onFinish: () -> Unit = {}
     var onError: () -> Unit = {}
 
-    private val targetPlayerPositions: MutableMap<String, Offset> = mutableMapOf()
-    private val targetPlayerDirections: MutableMap<String, Float> = mutableMapOf()
+    private val targetPlayerPositions = mutableMapOf<String, Offset>()
+    private val targetPlayerDirections = mutableMapOf<String, Float>()
+    private val targetPlayerSpeeds = mutableMapOf<String, Float>()
 
-    private val INTERPOLATION_FACTOR = 0.2f
+    private val INTERPOLATION_FACTOR = 0.15f
     private val POSITION_TOLERANCE = 0.5f
     private val CORRECTION_SPEED = 1.0f
 
@@ -71,8 +71,6 @@ class MultiplayerGameViewModel(
                 directionAngle = newAngle
             )
         }
-        // Логируем ввод с джойстика
-//        Log.d(TAG, "Joystick direction angle set to: $newAngle")
     }
 
     fun disconnect() {
@@ -89,7 +87,6 @@ class MultiplayerGameViewModel(
                 val currentTime = System.currentTimeMillis()
                 elapsedTime = (currentTime - lastTime) / 1000f
 
-                CollisionManager.checkAndResolveCollisions(stateValue.mainPlayer, stateValue.players)
                 movePlayers(elapsedTime)
                 if (stateValue.players.isNotEmpty()) {
                     moveCamera()
@@ -107,48 +104,56 @@ class MultiplayerGameViewModel(
     }
 
     private fun movePlayers(elapsedTime: Float) {
-        var playersCopy: List<Player> = emptyList()
-        var mainPlayerCopy: Player? = null
+        val newPlayersList = stateValue.players.map { player ->
+            var updatedCar = player.car
+            val speedModifier = stateValue.gameMap.getSpeedModifier(position = player.car.position)
 
-        for (player: Player in stateValue.players) {
-            val speedModifier: Float = stateValue.gameMap.getSpeedModifier(position = player.car.position)
-            var updatedCar: Car
-
-            if (player.isFinished) {
-                updatedCar = player.car
-            } else {
-                if (player.car.playerName != stateValue.mainPlayer.car.playerName) {
-                    val targetPosition = targetPlayerPositions[player.car.playerName]
-                    val targetDirection = targetPlayerDirections[player.car.playerName]
-
-                    if (targetPosition != null && targetDirection != null) {
-                        val interpolatedX = player.car.position.x + (targetPosition.x - player.car.position.x) * INTERPOLATION_FACTOR
-                        val interpolatedY = player.car.position.y + (targetPosition.y - player.car.position.y) * INTERPOLATION_FACTOR
-
-                        val interpolatedDirection = player.car.direction + (targetDirection - player.car.direction) * INTERPOLATION_FACTOR
-
-                        updatedCar = player.car.update(
-                            elapsedTime = elapsedTime,
-                            directionAngle = interpolatedDirection,
-                            speedModifier = speedModifier
-                        ).setNewPosition(Offset(interpolatedX, interpolatedY))
-                    } else {
-                        updatedCar = player.car.update(elapsedTime, directionAngle = player.car.direction, speedModifier)
-                    }
-                } else {
-                    val updatedCarForMainPlayer: Car = player.car.update(elapsedTime, directionAngle = stateValue.directionAngle, speedModifier)
-                    mainPlayerCopy = player.copy(car = updatedCarForMainPlayer)
-                    updatedCar = updatedCarForMainPlayer
-                }
+            // Предсказание для своей машины на основе ввода
+            if (player.car.playerName == stateValue.mainPlayer.car.playerName && !player.isFinished) {
+                updatedCar = player.car.update(
+                    elapsedTime = elapsedTime,
+                    directionAngle = stateValue.directionAngle,
+                    speedModifier = speedModifier
+                )
             }
 
-            playersCopy = playersCopy.plus(element = player.copy(car = updatedCar))
+            // Интерполяция к серверному состоянию для всех машин
+            val targetPosition = targetPlayerPositions[player.car.playerName]
+            val targetDirection = targetPlayerDirections[player.car.playerName]
+            val targetSpeed = targetPlayerSpeeds[player.car.playerName]
+
+            if (targetPosition != null && targetDirection != null && targetSpeed != null) {
+                // Интерполируем позицию
+                val interpolatedX = updatedCar.position.x + (targetPosition.x - updatedCar.position.x) * INTERPOLATION_FACTOR
+                val interpolatedY = updatedCar.position.y + (targetPosition.y - updatedCar.position.y) * INTERPOLATION_FACTOR
+                val newPosition = Offset(interpolatedX, interpolatedY)
+
+                // Интерполируем угол для плавного поворота
+                var angleDiff = targetDirection - updatedCar.visualDirection
+                while (angleDiff <= -PI) angleDiff += (2 * PI).toFloat()
+                while (angleDiff > PI) angleDiff -= (2 * PI).toFloat()
+                val newVisualDirection = updatedCar.visualDirection + angleDiff * INTERPOLATION_FACTOR
+
+                // Интерполируем скорость
+                val newSpeed = updatedCar.speed + (targetSpeed - updatedCar.speed) * INTERPOLATION_FACTOR
+
+                updatedCar = updatedCar.copy(
+                    position = newPosition,
+                    visualDirection = newVisualDirection,
+                    speed = newSpeed
+                )
+            }
+
+            player.copy(car = updatedCar)
         }
+
+        // Находим обновленного mainPlayer для камеры и других систем
+        val newMainPlayer = newPlayersList.find { it.car.playerName == stateValue.mainPlayer.car.playerName } ?: stateValue.mainPlayer
 
         modifyState {
             copy(
-                players = playersCopy,
-                mainPlayer = mainPlayerCopy ?: mainPlayer
+                players = newPlayersList,
+                mainPlayer = newMainPlayer
             )
         }
     }
@@ -224,6 +229,7 @@ class MultiplayerGameViewModel(
                 Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
                 onError()
             }
+
             is PlayerDisconnectedResponse -> {
                 var newPlayersList = emptyList<Player>()
 
@@ -251,83 +257,17 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
-                var newPlayersList: List<Player> = stateValue.players.toList()
-                var updatedMainPlayerFromResponse: Player? = null
-
                 message.players.forEach { playerDto ->
-                    val existingPlayerIndex: Int =
-                        newPlayersList.indexOfFirst { it.car.playerName == playerDto.id }
+                    targetPlayerPositions[playerDto.id] = Offset(playerDto.posX, playerDto.posY)
+                    targetPlayerDirections[playerDto.id] = playerDto.visualDirection
+                    targetPlayerSpeeds[playerDto.id] = playerDto.speed // Добавим целевую скорость
 
-                    if (existingPlayerIndex != -1) {
-                        val existingPlayer = newPlayersList[existingPlayerIndex]
-
-                        if (existingPlayer.car.playerName != stateValue.mainPlayer.car.playerName) {
-
-                            targetPlayerPositions[playerDto.id] = Offset(playerDto.posX, playerDto.posY)
-                            targetPlayerDirections[playerDto.id] = playerDto.visualDirection
-
-                            val newCar = existingPlayer.car.copy(
-                                visualDirection = playerDto.visualDirection,
-                                speed = playerDto.speed
-                            )
-                            val updatedPlayer = existingPlayer.copy(
-                                car = newCar,
-                                isFinished = playerDto.isFinished
-                            )
-                            newPlayersList = newPlayersList.toMutableList().apply {
-                                set(existingPlayerIndex, updatedPlayer)
-                            }.toList()
-
-                        } else {
-                            val serverPos = Offset(playerDto.posX, playerDto.posY)
-                            val currentClientPos = stateValue.mainPlayer.car.position
-
-                            val distanceDiff = (serverPos - currentClientPos).getDistance()
-
-                            if (distanceDiff > POSITION_TOLERANCE) {
-                                val correctionVector = (serverPos - currentClientPos) / distanceDiff
-                                val correctedX = currentClientPos.x + correctionVector.x * CORRECTION_SPEED * elapsedTime
-                                val correctedY = currentClientPos.y + correctionVector.y * CORRECTION_SPEED * elapsedTime
-
-                                val newCar = existingPlayer.car.copy(
-                                    position = Offset(correctedX, correctedY),
-                                    direction = playerDto.direction,
-                                    visualDirection = playerDto.visualDirection,
-                                    speed = playerDto.speed
-                                )
-                                val updatedPlayer = existingPlayer.copy(
-                                    car = newCar,
-                                    isFinished = playerDto.isFinished
-                                )
-                                newPlayersList = newPlayersList.toMutableList().apply {
-                                    set(existingPlayerIndex, updatedPlayer)
-                                }.toList()
-                                updatedMainPlayerFromResponse = updatedPlayer
-
-                            } else {
-                                val newCar = existingPlayer.car.copy(
-                                    direction = playerDto.direction,
-                                    visualDirection = playerDto.visualDirection,
-                                    speed = playerDto.speed
-                                )
-                                val updatedPlayer = existingPlayer.copy(
-                                    car = newCar,
-                                    isFinished = playerDto.isFinished
-                                )
-                                newPlayersList = newPlayersList.toMutableList().apply {
-                                    set(existingPlayerIndex, updatedPlayer)
-                                }.toList()
-                                updatedMainPlayerFromResponse = updatedPlayer
-                            }
-                        }
+                    val playerIndex = stateValue.players.indexOfFirst { it.car.playerName == playerDto.id }
+                    if (playerIndex != -1) {
+                        val playersCopy = stateValue.players.toMutableList()
+                        playersCopy[playerIndex] = playersCopy[playerIndex].copy(isFinished = playerDto.isFinished)
+                        modifyState { copy(players = playersCopy) }
                     }
-                }
-
-                modifyState {
-                    copy(
-                        players = newPlayersList,
-                        mainPlayer = updatedMainPlayerFromResponse ?: mainPlayer
-                    )
                 }
             }
 
@@ -354,6 +294,7 @@ class MultiplayerGameViewModel(
                 soundManager.stopSurfaceSound()
                 soundManager.release()
             }
+
             else -> Unit
         }
     }
