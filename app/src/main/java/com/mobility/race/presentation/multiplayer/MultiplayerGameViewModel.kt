@@ -4,7 +4,6 @@ import SoundManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Paint
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
@@ -120,6 +119,7 @@ class MultiplayerGameViewModel(
             var updatedCar = player.car
             val speedModifier = stateValue.gameMap.getSpeedModifier(position = player.car.position)
 
+
             // Предсказание для своей машины на основе ввода
             if (player.car.playerName == stateValue.mainPlayer.car.playerName && !player.isFinished) {
                 updatedCar = player.car.update(
@@ -214,6 +214,7 @@ class MultiplayerGameViewModel(
             )
         }
     }
+
 
     private fun updateActivePlayerId() {
         if (currentActivePlayerId >= stateValue.players.size || stateValue.players[currentActivePlayerId].isFinished) {

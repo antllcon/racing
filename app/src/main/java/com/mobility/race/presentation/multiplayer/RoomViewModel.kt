@@ -36,8 +36,8 @@ class RoomViewModel(
     }
 
     fun startGame() {
-        modifyState { currentState ->  // Явно указываем параметр состояния
-            currentState.copy(
+        modifyState {
+            copy(
                 isGameStarted = true
             )
         }
@@ -72,6 +72,7 @@ class RoomViewModel(
                 Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
             }
+
             is PlayerDisconnectedResponse -> {
                 var newPlayersList = emptyArray<String>()
 
@@ -87,27 +88,31 @@ class RoomViewModel(
                     )
                 }
             }
+
             is RoomCreatedResponse -> {
-                modifyState { currentState ->  // Явно указываем параметр состояния
-                    currentState.copy(
+                modifyState {
+                    copy(
                         roomId = message.roomId
                     )
                 }
             }
+
             is JoinedRoomResponse -> {
-                modifyState { currentState ->  // Явно указываем параметр состояния
-                    currentState.copy(
+                modifyState {
+                    copy(
                         roomId = message.roomId
                     )
                 }
             }
+
             is PlayerConnectedResponse -> {
-                modifyState { currentState ->  // Явно указываем параметр состояния
-                    currentState.copy(
+                modifyState {
+                    copy(
                         playerNames = message.playerNames
                     )
                 }
             }
+
             is StartedGameResponse -> {
                 gateway.fillGatewayStorage(message.starterPack)
 
@@ -120,12 +125,15 @@ class RoomViewModel(
                     carSpriteId++
                 }
 
-                navController.navigate(route = MultiplayerGame(
-                    stateValue.playerName,
-                    stateValue.playerNames,
-                    carSpriteId.toString()
-                ))
+                navController.navigate(
+                    route = MultiplayerGame(
+                        stateValue.playerName,
+                        stateValue.playerNames,
+                        carSpriteId.toString()
+                    )
+                )
             }
+
             else -> Unit
         }
     }

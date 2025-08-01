@@ -33,8 +33,8 @@ class SingleplayerGameViewModel(private val context: Context) :
             soundManager = SoundManager(context)
             soundManager.playBackgroundMusic()
         } catch (e: Exception) {
-            modifyState { currentState ->
-                currentState.copy(isGameRunning = false)
+            modifyState {
+                copy(isGameRunning = false)
             }
             return
         }
@@ -68,8 +68,8 @@ class SingleplayerGameViewModel(private val context: Context) :
 
                 val expired = stateValue.activeBonuses.filter { it.value <= currentTime }.keys
                 if (expired.isNotEmpty()) {
-                    modifyState { state ->
-                        state.copy(activeBonuses = state.activeBonuses - expired)
+                    modifyState {
+                        copy(activeBonuses = activeBonuses - expired)
                     }
                 }
 
@@ -98,11 +98,11 @@ class SingleplayerGameViewModel(private val context: Context) :
             lastSurfaceUpdateTime = currentTime
         }
 
-        modifyState { currentState ->
-            currentState.copy(
-                car = currentState.car.update(
+        modifyState {
+            copy(
+                car = car.update(
                     elapsedTime = elapsedTime,
-                    directionAngle = currentState.directionAngle,
+                    directionAngle = directionAngle,
                     speedModifier = speedModifier,
                     hasSizeBonus = hasSizeBonus
                 )
@@ -117,6 +117,7 @@ class SingleplayerGameViewModel(private val context: Context) :
         checkBonuses()
         previousSpeed = currentSpeed
     }
+
     private fun checkBonuses() {
         val car = stateValue.car
         val carCellX = car.position.x.toInt()
@@ -126,7 +127,8 @@ class SingleplayerGameViewModel(private val context: Context) :
         stateValue.gameMap.getBonuses().forEach { bonus ->
             if (bonus.isActive &&
                 carCellX == bonus.position.x.toInt() &&
-                carCellY == bonus.position.y.toInt()) {
+                carCellY == bonus.position.y.toInt()
+            ) {
 
                 bonus.isActive = false
                 bonus.spawnTime = currentTime
@@ -136,19 +138,21 @@ class SingleplayerGameViewModel(private val context: Context) :
     }
 
     private fun applyBonus(type: String) {
-        val duration = when(type) {
+        val duration = when (type) {
             GameMap.Bonus.TYPE_SPEED -> 5000L
             GameMap.Bonus.TYPE_SIZE -> 7000L
             else -> 5000L
         }
 
-        modifyState { state ->
-            state.copy(
-                activeBonuses = state.activeBonuses + (type to (System.currentTimeMillis() + duration)))
+        modifyState {
+            copy(
+                activeBonuses = activeBonuses + (type to (System.currentTimeMillis() + duration))
+            )
         }
 
         soundManager.playBonusSound()
     }
+
     private fun updateSurfaceSound(surfaceType: String, carSpeed: Float) {
         if (surfaceType != currentSurface) {
             currentSurface = surfaceType
@@ -177,8 +181,8 @@ class SingleplayerGameViewModel(private val context: Context) :
 
             val newLaps = manager.getLapsForCar(carId)
             if (newLaps != stateValue.lapsCompleted) {
-                modifyState { currentState ->
-                    currentState.copy(lapsCompleted = newLaps)
+                modifyState {
+                    copy(lapsCompleted = newLaps)
                 }
             }
 
@@ -189,28 +193,28 @@ class SingleplayerGameViewModel(private val context: Context) :
     }
 
     private fun moveCamera() {
-        modifyState { currentState ->
-            currentState.copy(
-                gameCamera = currentState.gameCamera.update(currentState.car.position)
+        modifyState {
+            copy(
+                gameCamera = gameCamera.update(car.position)
             )
         }
     }
 
     fun setDirectionAngle(angle: Float?) {
-        modifyState { currentState ->
-            currentState.copy(
+        modifyState {
+            copy(
                 directionAngle = angle
             )
         }
     }
 
     private fun endRace() {
-        modifyState { currentState ->
-            currentState.copy(
+        modifyState {
+            copy(
                 isGameRunning = false,
                 isRaceFinished = true,
                 finishTime = System.currentTimeMillis(),
-                raceTime = System.currentTimeMillis() - currentState.startTime
+                raceTime = System.currentTimeMillis() - startTime
             )
         }
         gameCycle?.cancel()

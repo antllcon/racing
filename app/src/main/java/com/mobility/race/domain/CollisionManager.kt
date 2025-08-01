@@ -1,7 +1,7 @@
 package com.mobility.race.domain
 
-import androidx.compose.ui.geometry.Offset
 import com.mobility.race.presentation.multiplayer.Player
+import androidx.compose.ui.geometry.Offset
 import kotlin.math.cos
 import kotlin.math.sin
 
