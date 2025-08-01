@@ -5,9 +5,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameState
 import kotlin.math.PI
@@ -30,8 +27,8 @@ fun DrawScope.drawCars(state: MultiplayerGameState, bitmaps: Map<String, ImageBi
                         ) / 2
                     ),
                     Size(
-                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * 1.3f,
-                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * 1.3f
+                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size),
+                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size)
                     )
                 )
             }
