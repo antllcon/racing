@@ -121,8 +121,6 @@ class MultiplayerGameViewModel(
             var updatedCar = player.car
             val speedModifier = stateValue.gameMap.getSpeedModifier(position = player.car.position)
 
-
-            // Предсказание для своей машины на основе ввода
             if (player.car.playerName == stateValue.mainPlayer.car.playerName && !player.isFinished) {
                 updatedCar = player.car.update(
                     elapsedTime = elapsedTime,
@@ -275,10 +273,6 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
-                println("Получено ${message.bonuses.size} бонусов с сервера.")
-                message.bonuses.forEach { bonusDto ->
-                    println("Бонус DTO: id=${bonusDto.id}, type=${bonusDto.type}, isActive=${bonusDto.isActive}, pos=(${bonusDto.posX}, ${bonusDto.posY})")
-                }
 
                 message.players.forEach { playerDto ->
                     targetPlayerPositions[playerDto.id] = Offset(playerDto.posX, playerDto.posY)
