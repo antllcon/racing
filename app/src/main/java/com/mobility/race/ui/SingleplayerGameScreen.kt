@@ -159,7 +159,7 @@ fun SingleplayerGameScreen(
                 bitmaps
             )
 
-            drawMinimap(state.gameMap, state.car, listOf(state.car),state.isRaceFinished,state.checkpointManager)
+            drawMinimap(state.gameMap, state.car, mapOf(Pair(state.car, state.isRaceFinished)),state.isRaceFinished,state.checkpointManager)
 
             drawControllingStick(
                 state.controllingStick,

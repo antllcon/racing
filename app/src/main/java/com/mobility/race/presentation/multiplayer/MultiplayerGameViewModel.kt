@@ -4,6 +4,7 @@ import SoundManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Paint
 import androidx.lifecycle.viewModelScope
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
@@ -80,11 +81,11 @@ class MultiplayerGameViewModel(
         }
     }
 
-    fun getCars(): List<Car> {
-        var cars = emptyList<Car>()
+    fun getCars(): Map<Car, Boolean> {
+        var cars = emptyMap<Car, Boolean>()
 
         stateValue.players.forEach {
-            cars = cars.plus(it.car)
+            cars = cars.plus(Pair(it.car, it.isFinished))
         }
 
         return cars
