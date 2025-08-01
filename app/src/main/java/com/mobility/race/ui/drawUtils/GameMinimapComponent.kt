@@ -15,6 +15,8 @@ import kotlin.math.min
 fun DrawScope.drawMinimap(
     map: GameMap,
     car: Car,
+    cars: List<Car>,
+    isFinished: Boolean,
     checkpointManager: CheckpointManager
 ) {
     val minimapSize = Size(300f, 300f)
@@ -61,7 +63,7 @@ fun DrawScope.drawMinimap(
                 innerMinimapPosition.y + y * cellSize
             )
 
-            if (nextCheckpoint != null && x.toFloat() == nextCheckpoint.x && y.toFloat() == nextCheckpoint.y) {
+            if (nextCheckpoint != null && x.toFloat() == nextCheckpoint.x && y.toFloat() == nextCheckpoint.y && !isFinished) {
                 drawRect(
                     color = Color.Red.copy(alpha = 0.7f),
                     topLeft = topLeft,
@@ -83,14 +85,17 @@ fun DrawScope.drawMinimap(
         }
     }
 
-    drawCircle(
-        color = Color.Blue,
-        center = Offset(
-            innerMinimapPosition.x + car.position.x * cellSize,
-            innerMinimapPosition.y + car.position.y * cellSize
-        ),
-        radius = cellSize * 0.5f
-    )
+    for (player in cars) {
+        drawCircle(
+            color = (if (player == car) Color.Blue else Color.Red),
+            center = Offset(
+                innerMinimapPosition.x + player.position.x * cellSize,
+                innerMinimapPosition.y + player.position.y * cellSize
+            ),
+            radius = cellSize * 0.5f
+        )
+    }
+
 
     drawRoundRect(
         color = strokeColor,

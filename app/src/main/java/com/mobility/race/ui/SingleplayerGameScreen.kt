@@ -159,7 +159,7 @@ fun SingleplayerGameScreen(
                 bitmaps
             )
 
-            drawMinimap(state.gameMap, state.car, state.checkpointManager)
+            drawMinimap(state.gameMap, state.car, listOf(state.car),state.isRaceFinished,state.checkpointManager)
 
             drawControllingStick(
                 state.controllingStick,
@@ -167,11 +167,14 @@ fun SingleplayerGameScreen(
                 currentStickInputDistanceFactor
             )
 
-            drawNextCheckpoint(
-                state.checkpointManager.getNextCheckpoint(state.car.id),
-                state.gameCamera,
-                state.gameCamera.getScaledCellSize(state.gameMap.size)
-            )
+            if (!state.isRaceFinished) {
+                drawNextCheckpoint(
+                    state.checkpointManager.getNextCheckpoint(state.car.id),
+                    state.gameCamera,
+                    state.gameCamera.getScaledCellSize(state.gameMap.size)
+                )
+            }
+
 
             rotate(
                 degrees = state.car.visualDirection * (180f / PI.toFloat()) + 90,

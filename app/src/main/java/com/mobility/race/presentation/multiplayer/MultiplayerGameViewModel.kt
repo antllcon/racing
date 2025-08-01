@@ -14,6 +14,7 @@ import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
@@ -77,6 +78,16 @@ class MultiplayerGameViewModel(
         viewModelScope.launch {
             gateway.disconnect()
         }
+    }
+
+    fun getCars(): List<Car> {
+        var cars = emptyList<Car>()
+
+        stateValue.players.forEach {
+            cars = cars.plus(it.car)
+        }
+
+        return cars
     }
 
     private fun startGame() {

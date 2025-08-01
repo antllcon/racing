@@ -161,7 +161,7 @@ fun MultiplayerGameScreen(
 
             drawCars(state, bitmaps)
 
-            drawMinimap(state.gameMap, state.mainPlayer.car, state.checkpointManager)
+            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
 
             if (!state.mainPlayer.isFinished && state.isGameRunning) {
                 drawControllingStick(
