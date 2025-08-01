@@ -39,6 +39,7 @@ import com.mobility.race.ui.ModernBackButton
 import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
+import com.mobility.race.ui.drawUtils.drawBonuses
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
 import com.mobility.race.ui.drawUtils.drawMinimap
