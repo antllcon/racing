@@ -188,7 +188,7 @@ class MultiplayerGameViewModel(
                 modifyState { copy(lapsCompleted = newLaps) }
             }
 
-            if (stateValue.lapsCompleted >= 1) {
+            if (stateValue.lapsCompleted >= 3) {
                 val newMainPlayer = stateValue.mainPlayer.copy(isFinished = true)
                 val newPlayers = stateValue.players.map { player ->
                     if (player.car.playerName == stateValue.mainPlayer.car.playerName) newMainPlayer else player
