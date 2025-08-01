@@ -21,15 +21,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mobility.race.R
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
@@ -81,17 +87,6 @@ fun MultiplayerGameScreen(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ) {
-        if (state.countdown > 0) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(text = (state.countdown).toString())
-            }
-            return@Box
-        }
-
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -110,7 +105,7 @@ fun MultiplayerGameScreen(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            if (state.controllingStick.isInside(offset)) {
+                            if (state.controllingStick.isInside(offset) && state.isGameRunning) {
                                 isStickActive = true
                                 val angle = state.controllingStick.getTouchAngle(offset)
                                 viewModel.setDirectionAngle(angle)
@@ -124,7 +119,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDrag = { change, _ ->
-                            if (isStickActive) {
+                            if (isStickActive  && state.isGameRunning) {
                                 val angle = state.controllingStick.getTouchAngle(change.position)
                                 viewModel.setDirectionAngle(angle)
                                 currentStickInputAngle = angle
@@ -133,7 +128,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragEnd = {
-                            if (isStickActive) {
+                            if (isStickActive  && state.isGameRunning) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -141,7 +136,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragCancel = {
-                            if (isStickActive) {
+                            if (isStickActive  && state.isGameRunning) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -168,7 +163,7 @@ fun MultiplayerGameScreen(
 
             drawMinimap(state.gameMap, state.mainPlayer.car, state.checkpointManager)
 
-            if (!state.mainPlayer.isFinished) {
+            if (!state.mainPlayer.isFinished && state.isGameRunning) {
                 drawControllingStick(
                     state.controllingStick,
                     currentStickInputAngle,
@@ -183,22 +178,48 @@ fun MultiplayerGameScreen(
             }
         }
 
-        if (state.mainPlayer.isFinished) {
-            Text(
-                text = "You've completed the race!",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp),
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            )
-        } else {
-            Text(
-                text = "Lap: ${state.lapsCompleted + 1} / 1",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(16.dp),
-                style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-            )
+        if (state.countdown > 0) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    text = ((state.countdown).toString()),
+                    fontSize = 80.sp,
+                    color = Color(0xFFFFA500),
+                    fontFamily = FontFamily(Font(R.font.jersey25)),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color(0xAAFF0000),
+                            offset = Offset(4f, 4f),
+                            blurRadius = 8f
+                        )
+                    )
+                )
+            }
+        }
+
+        if (state.isGameRunning) {
+            if (state.mainPlayer.isFinished) {
+                Text(
+                    text = "You've completed the race!",
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp),
+                    style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                )
+            } else {
+                Text(
+                    text = "Lap: ${state.lapsCompleted + 1} / 1",
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp),
+                    style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                )
+            }
         }
 
         ModernBackButton(
