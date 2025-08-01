@@ -160,6 +160,14 @@ fun MultiplayerGameScreen(
                 bitmaps
             )
 
+            drawBonuses(
+                state.bonuses,
+                state.gameCamera,
+                bitmaps,
+                state.gameMap.width,
+                state.gameMap.height
+            )
+
             drawCars(state, bitmaps)
             drawBonuses(state.bonuses, state.gameCamera, bitmaps, state.gameCamera.mapWidth, state.gameCamera.mapHeight)
 
