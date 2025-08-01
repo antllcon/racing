@@ -148,6 +148,7 @@ fun RoomScreen(
 
             if (state.playerNames[0] == state.playerName) {
                 AnimatedButton(
+                    enabled = (state.playerNames.size > 1),
                     onClick = {
                         soundManager?.playClickSound()
                         viewModel.startGame()
