@@ -147,7 +147,8 @@ fun MultiplayerGameScreen(
                     )
                 }
         ) {
-            //drawBonuses(state.bonuses, state.gameCamera, bitmaps)
+            drawBonuses(state.bonuses, state.gameCamera, bitmaps)
+
             drawBackgroundTexture(
                 state.gameMap,
                 state.gameCamera,

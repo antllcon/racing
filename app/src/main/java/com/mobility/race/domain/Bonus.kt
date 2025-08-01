@@ -10,7 +10,8 @@ sealed class Bonus(
     open val isActive: Boolean = true
 ) {
     enum class BonusType {
-        SPEED_BOOST, MASS_INCREASE
+        SPEED_BOOST,
+        MASS_INCREASE
     }
 
     data class SpeedBoost(

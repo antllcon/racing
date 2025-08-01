@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
 import com.mobility.race.data.StarterPack
+import com.mobility.race.domain.Bonus
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.ControllingStick
@@ -18,7 +19,8 @@ data class MultiplayerGameState(
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
     val lapsCompleted: Int,
-    val directionAngle: Float?
+    val directionAngle: Float?,
+    val bonuses: List<Bonus> = emptyList()
 ) {
     companion object {
         fun default(

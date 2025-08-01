@@ -5,6 +5,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
+import com.mobility.race.data.BonusPickedUpResponse
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.GameCountdownUpdateResponse
 import com.mobility.race.data.GameStateUpdateResponse
@@ -14,6 +15,7 @@ import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
+import com.mobility.race.domain.Bonus
 import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import com.mobility.race.ui.PlayerResult
@@ -273,15 +275,46 @@ class MultiplayerGameViewModel(
                 message.players.forEach { playerDto ->
                     targetPlayerPositions[playerDto.id] = Offset(playerDto.posX, playerDto.posY)
                     targetPlayerDirections[playerDto.id] = playerDto.visualDirection
-                    targetPlayerSpeeds[playerDto.id] = playerDto.speed // Добавим целевую скорость
+                    targetPlayerSpeeds[playerDto.id] = playerDto.speed
 
                     val playerIndex = stateValue.players.indexOfFirst { it.car.playerName == playerDto.id }
                     if (playerIndex != -1) {
                         val playersCopy = stateValue.players.toMutableList()
-                        playersCopy[playerIndex] = playersCopy[playerIndex].copy(isFinished = playerDto.isFinished)
+                        val existingPlayer = playersCopy[playerIndex]
+                        playersCopy[playerIndex] = existingPlayer.copy(
+                            isFinished = playerDto.isFinished,
+                            car = existingPlayer.car.copy(
+                                targetSizeModifier = playerDto.sizeModifier
+                            )
+                        )
                         modifyState { copy(players = playersCopy) }
                     }
                 }
+
+                val newBonuses = message.bonuses.map { dto ->
+                    val type = when (dto.type) {
+                        "SPEED_BOOST" -> Bonus.BonusType.SPEED_BOOST
+                        "MASS_INCREASE" -> Bonus.BonusType.MASS_INCREASE
+                        else -> Bonus.BonusType.SPEED_BOOST
+                    }
+
+                    when(type) {
+                        Bonus.BonusType.SPEED_BOOST -> Bonus.SpeedBoost(
+                            position = Offset(dto.posX, dto.posY),
+                            isActive = dto.isActive
+                        )
+                        Bonus.BonusType.MASS_INCREASE -> Bonus.MassIncrease(
+                            position = Offset(dto.posX, dto.posY),
+                            isActive = dto.isActive
+                        )
+                    }
+                }
+
+                modifyState { copy(bonuses = newBonuses) }
+            }
+
+            is BonusPickedUpResponse -> {
+                // Звук бонуса
             }
 
             is GameStopResponse -> {
