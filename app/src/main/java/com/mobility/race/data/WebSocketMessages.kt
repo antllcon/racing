@@ -182,7 +182,7 @@ data class StarterPack(
     val mapHeight: Int,
     val initialPlayerStates: List<Vector2D>,
     val startAngle: Float,
-    val route: List<Vector2D>,
+    val route: List<Vector2D>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -120,7 +120,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDrag = { change, _ ->
-                            if (isStickActive  && state.isGameRunning) {
+                            if (isStickActive && state.isGameRunning) {
                                 val angle = state.controllingStick.getTouchAngle(change.position)
                                 viewModel.setDirectionAngle(angle)
                                 currentStickInputAngle = angle
@@ -129,7 +129,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragEnd = {
-                            if (isStickActive  && state.isGameRunning) {
+                            if (isStickActive && state.isGameRunning) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -137,7 +137,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragCancel = {
-                            if (isStickActive  && state.isGameRunning) {
+                            if (isStickActive && state.isGameRunning) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -147,8 +147,7 @@ fun MultiplayerGameScreen(
                     )
                 }
         ) {
-            drawBonuses(state.bonuses, state.gameCamera, bitmaps)
-
+            println("Вызываем drawBonuses с ${state.bonuses.size} бонусами")
             drawBackgroundTexture(
                 state.gameMap,
                 state.gameCamera,
@@ -162,9 +161,18 @@ fun MultiplayerGameScreen(
                 bitmaps
             )
 
+            drawBonuses(
+                bonuses = state.bonuses,
+                camera = state.gameCamera,
+                bitmaps = bitmaps,
+                mapWidth = state.gameMap.width,
+                mapHeight = state.gameMap.height
+            )
+
+
             drawCars(state, bitmaps)
 
-            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
+            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(), state.mainPlayer.isFinished, state.checkpointManager)
 
             if (!state.mainPlayer.isFinished && state.isGameRunning) {
                 drawControllingStick(

@@ -34,7 +34,6 @@ data class MultiplayerGameState(
 
             starterPack.route.forEach {
                 newRouteList = newRouteList.plus(it.transformToOffset())
-                newBonusList = newBonusList.plus(it.transformToOffset())
             }
 
             val mainPlayer = Player(

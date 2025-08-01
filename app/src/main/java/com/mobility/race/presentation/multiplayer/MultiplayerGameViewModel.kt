@@ -151,10 +151,13 @@ class MultiplayerGameViewModel(
                 // Интерполируем скорость
                 val newSpeed = updatedCar.speed + (targetSpeed - updatedCar.speed) * INTERPOLATION_FACTOR
 
+                val newSizeModifier = updatedCar.sizeModifier + (updatedCar.targetSizeModifier - updatedCar.sizeModifier) * INTERPOLATION_FACTOR
+
                 updatedCar = updatedCar.copy(
                     position = newPosition,
                     visualDirection = newVisualDirection,
-                    speed = newSpeed
+                    speed = newSpeed,
+                    sizeModifier = newSizeModifier
                 )
             }
 
@@ -272,6 +275,11 @@ class MultiplayerGameViewModel(
             }
 
             is GameStateUpdateResponse -> {
+                println("Получено ${message.bonuses.size} бонусов с сервера.")
+                message.bonuses.forEach { bonusDto ->
+                    println("Бонус DTO: id=${bonusDto.id}, type=${bonusDto.type}, isActive=${bonusDto.isActive}, pos=(${bonusDto.posX}, ${bonusDto.posY})")
+                }
+
                 message.players.forEach { playerDto ->
                     targetPlayerPositions[playerDto.id] = Offset(playerDto.posX, playerDto.posY)
                     targetPlayerDirections[playerDto.id] = playerDto.visualDirection
