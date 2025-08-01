@@ -40,7 +40,6 @@ import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
-import com.mobility.race.ui.drawUtils.drawBonuses
 import com.mobility.race.ui.drawUtils.drawCars
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
@@ -160,15 +159,6 @@ fun MultiplayerGameScreen(
                 bitmaps
             )
 
-            drawBonuses(
-                bonuses = state.bonuses,
-                camera = state.gameCamera,
-                bitmaps = bitmaps,
-                mapWidth = state.gameMap.width,
-                mapHeight = state.gameMap.height
-            )
-
-
             drawCars(state, bitmaps)
 
             drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
@@ -186,7 +176,6 @@ fun MultiplayerGameScreen(
                     state.gameCamera.getScaledCellSize(state.gameMap.size)
                 )
             }
-
         }
 
         if (state.countdown > 0) {
