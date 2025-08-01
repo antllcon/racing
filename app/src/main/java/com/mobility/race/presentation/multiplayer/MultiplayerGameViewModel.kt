@@ -15,6 +15,7 @@ import com.mobility.race.data.PlayerInputRequest
 import com.mobility.race.data.PlayerResultStorage
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.domain.Car
+import com.mobility.race.domain.CollisionManager
 import com.mobility.race.presentation.BaseViewModel
 import com.mobility.race.ui.PlayerResult
 import kotlinx.coroutines.Job
@@ -88,7 +89,7 @@ class MultiplayerGameViewModel(
                 val currentTime = System.currentTimeMillis()
                 elapsedTime = (currentTime - lastTime) / 1000f
 
-//                CollisionManager.checkAndResolveCollisions(stateValue.mainPlayer, stateValue.players)
+                CollisionManager.checkAndResolveCollisions(stateValue.mainPlayer, stateValue.players)
                 movePlayers(elapsedTime)
                 if (stateValue.players.isNotEmpty()) {
                     moveCamera()
