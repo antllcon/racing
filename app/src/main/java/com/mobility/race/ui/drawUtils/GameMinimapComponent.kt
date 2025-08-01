@@ -15,6 +15,8 @@ import kotlin.math.min
 fun DrawScope.drawMinimap(
     map: GameMap,
     car: Car,
+    cars: Map<Car, Boolean>,
+    isFinished: Boolean,
     checkpointManager: CheckpointManager
 ) {
     val minimapSize = Size(300f, 300f)
@@ -22,6 +24,7 @@ fun DrawScope.drawMinimap(
     val strokeWidth = 8f
     val strokeColor = Color.Gray
     val cornerRadius = 8f
+
     drawRoundRect(
         color = Color.Black.copy(alpha = 0.7f),
         topLeft = minimapPosition,
@@ -50,7 +53,7 @@ fun DrawScope.drawMinimap(
             val terrain = map.getTerrainType(x, y)
             val color = when (terrain.uppercase()) {
                 "GRASS" -> Color(0xFF4CAF50)
-                "ABYSS" -> Color(0xFF2196F3)
+                "WATER" -> Color(0xFF2196F3)
                 "ROAD" -> Color(0xFF795548)
                 else -> Color.Gray
             }
@@ -60,7 +63,7 @@ fun DrawScope.drawMinimap(
                 innerMinimapPosition.y + y * cellSize
             )
 
-            if (nextCheckpoint != null && x.toFloat() == nextCheckpoint.x && y.toFloat() == nextCheckpoint.y) {
+            if (nextCheckpoint != null && x.toFloat() == nextCheckpoint.x && y.toFloat() == nextCheckpoint.y && !isFinished) {
                 drawRect(
                     color = Color.Red.copy(alpha = 0.7f),
                     topLeft = topLeft,
@@ -82,14 +85,19 @@ fun DrawScope.drawMinimap(
         }
     }
 
-    drawCircle(
-        color = Color.Blue,
-        center = Offset(
-            innerMinimapPosition.x + car.position.x * cellSize,
-            innerMinimapPosition.y + car.position.y * cellSize
-        ),
-        radius = cellSize * 0.5f
-    )
+    for ((player, isFinished) in cars) {
+        if (!isFinished) {
+            drawCircle(
+                color = (if (player == car) Color.Blue else Color.Red),
+                center = Offset(
+                    innerMinimapPosition.x + player.position.x * cellSize,
+                    innerMinimapPosition.y + player.position.y * cellSize
+                ),
+                radius = cellSize * 0.5f
+            )
+        }
+    }
+
 
     drawRoundRect(
         color = strokeColor,

@@ -9,10 +9,11 @@ class GameMap(
     val width: Int,
     val height: Int,
     val startCellPos: Offset,
-    val startDirection: StartDirection,
-    val route: List<Offset>
+    val startAngle: Float,
+    val route: List<Offset>,
+    val bonusPoints: List<Offset>
 ) {
-    enum class StartDirection {
+    private enum class StartDirection {
         HORIZONTAL,
         VERTICAL
     }
@@ -25,10 +26,11 @@ class GameMap(
     }
 
     companion object {
-        private const val DEFAULT_MAP_WIDTH = 10
-        private const val DEFAULT_MAP_HEIGHT = 10
+        private const val DEFAULT_MAP_WIDTH = 13
+        private const val DEFAULT_MAP_HEIGHT = 13
         private const val DEFAULT_CORE_POINT = 13
         private const val DEFAULT_WATER_PROPABILITY = 0.1f
+        private const val DEFAULT_BONUS_PROPABILITY = 0.2f
         private const val EMPTY_CELL_CODE = 0
         private const val CORE_CELL_CODE = 1
         private const val ROAD_CELL_CODE = 2
@@ -51,7 +53,8 @@ class GameMap(
             width: Int = DEFAULT_MAP_WIDTH,
             height: Int = DEFAULT_MAP_HEIGHT,
             roomCount: Int = DEFAULT_CORE_POINT,
-            waterProbability: Float = DEFAULT_WATER_PROPABILITY
+            waterProbability: Float = DEFAULT_WATER_PROPABILITY,
+            bonusProbability: Float = DEFAULT_BONUS_PROPABILITY
         ): GameMap {
             val grid: Array<IntArray> = Array(size = height) { IntArray(size = width) }
             val maxPossibleRooms = ((width - 2) / 2 + 1) * ((height - 2) / 2 + 1)
@@ -62,19 +65,57 @@ class GameMap(
             removeDeadEndsInternal(grid)
 
             createWaterCellsInternal(grid, waterProbability)
+            val generatedBonusPoints =  createBounusCellsInternal(grid, bonusProbability)
             determinationCellTypesInternal(grid)
 
             val startInfo = findStartCellInternal(grid)
+            val (route, bonusPoints) = generateRouteAndBonuses(grid, startInfo.position)
 
-            val route = generateRouteFromStart(grid, startInfo.position)
+            val startAngle = if (route.size > 1) {
+                val startPos = route.last()
+                val nextPos = route[1]
+                val dx = nextPos.x.toInt() - startPos.x.toInt()
+                val dy = nextPos.y.toInt() - startPos.y.toInt()
+
+                when {
+                    dx > 0 -> 0f
+                    dy < 0 -> -90f
+                    dx < 0 -> 180f
+                    dy > 0 -> 90f
+
+                    else -> when (startInfo.direction) {
+                        StartDirection.HORIZONTAL -> 0f
+                        StartDirection.VERTICAL -> -90f
+                    }
+                }
+            } else {
+                when (startInfo.direction) {
+                    StartDirection.HORIZONTAL -> 0f
+                    StartDirection.VERTICAL -> -90f
+                }
+            }
+
+
+            val combinedBonusPoints = bonusPoints.toMutableList().apply { addAll(generatedBonusPoints.map { Offset(it.first.toFloat(), it.second.toFloat()) }) }
+
+            println("Сгенерил")
+            for(i in 0 until generatedBonusPoints.size) {
+                println("Бонус ${i + 1}: ${generatedBonusPoints[i]}")
+            }
+
+            println("Создал")
+            for (i in 0 until bonusPoints.size) {
+                println("Бонус ${i + 1}: ${bonusPoints[i]}")
+            }
 
             return GameMap(
-                grid,
-                width,
-                height,
-                startInfo.position,
-                startInfo.direction,
-                route
+                grid = grid,
+                width = width,
+                height = height,
+                startCellPos = startInfo.position,
+                startAngle = startAngle,
+                route = route,
+                bonusPoints = combinedBonusPoints
             )
         }
 
@@ -84,19 +125,28 @@ class GameMap(
 
             var generatedRooms = 0
             val maxAttempts = roomCount * 5
-            var attempts = 0
+            val attempts = 0
 
             while (generatedRooms < roomCount && attempts < maxAttempts) {
                 val x: Int = (Random.nextInt(until = (width - 2) / 2 + 1) * 2) + 1
                 val y: Int = (Random.nextInt(until = (height - 2) / 2 + 1) * 2) + 1
 
                 if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
-                    if (grid[y][x] == 0) {
+                    val centerX = width / 2
+                    val centerY = height / 2
+
+                    val minX = centerX - 1
+                    val maxX = centerX + 1
+                    val minY = centerY - 1
+                    val maxY = centerY + 1
+
+                    val notInCenter = !(x in minX..maxX && y in minY..maxY)
+
+                    if (grid[y][x] == 0 && notInCenter) {
                         grid[y][x] = 1
                         generatedRooms++
                     }
                 }
-                attempts++
             }
         }
 
@@ -216,6 +266,26 @@ class GameMap(
             }
         }
 
+        private fun createBounusCellsInternal(
+            grid: Array<IntArray>,
+            bonusProbability: Float
+        ): List<Pair<Int, Int>> {
+            val bonusCells = mutableListOf<Pair<Int, Int>>()
+
+            for (y in 1 until grid.size - 1) {
+                for (x in 1 until grid[y].size - 1) {
+                    if (Random.nextFloat() < bonusProbability) {
+                        when (grid[y][x]) {
+                            ROAD_CELL_CODE -> bonusCells.add(x to y)
+                        }
+                    }
+                }
+            }
+
+            return bonusCells
+        }
+
+
         private fun determinationCellTypesInternal(grid: Array<IntArray>) {
             val height = grid.size
             val width = grid[0].size
@@ -311,7 +381,11 @@ class GameMap(
             }
 
             if (candidateCells.isNotEmpty()) {
-                val (chosenPosition, chosenDirection) = candidateCells.random()
+                println("В текущей итерации - генерация:")
+                for (i in 0 until candidateCells.size) {
+                    println(candidateCells[i])
+                }
+                val (chosenPosition, chosenDirection) = candidateCells[4]
                 if (chosenDirection == StartDirection.HORIZONTAL) {
                     grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 112
                 } else {
@@ -324,115 +398,88 @@ class GameMap(
             return StartInfo(Offset(width / 2f, height / 2f), StartDirection.HORIZONTAL)
         }
 
-
-        private fun generateRouteFromStart(grid: Array<IntArray>, startPos: Offset): List<Offset> {
-            val height = grid.size
-            val width = grid[0].size
-            val route = mutableListOf<Offset>()
-
-            val visited = Array(height) { BooleanArray(width) { false } }
-
-            val addedCheckpoints = mutableSetOf<Pair<Int, Int>>()
-
+        private fun generateRouteAndBonuses(grid: Array<IntArray>, startPos: Offset): Pair<List<Offset>, List<Offset>> {
             val startX = startPos.x.toInt()
             val startY = startPos.y.toInt()
 
-            if (grid[startY][startX] in 100..299) {
-                val posPair = Pair(startX, startY)
-                if (!addedCheckpoints.contains(posPair)) {
-                    route.add(Offset(startX.toFloat(), startY.toFloat()))
-                    addedCheckpoints.add(posPair)
+            val maxAttempts = 3
+            val foundRoutes = mutableListOf<List<Offset>>()
+            val baseDirections = listOf(Pair(0, -1), Pair(1, 0), Pair(0, 1), Pair(-1, 0))
+
+
+            repeat(maxAttempts) {
+                val path = mutableListOf<Offset>()
+                val visited = Array(grid.size) { BooleanArray(grid[0].size) }
+                val shuffledDirections = baseDirections.shuffled()
+                val foundPath = dfsFindLoop(grid, startX, startY, path, visited, startX, startY, shuffledDirections)
+                if (foundPath != null) {
+                    foundRoutes.add(foundPath)
                 }
             }
-            visited[startY][startX] = true
 
-            val directions = listOf(
-                Pair(0, -1),
-                Pair(1, 0),
-                Pair(0, 1),
-                Pair(-1, 0)
-            )
+            val selectedPath = foundRoutes.maxByOrNull { it.size } ?: listOf(startPos)
 
-            dfsExplore(
-                grid = grid,
-                visited = visited,
-                addedCheckpoints = addedCheckpoints,
-                currentX = startX,
-                currentY = startY,
-                route = route,
-                directions = directions,
-                width = width,
-                height = height
-            )
+            val finalRoute = selectedPath.filter { point ->
+                val x = point.x.toInt()
+                val y = point.y.toInt()
 
-            if (route.isEmpty()) {
-                println("Warning: Generated route is empty after DFS.")
-                if (grid[startY][startX] in 100..299) {
-                    val posPair = Pair(startX, startY)
-                    if (!addedCheckpoints.contains(posPair)) {
-                        route.add(Offset(startX.toFloat(), startY.toFloat()))
-                        addedCheckpoints.add(posPair)
+                x in grid[0].indices && y in grid.indices && grid[y][x] in 100..299
+            }
+
+            val allCorePoints = mutableListOf<Offset>()
+            for (y in grid.indices) {
+                for (x in grid[y].indices) {
+                    val code = grid[y][x]
+                    if (code in 100..299) {
+                        allCorePoints.add(Offset(x.toFloat(), y.toFloat()))
                     }
                 }
-            } else if (route.size == 1) {
-                println("Warning: Generated route contains only one checkpoint after DFS.")
             }
 
-            val finishPos = Offset(startX.toFloat(), startY.toFloat())
-            if (route.isEmpty() || route.lastOrNull() != finishPos) {
-                route.add(finishPos)
-            }
+            val bonusPoints = allCorePoints.filter { it !in finalRoute.toSet() }
 
-            return route
+            return Pair(finalRoute, bonusPoints)
         }
 
-        private fun dfsExplore(
+        private fun dfsFindLoop(
             grid: Array<IntArray>,
-            visited: Array<BooleanArray>,
-            addedCheckpoints: MutableSet<Pair<Int, Int>>,
             currentX: Int,
             currentY: Int,
-            route: MutableList<Offset>,
-            directions: List<Pair<Int, Int>>,
-            width: Int,
-            height: Int
-        ) {
+            path: MutableList<Offset>,
+            visited: Array<BooleanArray>,
+            startX: Int,
+            startY: Int,
+            directions: List<Pair<Int, Int>>
+        ): List<Offset>? {
+            if (visited[currentY][currentX]) {
+                return null
+            }
+
+            path.add(Offset(currentX.toFloat(), currentY.toFloat()))
+            visited[currentY][currentX] = true
+
             for ((dx, dy) in directions) {
                 val nextX = currentX + dx
                 val nextY = currentY + dy
 
-                if (nextX in 0 until width && nextY in 0 until height) {
-                    val nextCellCode = grid[nextY][nextX]
+                if (nextX !in 0 until grid[0].size || nextY !in 0 until grid.size) continue
 
-                    if (nextCellCode in 100..499) {
-                        if (nextCellCode in 100..299) {
-                            val posPair = Pair(nextX, nextY)
-                            if (!addedCheckpoints.contains(posPair)) {
-                                route.add(Offset(nextX.toFloat(), nextY.toFloat()))
-                                addedCheckpoints.add(posPair)
-                                // println("Added checkpoint at ($nextX, $nextY) with code $nextCellCode")
-                            } else {
-                                // println("Skipped duplicate checkpoint at ($nextX, $nextY)")
-                            }
-                        }
+                if (nextX == startX && nextY == startY && path.size > 2) {
+                    path.add(Offset(nextX.toFloat(), nextY.toFloat()))
+                    return path.toList()
+                }
 
-                        if (!visited[nextY][nextX]) {
-                            visited[nextY][nextX] = true
-                            dfsExplore(
-                                grid,
-                                visited,
-                                addedCheckpoints,
-                                nextX,
-                                nextY,
-                                route,
-                                directions,
-                                width,
-                                height
-                            )
-                        }
+                val nextCellCode = grid[nextY][nextX]
+                if (nextCellCode in 100..499) {
+                    val result = dfsFindLoop(grid, nextX, nextY, path, visited, startX, startY, directions) // Передаем directions дальше
+                    if (result != null) {
+                        return result
                     }
                 }
             }
+
+            path.removeAt(path.lastIndex)
+            return null
         }
     }
 
@@ -445,12 +492,13 @@ class GameMap(
         }
         return "terrain_" + grid[y][x].toString().padStart(3, '0')
     }
+
     fun getTerrainType(x: Int, y: Int): String {
         return when (grid[y][x] / 100) {
             1 -> "ROAD"
-            2 -> "ABYSS"
+            2 -> "WATER"
             3 -> "ROAD"
-            4 -> "ABYSS"
+            4 -> "WATER"
             else -> "GRASS"
         }
     }

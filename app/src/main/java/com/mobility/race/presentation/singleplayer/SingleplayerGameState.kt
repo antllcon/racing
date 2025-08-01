@@ -11,6 +11,7 @@ import com.mobility.race.domain.GameMap
 data class SingleplayerGameState(
     val directionAngle: Float?,
     val isGameRunning: Boolean,
+    val isRaceFinished: Boolean = false,
     val controllingStick: ControllingStick,
     val car: Car,
     val gameMap: GameMap,
@@ -18,6 +19,7 @@ data class SingleplayerGameState(
     val checkpointManager: CheckpointManager,
     val startTime: Long = System.currentTimeMillis(),
     val finishTime: Long = 0L,
+    val raceTime: Long = 0L,
     val lapsCompleted: Int = 0,
     val totalLaps: Int = 3
 ) {
@@ -25,15 +27,11 @@ data class SingleplayerGameState(
         fun default(carId: String): SingleplayerGameState {
             val gameMap: GameMap = GameMap.generateDungeonMap()
             val checkpointManager = CheckpointManager(gameMap.route)
-            val initialDirection = when (gameMap.startDirection) {
-                GameMap.StartDirection.HORIZONTAL -> Car.DIRECTION_RIGHT
-                GameMap.StartDirection.VERTICAL -> Car.DIRECTION_UP
-            }
             val car = Car(
                 position = Offset(gameMap.startCellPos.x + 0.4f, gameMap.startCellPos.y + 0.5f),
                 id = carId,
-                direction = initialDirection,
-                visualDirection = initialDirection
+                direction = gameMap.startAngle,
+                visualDirection = gameMap.startAngle
             )
 
             checkpointManager.registerCar(car.id)

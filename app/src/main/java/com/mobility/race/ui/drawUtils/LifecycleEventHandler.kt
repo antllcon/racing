@@ -11,6 +11,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 fun LifecycleEventHandler(
     onCreate: (() -> Unit)? = null,
     onStart: (() -> Unit)? = null,
+    onPause: (() -> Unit)? = null,
+    onResume: (() -> Unit)? = null,
     onStop: (() -> Unit)? = null,
     onDestroy: (() -> Unit)? = null,
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
@@ -21,6 +23,8 @@ fun LifecycleEventHandler(
             when (event) {
                 Lifecycle.Event.ON_CREATE -> onCreate?.invoke()
                 Lifecycle.Event.ON_START -> onStart?.invoke()
+                Lifecycle.Event.ON_PAUSE -> onPause?.invoke()
+                Lifecycle.Event.ON_RESUME -> onResume?.invoke()
                 Lifecycle.Event.ON_STOP -> onStop?.invoke()
                 Lifecycle.Event.ON_DESTROY -> onDestroy?.invoke()
                 else -> {}

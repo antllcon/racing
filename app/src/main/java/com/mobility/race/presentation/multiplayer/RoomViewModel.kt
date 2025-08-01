@@ -1,12 +1,14 @@
 package com.mobility.race.presentation.multiplayer
 
-import androidx.compose.ui.geometry.Offset
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.mobility.race.data.ErrorResponse
 import com.mobility.race.data.IGateway
 import com.mobility.race.data.JoinedRoomResponse
 import com.mobility.race.data.PlayerConnectedResponse
+import com.mobility.race.data.PlayerDisconnectedResponse
 import com.mobility.race.data.RoomCreatedResponse
 import com.mobility.race.data.ServerMessage
 import com.mobility.race.data.StartedGameResponse
@@ -20,6 +22,7 @@ class RoomViewModel(
     private val playerName: String,
     private val roomName: String,
     private val isCreatingRoom: Boolean,
+    private val context: Context,
     private val navController: NavController,
     private val gateway: IGateway
 ) : BaseViewModel<RoomState>(RoomState.default(playerName, roomName, isCreatingRoom)) {
@@ -45,6 +48,12 @@ class RoomViewModel(
 
     }
 
+    fun disconnect() {
+        viewModelScope.launch {
+            gateway.disconnect()
+        }
+    }
+
     private fun init() {
         viewModelScope.launch {
             gateway.connect()
@@ -58,11 +67,26 @@ class RoomViewModel(
         }
     }
 
-
     private fun handleMessage(message: ServerMessage) {
         when (message) {
             is ErrorResponse -> {
-                throw Exception("Think about it!")
+                Toast.makeText(context, message.message, Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+            }
+            is PlayerDisconnectedResponse -> {
+                var newPlayersList = emptyArray<String>()
+
+                for (player in stateValue.playerNames) {
+                    if (player != message.playerId) {
+                        newPlayersList = newPlayersList.plus(player)
+                    }
+                }
+
+                modifyState {
+                    copy(
+                        playerNames = newPlayersList
+                    )
+                }
             }
             is RoomCreatedResponse -> {
                 modifyState {

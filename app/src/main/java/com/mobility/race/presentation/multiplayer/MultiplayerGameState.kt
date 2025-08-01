@@ -7,67 +7,67 @@ import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.ControllingStick
 import com.mobility.race.domain.GameCamera
 import com.mobility.race.domain.GameMap
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 
 data class MultiplayerGameState(
-    val countdown: Float,
+    val countdown: Int,
     val mainPlayer: Player,
-    val players: Array<Player>,
+    val players: List<Player>,
     val gameMap: GameMap,
     val gameCamera: GameCamera,
     val controllingStick: ControllingStick,
     val checkpointManager: CheckpointManager,
     val isGameRunning: Boolean,
+    val lapsCompleted: Int,
     val directionAngle: Float?
 ) {
     companion object {
         fun default(
-            nickname: String,
+            name: String,
             playerNames: Array<String>,
             carSpriteId: String,
             starterPack: StarterPack
         ): MultiplayerGameState {
             var newRouteList: List<Offset> = emptyList()
+            var newBonusList: List<Offset> = emptyList()
 
             starterPack.route.forEach {
                 newRouteList = newRouteList.plus(it.transformToOffset())
+                newBonusList = newBonusList.plus(it.transformToOffset())
             }
 
-            val startDirection =
-                if (starterPack.startDirection == GameMap.StartDirection.VERTICAL) {
-                    Car.DIRECTION_UP
-                } else {
-                    Car.DIRECTION_RIGHT
-                }
-
-
             val mainPlayer = Player(
-                nickname, Car(
+                Car(
+                    playerName = name,
                     id = carSpriteId,
-                    position = starterPack.initialPlayerStates[playerNames.indexOf(nickname)].transformToOffset(),
-                    visualDirection = startDirection,
-                )
+                    position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
+                    visualDirection = starterPack.startAngle,
+                ),
+                isFinished = false
             )
 
-            var players: Array<Player> = emptyArray()
+            var players: List<Player> = emptyList()
 
-            for (name in playerNames) {
+            for (name: String in playerNames) {
                 players = players.plus(
-                    Player(
-                        name = name,
-                        Car(
+                    element = Player(
+                        car = Car(
+                            playerName = name,
                             id = getSpriteId(name, playerNames).toString(),
                             position = starterPack.initialPlayerStates[playerNames.indexOf(name)].transformToOffset(),
-                            visualDirection = startDirection
-                        )
+                            visualDirection = starterPack.startAngle
+                        ),
+                        isFinished = false
                     )
                 )
             }
 
+            println(players)
+
+            val checkpointManager = CheckpointManager(newRouteList)
+            checkpointManager.registerCar(mainPlayer.car.id)
+
             return MultiplayerGameState(
-                countdown = 5f,
+                countdown = 5,
                 mainPlayer = mainPlayer,
                 players = players,
                 gameMap = GameMap(
@@ -75,8 +75,9 @@ data class MultiplayerGameState(
                     width = starterPack.mapWidth,
                     height = starterPack.mapHeight,
                     startCellPos = starterPack.initialPlayerStates.first().transformToOffset(),
-                    startDirection = starterPack.startDirection,
-                    route = newRouteList
+                    startAngle = starterPack.startAngle,
+                    route = newRouteList,
+                    bonusPoints = newBonusList
                 ),
                 gameCamera = GameCamera(
                     position = mainPlayer.car.position,
@@ -84,17 +85,18 @@ data class MultiplayerGameState(
                     mapHeight = starterPack.mapHeight
                 ),
                 controllingStick = ControllingStick(),
-                checkpointManager = CheckpointManager(newRouteList),
+                checkpointManager = checkpointManager,
                 isGameRunning = true,
+                lapsCompleted = 0,
                 directionAngle = null
             )
         }
 
 
-        private fun getSpriteId(playerIdToFind: String, playerIds: Array<String>): Int {
+        private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1
-            for (playerId in playerIds) {
-                if (playerId == playerIdToFind) {
+            for (id in playerIds) {
+                if (playerId == id) {
                     return index
                 }
                 index++
@@ -105,8 +107,6 @@ data class MultiplayerGameState(
 }
 
 data class Player(
-    val name: String,
-    val car: Car,
-    val isAccelerating: Boolean = false,
+    var car: Car,
     val isFinished: Boolean = false
 )

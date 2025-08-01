@@ -1,16 +1,24 @@
 package com.mobility.race.presentation.singleplayer
 
+import SoundManager
+import android.content.Context
 import androidx.lifecycle.viewModelScope
+import com.mobility.race.domain.Car
 import com.mobility.race.presentation.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SingleplayerGameViewModel :
+class SingleplayerGameViewModel(private val context: Context) :
     BaseViewModel<SingleplayerGameState>(SingleplayerGameState.default(((1..6).random().toString()))) {
 
     private var gameCycle: Job? = null
     private var carId: String = ((1..6).random().toString())
+    lateinit var soundManager: SoundManager
+    private var previousSpeed: Float = 0f
+    private var currentSurface: String = "ROAD"
+    private var lastSurfaceUpdateTime = 0L
+    private val surfaceUpdateInterval = 100L
 
     init {
         startNewGame()
@@ -19,6 +27,13 @@ class SingleplayerGameViewModel :
     fun startNewGame() {
         carId = ((1..6).random().toString())
 
+        try {
+            soundManager = SoundManager(context)
+            soundManager.playBackgroundMusic()
+        } catch (e: Exception) {
+            modifyState { copy(isGameRunning = false) }
+            return
+        }
         gameCycle?.cancel()
 
         modifyState {
@@ -54,11 +69,40 @@ class SingleplayerGameViewModel :
     private fun movePlayer(elapsedTime: Float) {
         val speedModifier = stateValue.gameMap.getSpeedModifier(stateValue.car.position)
 
+        val carPos = stateValue.car.position
+        val surfaceType = stateValue.gameMap.getTerrainType(carPos.x.toInt(), carPos.y.toInt())
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastSurfaceUpdateTime > surfaceUpdateInterval) {
+            updateSurfaceSound(surfaceType, stateValue.car.speed)
+            lastSurfaceUpdateTime = currentTime
+        }
+
         modifyState {
             copy(
                 car = car.update(elapsedTime, stateValue.directionAngle, speedModifier),
             )
         }
+
+        val currentSpeed = stateValue.car.speed
+
+        if (previousSpeed <= Car.MIN_SPEED && currentSpeed > Car.MIN_SPEED) {
+            soundManager.playStartSound()
+        }
+
+        previousSpeed = currentSpeed
+    }
+    private fun updateSurfaceSound(surfaceType: String, carSpeed: Float) {
+        if (surfaceType != currentSurface) {
+            currentSurface = surfaceType
+            soundManager.playSurfaceSound(surfaceType, calculateSurfaceVolume(carSpeed))
+        } else {
+            soundManager.updateSurfaceSoundVolume(calculateSurfaceVolume(carSpeed))
+        }
+    }
+
+    private fun calculateSurfaceVolume(carSpeed: Float): Float {
+        return 0.1f + (carSpeed / Car.MAX_SPEED) * 0.9f
     }
 
     private fun checkCheckpoints() {
@@ -105,10 +149,14 @@ class SingleplayerGameViewModel :
         modifyState {
             copy(
                 isGameRunning = false,
-                finishTime = System.currentTimeMillis() - startTime
+                isRaceFinished = true,
+                finishTime = System.currentTimeMillis(),
+                raceTime = System.currentTimeMillis() - startTime
             )
         }
         gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.pauseBackgroundMusic()
     }
 
     fun restartGame() {
@@ -118,5 +166,7 @@ class SingleplayerGameViewModel :
     override fun onCleared() {
         super.onCleared()
         gameCycle?.cancel()
+        soundManager.stopSurfaceSound()
+        soundManager.release()
     }
 }

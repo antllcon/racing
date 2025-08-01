@@ -1,6 +1,5 @@
 package com.mobility.race.data
 
-import com.mobility.race.domain.GameMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -12,7 +11,8 @@ enum class ClientMessageType {
     LEAVE_ROOM,
     START_GAME,
     PLAYER_ACTION,
-    PLAYER_INPUT
+    PLAYER_INPUT,
+    PLAYER_FINISHED
 }
 
 enum class ServerMessageType {
@@ -75,19 +75,26 @@ data class PlayerActionRequest(val name: String) : ClientMessage {
 
 @Serializable
 data class PlayerStateDto(
-    val name: String,
+    val id: String,
     val posX: Float,
     val posY: Float,
+    val direction: Float,
     val visualDirection: Float,
     val speed: Float,
-    val isAccelerating: Boolean,
-    val isFinished: Boolean
+    val isFinished: Boolean,
 )
+
 
 @Serializable
 @SerialName("PLAYER_INPUT")
-data class PlayerInputRequest(val isAccelerating: Boolean, val turnDirection: Float, val deltaTime: Float, val ringsCrossed: Int) : ClientMessage {
+data class PlayerInputRequest(val visualDirection: Float, val elapsedTime: Float, val ringsCrossed: Int) : ClientMessage {
     override val type: ClientMessageType get() = ClientMessageType.PLAYER_INPUT
+}
+
+@Serializable
+@SerialName("PLAYER_FINISHED")
+data class PlayerFinishedRequest(val name: String): ClientMessage {
+    override val type: ClientMessageType get() = ClientMessageType.PLAYER_FINISHED
 }
 
 @Serializable
@@ -164,7 +171,7 @@ data class StarterPack(
     val mapWidth: Int,
     val mapHeight: Int,
     val initialPlayerStates: List<Vector2D>,
-    val startDirection: GameMap.StartDirection,
+    val startAngle: Float,
     val route: List<Vector2D>,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -177,7 +184,7 @@ data class StarterPack(
         if (mapHeight != other.mapHeight) return false
         if (!mapGrid.contentDeepEquals(other.mapGrid)) return false
         if (initialPlayerStates != other.initialPlayerStates) return false
-        if (startDirection != other.startDirection) return false
+        if (startAngle != other.startAngle) return false
         if (route != other.route) return false
 
         return true
@@ -188,7 +195,7 @@ data class StarterPack(
         result = 31 * result + mapHeight.hashCode()
         result = 31 * result + mapGrid.contentDeepHashCode()
         result = 31 * result + initialPlayerStates.hashCode()
-        result = 31 * result + startDirection.hashCode()
+        result = 31 * result + startAngle.hashCode()
         result = 31 * result + route.hashCode()
         return result
     }
@@ -214,7 +221,7 @@ data class PlayerActionResponse(val name: String) : ServerMessage {
 
 @Serializable
 @SerialName("GAME_COUNTDOWN_UPDATE")
-data class GameCountdownUpdateResponse(val remainingTime: Float) : ServerMessage {
+data class GameCountdownUpdateResponse(val remainingTime: Int) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.GAME_COUNTDOWN_UPDATE
 }
 
@@ -226,6 +233,6 @@ data class GameStateUpdateResponse(val players: List<PlayerStateDto>) : ServerMe
 
 @Serializable
 @SerialName("GAME_STOP")
-data class GameStopResponse(val result: MutableMap<String, Long>) : ServerMessage {
+data class GameStopResponse(val result: MutableMap<String, Float>) : ServerMessage {
     override val type: ServerMessageType get() = ServerMessageType.GAME_STOP
 }

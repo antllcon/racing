@@ -18,7 +18,9 @@ data class Car(
     var visualDirection: Float = 0f,
     val speedModifier: Float = 1f,
     val currentSprite: Int = 1,
-    var distanceBeforeSpriteChange: Float = DEFAULT_SPRITE_CHANGE_DISTANCE
+    var distanceBeforeSpriteChange: Float = DEFAULT_SPRITE_CHANGE_DISTANCE,
+    val isStarting: Boolean = false,
+    var wasStopped: Boolean = true
 ) {
     companion object {
         const val MIN_SPEED = 0f
@@ -27,7 +29,7 @@ data class Car(
         const val DECELERATION = 0.4f
         const val LENGTH = 0.203f
         const val WIDTH = 0.30f
-        const val MAP_SIZE = 10f
+        const val MAP_SIZE = 13f
         const val MAX_DIRECTION_CHANGE = 0.09f
         const val VISUAL_LAG_SPEED = 0.05f
         const val DEFAULT_SPRITE_CHANGE_DISTANCE = 0.01f
@@ -36,15 +38,21 @@ data class Car(
         const val DIRECTION_LEFT = PI.toFloat()
         const val DIRECTION_UP = (3 * PI / 2).toFloat()
     }
-
     fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
+        val newSpeed = updateSpeed(directionAngle)
+        val wasStoppedBefore = speed <= MIN_SPEED
+        val isMovingNow = newSpeed > MIN_SPEED
+        val starting = wasStoppedBefore && isMovingNow
+
         return copy(
             direction = directionAngle ?: this.direction,
             position = updatePosition(elapsedTime),
-            speed = updateSpeed(directionAngle),
+            speed = newSpeed,
             speedModifier = setSpeedModifier(speedModifier),
             visualDirection = updateVisualDirection(),
-            currentSprite = updateCurrentSprite()
+            currentSprite = updateCurrentSprite(),
+            isStarting = starting,
+            wasStopped = newSpeed <= MIN_SPEED
         )
     }
 
