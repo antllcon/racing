@@ -36,8 +36,8 @@ class RoomViewModel(
     }
 
     fun startGame() {
-        modifyState {
-            copy(
+        modifyState { currentState ->  // Явно указываем параметр состояния
+            currentState.copy(
                 isGameStarted = true
             )
         }
@@ -45,7 +45,6 @@ class RoomViewModel(
         viewModelScope.launch {
             gateway.startGame(stateValue.roomName)
         }
-
     }
 
     fun disconnect() {
@@ -89,22 +88,22 @@ class RoomViewModel(
                 }
             }
             is RoomCreatedResponse -> {
-                modifyState {
-                    copy(
+                modifyState { currentState ->  // Явно указываем параметр состояния
+                    currentState.copy(
                         roomId = message.roomId
                     )
                 }
             }
             is JoinedRoomResponse -> {
-                modifyState {
-                    copy(
+                modifyState { currentState ->  // Явно указываем параметр состояния
+                    currentState.copy(
                         roomId = message.roomId
                     )
                 }
             }
             is PlayerConnectedResponse -> {
-                modifyState {
-                    copy(
+                modifyState { currentState ->  // Явно указываем параметр состояния
+                    currentState.copy(
                         playerNames = message.playerNames
                     )
                 }
@@ -118,11 +117,14 @@ class RoomViewModel(
                     if (name == stateValue.playerName) {
                         break
                     }
-
                     carSpriteId++
                 }
 
-                navController.navigate(route = MultiplayerGame(stateValue.playerName, stateValue.playerNames, carSpriteId.toString()))
+                navController.navigate(route = MultiplayerGame(
+                    stateValue.playerName,
+                    stateValue.playerNames,
+                    carSpriteId.toString()
+                ))
             }
             else -> Unit
         }

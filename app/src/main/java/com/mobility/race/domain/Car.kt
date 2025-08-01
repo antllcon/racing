@@ -20,8 +20,11 @@ data class Car(
     val currentSprite: Int = 1,
     var distanceBeforeSpriteChange: Float = DEFAULT_SPRITE_CHANGE_DISTANCE,
     val isStarting: Boolean = false,
-    var wasStopped: Boolean = true
-) {
+    var wasStopped: Boolean = true,
+    var sizeModifier: Float = 1f,
+    var targetSizeModifier: Float = 1f,
+    var sizeTransitionProgress: Float = 1f
+){
     companion object {
         const val MIN_SPEED = 0f
         const val MAX_SPEED = 2.5f
@@ -37,8 +40,21 @@ data class Car(
         const val DIRECTION_DOWN = (PI / 2).toFloat()
         const val DIRECTION_LEFT = PI.toFloat()
         const val DIRECTION_UP = (3 * PI / 2).toFloat()
+        const val SIZE_TRANSITION_SPEED = 2f
     }
-    fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float): Car {
+    fun update(elapsedTime: Float, directionAngle: Float?, speedModifier: Float, hasSizeBonus: Boolean = false): Car {
+        val sizeTransitionSpeed = SIZE_TRANSITION_SPEED * elapsedTime
+        sizeTransitionProgress = when {
+            sizeTransitionProgress < 1f -> (sizeTransitionProgress + sizeTransitionSpeed).coerceAtMost(1f)
+            else -> 1f
+        }
+
+        val currentSizeModifier = if (sizeTransitionProgress < 1f) {
+            sizeModifier + (targetSizeModifier - sizeModifier) * sizeTransitionProgress
+        } else {
+            targetSizeModifier
+        }
+
         val newSpeed = updateSpeed(directionAngle)
         val wasStoppedBefore = speed <= MIN_SPEED
         val isMovingNow = newSpeed > MIN_SPEED
@@ -48,11 +64,14 @@ data class Car(
             direction = directionAngle ?: this.direction,
             position = updatePosition(elapsedTime),
             speed = newSpeed,
-            speedModifier = setSpeedModifier(speedModifier),
+            speedModifier = speedModifier,
             visualDirection = updateVisualDirection(),
             currentSprite = updateCurrentSprite(),
             isStarting = starting,
-            wasStopped = newSpeed <= MIN_SPEED
+            wasStopped = newSpeed <= MIN_SPEED,
+            sizeModifier = currentSizeModifier,
+            targetSizeModifier = if (hasSizeBonus) 2.0f else 1f,
+            sizeTransitionProgress = sizeTransitionProgress
         )
     }
 

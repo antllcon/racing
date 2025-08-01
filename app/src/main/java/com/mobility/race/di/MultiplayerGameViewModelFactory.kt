@@ -3,13 +3,9 @@ package com.mobility.race.di
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
-import androidx.navigation.NavController
-import com.mobility.race.data.Gateway
 import com.mobility.race.data.IGateway
 import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
-import io.ktor.client.HttpClient
 
 class MultiplayerGameViewModelFactory(
     private val nickname: String,

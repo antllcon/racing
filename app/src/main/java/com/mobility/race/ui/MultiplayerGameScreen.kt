@@ -40,6 +40,7 @@ import com.mobility.race.presentation.multiplayer.MultiplayerGameViewModel
 import com.mobility.race.ui.drawUtils.LifecycleEventHandler
 import com.mobility.race.ui.drawUtils.bitmapStorage
 import com.mobility.race.ui.drawUtils.drawBackgroundTexture
+import com.mobility.race.ui.drawUtils.drawBonuses
 import com.mobility.race.ui.drawUtils.drawCars
 import com.mobility.race.ui.drawUtils.drawControllingStick
 import com.mobility.race.ui.drawUtils.drawGameMap
@@ -146,6 +147,7 @@ fun MultiplayerGameScreen(
                     )
                 }
         ) {
+            //drawBonuses(state.bonuses, state.gameCamera, bitmaps)
             drawBackgroundTexture(
                 state.gameMap,
                 state.gameCamera,

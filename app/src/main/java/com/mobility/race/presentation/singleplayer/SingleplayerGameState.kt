@@ -21,7 +21,8 @@ data class SingleplayerGameState(
     val finishTime: Long = 0L,
     val raceTime: Long = 0L,
     val lapsCompleted: Int = 0,
-    val totalLaps: Int = 3
+    val totalLaps: Int = 3,
+    val activeBonuses: Map<String, Long> = emptyMap()
 ) {
     companion object {
         fun default(carId: String): SingleplayerGameState {

@@ -83,6 +83,8 @@ fun bitmapStorage(context: Context): Map<String, ImageBitmap> {
         "terrain_409" to ImageBitmap.imageResource(R.drawable.terrain_409),
         "terrain_410" to ImageBitmap.imageResource(R.drawable.terrain_410),
         "terrain_411" to ImageBitmap.imageResource(R.drawable.terrain_411),
-        "terrain_500" to ImageBitmap.imageResource(R.drawable.terrain_500)
+        "terrain_500" to ImageBitmap.imageResource(R.drawable.terrain_500),
+        "bonus_speed" to ImageBitmap.imageResource(R.drawable.bonus_speed),
+        "bonus_size" to ImageBitmap.imageResource(R.drawable.bonus_size)
     )
 }

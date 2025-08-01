@@ -2,6 +2,7 @@ package com.mobility.race.presentation.multiplayer
 
 import androidx.compose.ui.geometry.Offset
 import com.mobility.race.data.StarterPack
+import com.mobility.race.domain.Bonus
 import com.mobility.race.domain.Car
 import com.mobility.race.domain.CheckpointManager
 import com.mobility.race.domain.ControllingStick
@@ -21,6 +22,7 @@ data class MultiplayerGameState(
     val directionAngle: Float?
 ) {
     companion object {
+//        private const val DEFAULT_BONUS_COUNT = 5
         fun default(
             name: String,
             playerNames: Array<String>,
@@ -61,8 +63,6 @@ data class MultiplayerGameState(
                 )
             }
 
-            println(players)
-
             val checkpointManager = CheckpointManager(newRouteList)
             checkpointManager.registerCar(mainPlayer.car.id)
 
@@ -91,7 +91,6 @@ data class MultiplayerGameState(
                 directionAngle = null
             )
         }
-
 
         private fun getSpriteId(playerId: String, playerIds: Array<String>): Int {
             var index = 1

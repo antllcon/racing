@@ -8,14 +8,13 @@ abstract class BaseViewModel<TState : Any>(
     initialState: TState
 ) : ViewModel() {
 
-    val state: State<TState> by lazy { mState }
+    private val _state = mutableStateOf(initialState)
+    val state: State<TState> = _state
 
-    private val mState = mutableStateOf(initialState)
+    protected val stateValue: TState
+        get() = _state.value
 
-    protected val stateValue
-        get() = mState.value
-
-    protected fun modifyState(modifier: TState.() -> TState) {
-        mState.value = mState.value.modifier()
+    protected fun modifyState(transform: (TState) -> TState) {
+        _state.value = transform(_state.value)
     }
 }

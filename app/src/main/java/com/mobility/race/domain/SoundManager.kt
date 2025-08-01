@@ -12,11 +12,15 @@ class SoundManager(private val context: Context) {
         const val BACKGROUND_MUSIC_VOLUME = 0.4f
         const val GRASS_SOUND_VOLUME = 0.3f
         const val DEFAULT_SOUND_VOLUME = 1f
+        const val BONUS_SOUND_VOLUME = 0.8f
+
     }
 
     private val soundPool: SoundPool
     private var startSoundId: Int = 0
     private var clickSoundId: Int = 0
+    private var bonusSoundId: Int = 0
+
 
     private val exoPlayer: ExoPlayer
 
@@ -37,6 +41,7 @@ class SoundManager(private val context: Context) {
 
         startSoundId = soundPool.load(context, R.raw.start, 1)
         clickSoundId = soundPool.load(context, R.raw.click, 1)
+        bonusSoundId = soundPool.load(context, R.raw.bonus, 1)
         surfaceSounds["ROAD"] = soundPool.load(context, R.raw.road, 1)
         surfaceSounds["GRASS"] = soundPool.load(context, R.raw.grass, 1)
         surfaceSounds["WATER"] = soundPool.load(context, R.raw.water, 1)
@@ -65,6 +70,9 @@ class SoundManager(private val context: Context) {
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
         exoPlayer.volume = BACKGROUND_MUSIC_VOLUME
+    }
+    fun playBonusSound() {
+        soundPool.play(bonusSoundId, BONUS_SOUND_VOLUME, BONUS_SOUND_VOLUME, 0, 0, 1f)
     }
 
     fun playClickSound() {
