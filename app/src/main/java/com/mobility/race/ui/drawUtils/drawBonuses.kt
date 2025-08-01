@@ -28,8 +28,8 @@ fun DrawScope.drawBonuses(
                     image = it,
                     dstSize = IntSize(bonusSize.toInt(), bonusSize.toInt()),
                     dstOffset = IntOffset(
-                        (screenPos.x - bonusSize / 2).toInt(),
-                        (screenPos.y - bonusSize / 2).toInt()
+                        (screenPos.x - bonusSize).toInt(),
+                        (screenPos.y - bonusSize).toInt()
                     )
                 )
             }
