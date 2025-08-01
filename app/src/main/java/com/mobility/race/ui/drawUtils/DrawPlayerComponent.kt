@@ -12,8 +12,6 @@ import com.mobility.race.domain.Car
 import com.mobility.race.presentation.multiplayer.MultiplayerGameState
 import kotlin.math.PI
 
-// TODO: можно сделать абстрактный класс GameState и получать state players (1 или много)
-// TODO: но в целом пофиг, до защиты неделя
 fun DrawScope.drawCars(state: MultiplayerGameState, bitmaps: Map<String, ImageBitmap>) {
     state.players.forEach { player ->
         if (!player.isFinished) {
@@ -32,8 +30,8 @@ fun DrawScope.drawCars(state: MultiplayerGameState, bitmaps: Map<String, ImageBi
                         ) / 2
                     ),
                     Size(
-                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size),
-                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size)
+                        Car.LENGTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * 1.3f,
+                        Car.WIDTH * state.gameCamera.getScaledCellSize(state.gameMap.size) * 1.3f
                     )
                 )
             }

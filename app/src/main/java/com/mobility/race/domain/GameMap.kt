@@ -113,15 +113,24 @@ class GameMap(
 
             while (generatedRooms < roomCount && attempts < maxAttempts) {
                 val x: Int = (Random.nextInt(until = (width - 2) / 2 + 1) * 2) + 1
-                val y: Int = (Random.nextInt(until = (height - 2) / 2 + 1) * 2) + 1
+                val y: Int = (Random.nextInt(until = (height - 2) / 2 + 1) * 2)
 
                 if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1) {
-                    if (grid[y][x] == 0) {
+                    val centerX = width / 2
+                    val centerY = height / 2
+
+                    val minX = centerX - 1
+                    val maxX = centerX + 1
+                    val minY = centerY - 1
+                    val maxY = centerY + 1
+
+                    val notInCenter = !(x in minX..maxX && y in minY..maxY)
+
+                    if (grid[y][x] == 0 && notInCenter) {
                         grid[y][x] = 1
                         generatedRooms++
                     }
                 }
-                attempts++
             }
         }
 
@@ -336,7 +345,11 @@ class GameMap(
             }
 
             if (candidateCells.isNotEmpty()) {
-                val (chosenPosition, chosenDirection) = candidateCells.random()
+                println("В текущей итерации - генерация:")
+                for (i in 0 until candidateCells.size) {
+                    println(candidateCells[i])
+                }
+                val (chosenPosition, chosenDirection) = candidateCells[4]
                 if (chosenDirection == StartDirection.HORIZONTAL) {
                     grid[chosenPosition.y.toInt()][chosenPosition.x.toInt()] = 112
                 } else {
