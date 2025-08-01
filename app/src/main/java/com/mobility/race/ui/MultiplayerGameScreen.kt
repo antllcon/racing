@@ -106,7 +106,7 @@ fun MultiplayerGameScreen(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            if (state.controllingStick.isInside(offset) && state.isGameRunning) {
+                            if (state.controllingStick.isInside(offset) && state.countdown == 0) {
                                 isStickActive = true
                                 val angle = state.controllingStick.getTouchAngle(offset)
                                 viewModel.setDirectionAngle(angle)
@@ -120,7 +120,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDrag = { change, _ ->
-                            if (isStickActive && state.isGameRunning) {
+                            if (isStickActive  && state.countdown == 0) {
                                 val angle = state.controllingStick.getTouchAngle(change.position)
                                 viewModel.setDirectionAngle(angle)
                                 currentStickInputAngle = angle
@@ -129,7 +129,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragEnd = {
-                            if (isStickActive && state.isGameRunning) {
+                            if (isStickActive  && state.countdown == 0) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -137,7 +137,7 @@ fun MultiplayerGameScreen(
                             }
                         },
                         onDragCancel = {
-                            if (isStickActive && state.isGameRunning) {
+                            if (isStickActive  && state.countdown == 0) {
                                 viewModel.setDirectionAngle(null)
                                 isStickActive = false
                                 currentStickInputAngle = null
@@ -147,7 +147,6 @@ fun MultiplayerGameScreen(
                     )
                 }
         ) {
-            println("Вызываем drawBonuses с ${state.bonuses.size} бонусами")
             drawBackgroundTexture(
                 state.gameMap,
                 state.gameCamera,
@@ -172,21 +171,21 @@ fun MultiplayerGameScreen(
 
             drawCars(state, bitmaps)
 
-            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(), state.mainPlayer.isFinished, state.checkpointManager)
-
-            if (!state.mainPlayer.isFinished && state.isGameRunning) {
-                drawControllingStick(
-                    state.controllingStick,
-                    currentStickInputAngle,
-                    currentStickInputDistanceFactor
-                )
-
+            if (!state.mainPlayer.isFinished && state.countdown == 0) {
                 drawNextCheckpoint(
                     state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
                     state.gameCamera,
                     state.gameCamera.getScaledCellSize(state.gameMap.size)
                 )
+
+                drawControllingStick(
+                    state.controllingStick,
+                    currentStickInputAngle,
+                    currentStickInputDistanceFactor
+                )
             }
+
+            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
         }
 
         if (state.countdown > 0) {
@@ -213,7 +212,7 @@ fun MultiplayerGameScreen(
             }
         }
 
-        if (state.isGameRunning) {
+        if (state.countdown == 0) {
             if (state.mainPlayer.isFinished) {
                 Text(
                     text = "You've completed the race!",

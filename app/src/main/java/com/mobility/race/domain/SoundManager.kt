@@ -9,7 +9,7 @@ import com.mobility.race.R
 
 class SoundManager(private val context: Context) {
     private companion object {
-        const val BACKGROUND_MUSIC_VOLUME = 0.4f
+        const val BACKGROUND_MUSIC_VOLUME = 0.1f
         const val GRASS_SOUND_VOLUME = 0.3f
         const val DEFAULT_SOUND_VOLUME = 1f
         const val BONUS_SOUND_VOLUME = 0.8f
