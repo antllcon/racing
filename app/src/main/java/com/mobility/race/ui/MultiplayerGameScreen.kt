@@ -171,21 +171,21 @@ fun MultiplayerGameScreen(
 
             drawCars(state, bitmaps)
 
-            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
-
             if (!state.mainPlayer.isFinished && state.countdown == 0) {
-                drawControllingStick(
-                    state.controllingStick,
-                    currentStickInputAngle,
-                    currentStickInputDistanceFactor
-                )
-
                 drawNextCheckpoint(
                     state.checkpointManager.getNextCheckpoint(state.mainPlayer.car.id),
                     state.gameCamera,
                     state.gameCamera.getScaledCellSize(state.gameMap.size)
                 )
+
+                drawControllingStick(
+                    state.controllingStick,
+                    currentStickInputAngle,
+                    currentStickInputDistanceFactor
+                )
             }
+
+            drawMinimap(state.gameMap, state.mainPlayer.car, viewModel.getCars(),state.mainPlayer.isFinished,state.checkpointManager)
         }
 
         if (state.countdown > 0) {
